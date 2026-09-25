@@ -13,6 +13,8 @@ Uma plataforma para o profissional ou influenciador:
 
 O foco inicial deve ser **venda e relacionamento para personal trainers**, mantendo o modelo de dados capaz de atender outros criadores depois.
 
+**Estado em 25/09/2026:** a aplicação já usa React + Vite e possui as três áreas do FoodWeb (vitrine pública, Admin do criador e Admin Master). Catálogo, configurações e biblioteca de ideias usam o projeto Supabase `Academia`. A Edge Function do Gemini foi publicada, mas requer `GEMINI_API_KEY` para gerar conteúdo. Pedido, confirmação Pix, entrega digital, planos SaaS e disparo automático de WhatsApp ainda são etapas futuras.
+
 ## 2. Perfis e áreas
 
 ### Admin master da plataforma
@@ -105,14 +107,13 @@ Nunca liberar produto digital apenas porque o cliente enviou uma imagem de compr
 
 ### Aplicação
 
-- Next.js com TypeScript e App Router, inicialmente com exportação estática;
+- React com TypeScript, Vite e React Router, com build estático em `dist`;
 - Supabase Auth para autenticação;
 - Supabase Postgres para dados transacionais;
 - Supabase Storage para imagens e arquivos digitais;
 - Supabase Edge Functions para webhooks, IA e integração WhatsApp;
 - Cloudflare Pages para hospedagem, domínio e cache;
-- Tailwind CSS + shadcn/ui como base visual;
-- Tremor apenas para métricas e gráficos do painel.
+- CSS próprio para preservar a identidade visual aprovada do Academia.
 
 ### Integrações
 
@@ -139,7 +140,7 @@ O modelo de IA deve ser configurável por ambiente (`AI_MODEL`): um modelo econ�
 - adicionar Cloudflare Queues ou Workflows somente quando o volume de mensagens justificar processamento assíncrono;
 - adicionar serviço de pagamentos quando o checkout real entrar no MVP comercial.
 
-Cloudflare Workers não é obrigatório no começo. Ele deve entrar quando houver necessidade de SSR/ISR, endpoints próprios na borda, rate limiting avançado, filas ou processamento que não faça sentido dentro das Edge Functions. A documentação atual do Cloudflare recomenda Workers para aplicações full-stack; para este MVP, a exportação estática mantém a operação mais simples e deixa a lógica sensível no Supabase. [Guia Next.js no Cloudflare](https://developers.cloudflare.com/pages/framework-guides/nextjs/deploy-a-static-nextjs-site/) · [Workers para Next.js](https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/)
+Cloudflare Workers não é obrigatório no começo. O build estático do Vite pode ser hospedado no Pages, enquanto a lógica sensível fica nas Edge Functions do Supabase. [Guia Vite no Cloudflare](https://developers.cloudflare.com/pages/framework-guides/deploy-a-vite-site/)
 
 O código deve esconder cada integração atrás de uma interface simples (`AiProvider`, `MessagingProvider` e `PaymentProvider`). Assim, o MVP não depende de várias plataformas, mas continua preparado para trocar Gemini, WhatsApp ou checkout sem reescrever o domínio.
 
@@ -254,7 +255,7 @@ Todas as tabelas de domínio devem possuir `workspace_id`, salvo entidades globa
 
 ## 8. Base visual
 
-Recomendação: usar **shadcn/ui** como sistema de componentes e adotar a linguagem de métricas do **Tremor**. O repositório `nextjs/saas-starter` é útil como referência de organização de um SaaS, mas usa Drizzle/Postgres/Stripe e não deve ser copiado como arquitetura do banco. O template gratuito do TailAdmin pode servir como referência de painel e possui licença MIT; ainda assim, é melhor não misturar três sistemas visuais no mesmo produto.
+O Academia usa identidade própria em CSS, preservada nesta implementação. O FoodWeb serviu como referência para as três áreas, a navegação e o fluxo comercial; não copiamos regras de alimentação, banco compartilhado ou componentes visuais do outro produto.
 
 Referências consultadas:
 
@@ -265,7 +266,7 @@ Referências consultadas:
 
 ## 9. Ordem de implementação
 
-1. Criar o app Next.js e o sistema visual.
+1. Criar o app React/Vite e o sistema visual.
 2. Criar Auth, workspaces, membros, slug e RLS.
 3. Criar página pública e catálogo.
 4. Criar produtos digitais/serviços e Storage protegido.
@@ -283,7 +284,7 @@ O Cloudflare Workers possui plano gratuito com limites diários e plano pago sep
 
 ## 11. Decisões que precisam ser confirmadas
 
-1. Qual é o `project_ref` correto do Supabase `Academia`? Ele não apareceu na conexão atual; somente `floriweb01` está disponível.
+1. O `project_ref` do Supabase `Academia` é `vnpoinodvchmmbyxpacj`.
 2. O Pix inicial será confirmado manualmente pelo personal; gateway automático fica para a segunda etapa.
-3. A integração WhatsApp será com Cloud API oficial da Meta ou um BSP já contratado?
-4. O primeiro produto a validar será conteúdo para personal trainers ou venda de manuais/avaliações?
+3. A integração de disparos WhatsApp será com Cloud API oficial da Meta ou um BSP já contratado? A primeira etapa usa conversa individual via link.
+4. A primeira oferta comercial pode ser um manual digital ou avaliação para validar a vitrine.
