@@ -86,10 +86,10 @@ export function PublicLayout() {
   const totalItems = safeCart.reduce((total, item) => total + item.quantity, 0)
   return <StoreContext.Provider value={{ workspace, products, cart: safeCart, addToCart, changeQuantity, clearCart }}>
     <div className="store-shell">
-      <header className="store-topbar"><Link className="store-logo plain-link" to={`/p/${slug}`}><span className="brand-mark">A</span><span><strong>{workspace.name}</strong><small>por academia</small></span></Link><nav><Link to={`/p/${slug}`}>Início</Link><Link to={`/p/${slug}/carrinho`}>Sacola <span className="cart-badge">{totalItems}</span></Link></nav></header>
+      <header className="store-topbar"><Link className="store-logo plain-link" to={`/p/${slug}`}><span className="brand-mark">M</span><span><strong>{workspace.name}</strong><small>por movência</small></span></Link><nav><Link to={`/p/${slug}`}>Início</Link><Link to={`/p/${slug}/carrinho`}>Sacola <span className="cart-badge">{totalItems}</span></Link></nav></header>
       {error && <p className="form-error">{error}</p>}
       <main><Outlet /></main>
-      <footer className="store-footer"><span>{workspace.name} · feito com academia</span><span>Pagamento e atendimento combinados diretamente com o profissional.</span></footer>
+      <footer className="store-footer"><span>{workspace.name} · feito com movência</span><span>Pagamento e atendimento combinados diretamente com o profissional.</span></footer>
     </div>
   </StoreContext.Provider>
 }

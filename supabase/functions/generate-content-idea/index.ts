@@ -70,7 +70,7 @@ Deno.serve(async (request) => {
     'Responda SOMENTE com um objeto JSON contendo title, hook, body e cta como strings não vazias.',
   ].join('\n')
 
-  const model = Deno.env.get('GEMINI_MODEL') || 'gemini-2.5-flash'
+  const model = Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash-lite'
   let generated: Idea
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {

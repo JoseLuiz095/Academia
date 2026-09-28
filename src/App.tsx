@@ -9,6 +9,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage').then((module) => ({ def
 const LandingPage = lazy(() => import('./pages/LandingPage').then((module) => ({ default: module.LandingPage })))
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard').then((module) => ({ default: module.AdminDashboard })))
 const AdminProducts = lazy(() => import('./pages/admin/Products').then((module) => ({ default: module.AdminProducts })))
+const AdminOrders = lazy(() => import('./pages/admin/Orders').then((module) => ({ default: module.AdminOrders })))
 const AdminContent = lazy(() => import('./pages/admin/Content').then((module) => ({ default: module.AdminContent })))
 const AdminSettings = lazy(() => import('./pages/admin/Settings').then((module) => ({ default: module.AdminSettings })))
 const AdminWhatsApp = lazy(() => import('./pages/admin/WhatsApp').then((module) => ({ default: module.AdminWhatsApp })))
@@ -53,6 +54,7 @@ export default function App() {
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin/primeiros-passos" element={<AdminOnboarding />} />
       <Route path="/admin/produtos" element={<AdminProducts />} />
+      <Route path="/admin/pedidos" element={<AdminOrders />} />
       <Route path="/admin/conteudo" element={<AdminContent />} />
       <Route path="/admin/whatsapp" element={<AdminWhatsApp />} />
       <Route path="/admin/configuracoes" element={<AdminSettings />} />

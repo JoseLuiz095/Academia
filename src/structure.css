@@ -1,4 +1,4 @@
-/* Estrutura de produto inspirada nos três ambientes do FoodWeb; identidade do Academia preservada. */
+/* Estrutura de produto inspirada nos três ambientes do FoodWeb; identidade do Movência preservada. */
 .plain-link { text-decoration: none; color: inherit; }
 .plain-link:hover { text-decoration: none; }
 a { color: #bc603d; }
@@ -63,8 +63,13 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .idea-list-row > div { flex: 1; }
 .idea-list-row small { display: block; margin: 5px 0; }
 .idea-list-row p { max-width: 650px; color: #66746c; white-space: pre-wrap; line-height: 1.6; font-size: 11px; }
-.idea-actions { display: flex; gap: 8px; }
+.idea-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .idea-edit-form { width: 100%; }
+.idea-edit-form .form-actions { flex-wrap: wrap; justify-content: flex-start; }
+.content-workflow .field-help, .idea-edit-form .field-help { overflow-wrap: anywhere; }
+.whatsapp-hero, .whatsapp-hero > div, .whatsapp-points { min-width: 0; }
+.whatsapp-hero p, .whatsapp-points span { overflow-wrap: anywhere; }
+.whatsapp-hero + .panel .form-actions { justify-content: flex-start; }
 .whatsapp-hero .text-button { color: #668b6d; }
 .master-workspace-row > div { flex: 1; }
 .master-workspace-row small { display: block; margin-top: 4px; }
@@ -190,3 +195,6 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 
 @media (max-width: 900px) { .landing-hero, .store-hero, .store-detail { gap: 25px; }.store-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }.checkout-grid { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .form-row, .landing-hero, .store-hero, .store-detail, .landing-steps > div, .store-grid { grid-template-columns: 1fr; }.landing-header, .store-topbar { padding: 16px; }.store-topbar { gap: 10px; }.store-topbar nav { gap: 12px; }.landing-header nav { gap: 10px; }.landing-header nav a:first-child { display: none; }.landing-header nav .primary-button { padding: 9px; }.landing-hero { min-height: 0; padding: 50px 18px; }.landing-art { transform: none; }.landing-steps, .landing-creators { padding: 40px 18px; }.store-hero, .store-section { padding: 30px 18px; }.store-hero-art { min-height: 230px; }.store-footer { flex-direction: column; padding: 22px 18px; }.store-detail .store-product-cover { min-height: 300px; }.cart-row { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }.cart-row > strong { grid-column: 1 / -1; }.checkout-grid .primary-button { justify-content: center; max-width: 100%; white-space: normal; text-align: center; }.auth-card { padding: 24px; }.form-actions { flex-wrap: wrap; } }
+.orders-list { display: grid; gap: 1rem; }
+.order-card .simple-list { margin: 1rem 0; }
+.order-card .form-actions { margin-top: 1rem; }

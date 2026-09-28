@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useStore } from '../../layouts/PublicLayout'
 import { currency, whatsappLink } from '../../lib/format'
 import { buildPixCopyPaste } from '../../lib/pix'
-import type { Product } from '../../types'
+import { createPendingOrder, finishOrderAttempt, loadOrderReceipt, rememberOrderReceipt } from '../../lib/orders'
+import type { OrderReceipt, Product } from '../../types'
 
 const label: Record<Product['kind'], string> = { service: 'Serviço', digital: 'Manual digital', physical: 'Produto físico' }
 
@@ -30,23 +31,72 @@ export function StoreCart() {
   const { workspace, products, cart, changeQuantity } = useStore()
   const rows = cart.map((item) => ({ item, product: products.find((product) => product.id === item.id) })).filter((row): row is { item: typeof row.item; product: Product } => Boolean(row.product))
   const total = rows.reduce((sum, row) => sum + (row.product.price ?? 0) * row.item.quantity, 0)
-  return <section className="store-section narrow"><Link className="back-link" to={`/p/${workspace.slug}`}>← Continuar explorando</Link><p className="eyebrow">Sua seleção</p><h1>Minha sacola</h1>{rows.length ? <><div className="cart-list">{rows.map(({ item, product }) => <div className="cart-row" key={item.id}><div><strong>{product.name}</strong><small>{label[product.kind]}</small></div><div className="quantity-control" role="group" aria-label={`Quantidade de ${product.name}`}><button aria-label={item.quantity === 1 ? `Remover ${product.name} da sacola` : `Diminuir quantidade de ${product.name}`} onClick={() => changeQuantity(item.id, item.quantity - 1)}>−</button><output aria-live="polite">{item.quantity}</output><button aria-label={`Aumentar quantidade de ${product.name}`} disabled={item.quantity >= 99} onClick={() => changeQuantity(item.id, item.quantity + 1)}>＋</button></div><strong>{currency.format((product.price ?? 0) * item.quantity)}</strong></div>)}</div><div className="cart-total"><span>Total</span><strong aria-live="polite">{currency.format(total)}</strong></div><Link className="primary-button plain-link" to={`/p/${workspace.slug}/finalizar`}>Continuar para pagamento <span>→</span></Link></> : <div className="panel empty-panel"><h2>Sua sacola está vazia</h2><p>Escolha um serviço ou produto para começar.</p><Link className="primary-button plain-link" to={`/p/${workspace.slug}`}>Ver catálogo <span>→</span></Link></div>}</section>
+  return <section className="store-section narrow"><Link className="back-link" to={`/p/${workspace.slug}`}>← Continuar explorando</Link><p className="eyebrow">Sua seleção</p><h1>Minha sacola</h1>{rows.length ? <><div className="cart-list">{rows.map(({ item, product }) => <div className="cart-row" key={item.id}><div><strong>{product.name}</strong><small>{label[product.kind]}</small></div><div className="quantity-control" role="group" aria-label={`Quantidade de ${product.name}`}><button aria-label={item.quantity === 1 ? `Remover ${product.name} da sacola` : `Diminuir quantidade de ${product.name}`} onClick={() => changeQuantity(item.id, item.quantity - 1)}>−</button><output aria-live="polite">{item.quantity}</output><button aria-label={`Aumentar quantidade de ${product.name}`} disabled={item.quantity >= 99} onClick={() => changeQuantity(item.id, item.quantity + 1)}>＋</button></div><strong>{currency.format((product.price ?? 0) * item.quantity)}</strong></div>)}</div><div className="cart-total"><span>Total</span><strong aria-live="polite">{currency.format(total)}</strong></div><Link className="primary-button plain-link" to={`/p/${workspace.slug}/finalizar`}>Continuar para o pedido <span>→</span></Link></> : <div className="panel empty-panel"><h2>Sua sacola está vazia</h2><p>Escolha um serviço ou produto para começar.</p><Link className="primary-button plain-link" to={`/p/${workspace.slug}`}>Ver catálogo <span>→</span></Link></div>}</section>
 }
 
 export function StoreCheckout() {
-  const { workspace, products, cart } = useStore()
+  const { workspace, products, cart, clearCart } = useStore()
+  const [lastReceipt, setLastReceipt] = useState<OrderReceipt | null>(() => loadOrderReceipt(workspace.id))
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null)
+  const submitting = useRef(false)
   const rows = cart.map((item) => ({ item, product: products.find((product) => product.id === item.id) })).filter((row): row is { item: typeof row.item; product: Product } => Boolean(row.product))
+  const receipt = rows.length ? null : lastReceipt
   const total = rows.reduce((sum, row) => sum + (row.product.price ?? 0) * row.item.quantity, 0)
   const pixCode = useMemo(() => {
-    if (!workspace.whatsapp_number || !workspace.pix_key || !workspace.pix_receiver || !workspace.pix_city || total <= 0) return null
-    try { return buildPixCopyPaste({ key: workspace.pix_key, receiver: workspace.pix_receiver, city: workspace.pix_city, amount: total }) }
+    if (!receipt || !workspace.pix_key || !workspace.pix_receiver || !workspace.pix_city || receipt.total <= 0) return null
+    try { return buildPixCopyPaste({ key: workspace.pix_key, receiver: workspace.pix_receiver, city: workspace.pix_city, amount: receipt.total }) }
     catch { return null }
-  }, [workspace.whatsapp_number, workspace.pix_key, workspace.pix_receiver, workspace.pix_city, total])
-  const orderText = `Olá! Quero combinar este pedido da página ${workspace.name}:\n${rows.map(({ item, product }) => `• ${item.quantity}x ${product.name} — ${currency.format((product.price ?? 0) * item.quantity)}`).join('\n')}\nTotal: ${currency.format(total)}. Por favor, confirme a disponibilidade e os dados de pagamento antes de eu pagar.`
-  const contact = whatsappLink(workspace.whatsapp_number, orderText)
+  }, [workspace.pix_key, workspace.pix_receiver, workspace.pix_city, receipt])
+  const contact = receipt ? whatsappLink(workspace.whatsapp_number, `Olá! Registrei o pedido ${receipt.reference} na página ${workspace.name}:\n${receipt.items.map((item) => `• ${item.quantity}x ${item.name} — ${currency.format(item.line_total)}`).join('\n')}\nTotal: ${currency.format(receipt.total)}. Pode confirmar a disponibilidade e os dados de pagamento? Após pagar, aviso por aqui para sua confirmação manual.`) : null
+
+  async function registerOrder() {
+    if (submitting.current) return
+    submitting.current = true
+    setBusy(true)
+    setError('')
+    try {
+      const saved = await createPendingOrder(workspace.id, rows.map(({ item }) => ({ product_id: item.id, quantity: item.quantity })), Math.round(total * 100) / 100)
+      rememberOrderReceipt(workspace.id, saved)
+      setLastReceipt(saved)
+      finishOrderAttempt(workspace.id)
+      clearCart()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível registrar o pedido. Tente novamente.')
+    } finally {
+      submitting.current = false
+      setBusy(false)
+    }
+  }
+
   async function copy(text: string, what: string) { try { await navigator.clipboard.writeText(text); setMessage({ text: `${what} copiado.`, error: false }) } catch { setMessage({ text: 'Não foi possível copiar automaticamente. Selecione e copie o texto acima.', error: true }) } }
-  if (!rows.length) return <section className="store-section narrow"><h1>Sacola vazia</h1><Link to={`/p/${workspace.slug}`}>Voltar para a vitrine</Link></section>
-  if (!contact) return <section className="store-section narrow"><h1>Pagamento indisponível</h1><p>Este profissional ainda não informou um WhatsApp para combinar o pedido. Não faça o Pix antes de confirmar diretamente com ele.</p><Link to={`/p/${workspace.slug}`}>Voltar para a vitrine</Link></section>
-  return <section className="store-section narrow"><Link className="back-link" to={`/p/${workspace.slug}/carrinho`}>← Voltar à sacola</Link><p className="eyebrow">Pagamento direto com o profissional</p><h1>Combinar pedido</h1><p className="checkout-intro">Envie o pedido e confirme a disponibilidade e os dados de pagamento com o profissional antes de fazer o Pix.</p><div className="checkout-grid"><div className="panel"><h2>Pix manual</h2><p>Depois da confirmação, confira o nome do recebedor e o valor no aplicativo do seu banco. O profissional confirma o pagamento antes de liberar o produto ou agendamento.</p><div className="checkout-payee"><span>Recebedor</span><strong>{workspace.pix_receiver || 'A confirmar com o profissional'}</strong><span>Total</span><strong>{currency.format(total)}</strong></div>{pixCode ? <><label>Pix copia e cola<textarea readOnly rows={5} value={pixCode} /></label><button className="primary-button" onClick={() => void copy(pixCode, 'Código Pix')}>Copiar Pix <span aria-hidden="true">▣</span></button></> : workspace.pix_key ? <><label>Chave Pix<input readOnly value={workspace.pix_key} /></label><button className="primary-button" onClick={() => void copy(workspace.pix_key!, 'Chave Pix')}>Copiar chave <span aria-hidden="true">▣</span></button><p className="field-help">A chave Pix não inclui o valor. Confirme os dados com o profissional e informe o total no banco. O código com valor não está disponível para este pedido.</p></> : <p className="field-help">Os dados Pix ainda não foram cadastrados. Combine o pagamento diretamente com o profissional.</p>}{message && <p className={message.error ? 'form-error' : 'form-success'} role={message.error ? 'alert' : 'status'}>{message.text}</p>}</div><div className="panel"><h2>Resumo</h2><div className="simple-list">{rows.map(({ item, product }) => <div key={item.id}><strong>{item.quantity}× {product.name}</strong><span>{currency.format((product.price ?? 0) * item.quantity)}</span></div>)}</div><div className="cart-total"><span>Total</span><strong>{currency.format(total)}</strong></div>{contact ? <a className="primary-button plain-link" href={contact} target="_blank" rel="noreferrer">Enviar pedido no WhatsApp <span aria-hidden="true">↗</span></a> : <p className="form-error">O profissional ainda não informou um WhatsApp para receber pedidos. Não faça o Pix antes de combinar o pedido diretamente com ele.</p>}<p className="field-help">O WhatsApp abre uma conversa; o pedido não é registrado nem confirmado automaticamente na plataforma.</p></div></div></section>
+  if (!rows.length && !receipt) return <section className="store-section narrow"><h1>Sacola vazia</h1><Link to={`/p/${workspace.slug}`}>Voltar para a vitrine</Link></section>
+  if (!whatsappLink(workspace.whatsapp_number, 'pedido')) return <section className="store-section narrow"><h1>Pedido indisponível</h1><p>Este profissional ainda não informou um WhatsApp para combinar o pedido.</p><Link to={`/p/${workspace.slug}`}>Voltar para a vitrine</Link></section>
+
+  return <section className="store-section narrow">
+    {!receipt && <Link className="back-link" to={`/p/${workspace.slug}/carrinho`}>← Voltar à sacola</Link>}
+    <p className="eyebrow">Pagamento direto com o profissional</p>
+    <h1>{receipt ? `Pedido ${receipt.reference}` : 'Combinar pedido'}</h1>
+    <p className="checkout-intro">{receipt ? 'Pedido registrado como pendente. Envie a referência ao profissional pelo WhatsApp e confirme disponibilidade e dados de pagamento antes de fazer o Pix.' : 'Registre a seleção para receber uma referência. Depois, combine disponibilidade e pagamento pelo WhatsApp.'}</p>
+    <div className="checkout-grid">
+      <div className="panel">
+        <h2>Pix manual</h2>
+        {receipt ? <>
+          <p>Confira o nome do recebedor e o valor no aplicativo do seu banco. O profissional confirma o pagamento antes de liberar o produto ou agendamento.</p>
+          <div className="checkout-payee"><span>Recebedor</span><strong>{workspace.pix_receiver || 'A confirmar com o profissional'}</strong><span>Total</span><strong>{currency.format(receipt.total)}</strong></div>
+          {pixCode ? <><label>Pix copia e cola<textarea readOnly rows={5} value={pixCode} /></label><button className="primary-button" onClick={() => void copy(pixCode, 'Código Pix')}>Copiar Pix <span aria-hidden="true">▣</span></button></> : workspace.pix_key ? <><label>Chave Pix<input readOnly value={workspace.pix_key} /></label><button className="primary-button" onClick={() => void copy(workspace.pix_key!, 'Chave Pix')}>Copiar chave <span aria-hidden="true">▣</span></button><p className="field-help">A chave Pix não inclui o valor. Confirme os dados com o profissional e informe o total no banco.</p></> : <p className="field-help">Os dados Pix ainda não foram cadastrados. Combine o pagamento diretamente com o profissional.</p>}
+          {message && <p className={message.error ? 'form-error' : 'form-success'} role={message.error ? 'alert' : 'status'}>{message.text}</p>}
+        </> : <p>Os dados para pagamento aparecem após o registro do pedido.</p>}
+      </div>
+      <div className="panel">
+        <h2>Resumo</h2>
+        <div className="simple-list">{receipt ? receipt.items.map((item, index) => <div key={index}><strong>{item.quantity}× {item.name}</strong><span>{currency.format(item.line_total)}</span></div>) : rows.map(({ item, product }) => <div key={item.id}><strong>{item.quantity}× {product.name}</strong><span>{currency.format((product.price ?? 0) * item.quantity)}</span></div>)}</div>
+        <div className="cart-total"><span>Total</span><strong>{currency.format(receipt?.total ?? total)}</strong></div>
+        {receipt ? <><p className="form-success" role="status">Referência {receipt.reference} registrada. Aguardando confirmação manual do profissional.</p>{contact && <a className="primary-button plain-link" href={contact} target="_blank" rel="noreferrer">Enviar pedido no WhatsApp <span aria-hidden="true">↗</span></a>}</> : <button className="primary-button" type="button" disabled={busy} onClick={() => void registerOrder()}>{busy ? 'Registrando…' : 'Registrar pedido pendente'} <span aria-hidden="true">→</span></button>}
+        {error && <p className="form-error" role="alert">{error}</p>}
+        <p className="field-help">O pedido fica pendente até o profissional confirmar manualmente o pagamento. Nenhum dado pessoal é solicitado aqui.</p>
+      </div>
+    </div>
+  </section>
 }

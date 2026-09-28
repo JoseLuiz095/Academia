@@ -1,16 +1,16 @@
-# Academia
+# Movência
 
-SaaS para personal trainers e criadores, construído em React, TypeScript, Vite e Supabase. A organização segue as três áreas do FoodWeb, com visual próprio do Academia.
+SaaS para personal trainers e criadores, construído em React, TypeScript, Vite e Supabase. A marca provisória Movência representa movimento no treino e constância na criação de conteúdo. O repositório e o projeto Supabase ainda se chamam `Academia`. O FoodWeb serviu apenas como referência de estrutura.
 
 ## Áreas
 
 | Área | Rotas | O que funciona agora |
 | --- | --- | --- |
-| Página pública | `/`, `/p/:slug`, produto, sacola e finalizar | Vitrine, catálogo e pedido combinado pelo WhatsApp; Pix manual |
-| Admin do criador | `/admin/*` | Conta, criação do espaço, produtos, perfil de conteúdo, ideias e configurações |
+| Página pública | `/`, `/p/:slug`, produto, sacola e finalizar | Vitrine, catálogo, pedido pendente com referência e Pix manual |
+| Admin do criador | `/admin/*` | Conta, espaço, produtos, pedidos, ideias com IA, WhatsApp de teste e configurações |
 | Admin Master | `/admin-master/*` | Acesso restrito, visão geral e listagem de espaços |
 
-O Admin Master não é liberado pelo cadastro público. Um operador do banco deve adicionar o usuário autorizado em `public.platform_admins`. Planos e cobrança SaaS ainda não foram implementados. O pedido da vitrine abre uma conversa; ainda não grava pedido, confirma Pix nem entrega arquivo digital automaticamente.
+O Admin Master não é liberado pelo cadastro público. Um operador do banco deve adicionar o usuário autorizado em `public.platform_admins`. Planos e cobrança SaaS ainda não foram implementados. O pedido é registrado como pendente e o cliente envia sua referência pelo WhatsApp; não há confirmação automática do Pix nem entrega automática de arquivo digital.
 
 ## Execução local
 
@@ -47,13 +47,13 @@ Substitua o e-mail e confira o usuário antes de executar. Em Auth > URL Configu
 
 ### Gemini
 
-A Edge Function `generate-content-idea` já está publicada e exige sessão autenticada. O botão de geração fica operacional quando `GEMINI_API_KEY` for configurada como secret da Edge Function no Supabase. `GEMINI_MODEL` é opcional; o padrão é `gemini-2.5-flash`. O limite inicial é de 20 pedidos por dia por espaço. Sem chave, o usuário pode preparar e copiar o prompt ou salvar uma ideia manualmente.
+A Edge Function `generate-content-idea` já está publicada e exige sessão autenticada. O botão de geração fica operacional quando `GEMINI_API_KEY` for configurada como secret da Edge Function no Supabase. A chave de teste local está em `supabase/functions/.env`, ignorado pelo Git; ela **não** é enviada automaticamente ao servidor. `GEMINI_MODEL` é opcional; o padrão é `gemini-3.5-flash-lite`. O limite inicial é de 20 pedidos por dia por usuário e espaço. Sem secret remoto, o usuário pode preparar e copiar o prompt ou salvar uma ideia manualmente.
 
 Cada resposta de IA é salva como `review` e só passa a `approved` por ação do criador. O WhatsApp automático ainda não foi integrado; a tela permite testar individualmente uma ideia aprovada pelo aplicativo.
 
 ## Pix e pedidos
 
-O profissional cadastra chave Pix, nome e cidade do recebedor. No checkout, o navegador monta um BR Code estático com o total exibido. O cliente deve conferir os dados no banco, e o profissional confirma o crédito manualmente. O site não libera manuais nem confirma avaliações nessa etapa. Para outras formas de pagamento, o cliente combina diretamente com o profissional.
+O profissional cadastra chave Pix, nome e cidade do recebedor. No checkout, o cliente primeiro registra um pedido pendente; preços e total são recalculados no banco, que devolve uma referência. O navegador então monta um BR Code estático. O cliente envia a referência pelo WhatsApp e confere os dados no banco. O profissional verifica o crédito no extrato e marca o pedido como confirmado no painel. O site não libera manuais nem confirma avaliações automaticamente. Para outras formas de pagamento, o cliente combina diretamente com o profissional. O fluxo público ainda não tem proteção antiabuso dedicada; avalie Turnstile antes de divulgar amplamente.
 
 ## Cloudflare Pages
 

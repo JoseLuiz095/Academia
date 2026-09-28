@@ -28,6 +28,12 @@ export type Product = {
   created_at?: string
 }
 
+export type OrderReceipt = {
+  reference: string
+  total: number
+  items: { name: string; quantity: number; unit_price: number; line_total: number }[]
+}
+
 export type ContentProfile = {
   workspace_id: string
   tone: string
