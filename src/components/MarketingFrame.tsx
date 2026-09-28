@@ -7,7 +7,7 @@ export function MarketingFrame({ children }: { children: ReactNode }) {
       <Link to="/" className="store-logo plain-link" aria-label="Impulso, início"><span className="brand-mark">I</span><strong>impulso</strong></Link>
       <nav aria-label="Navegação principal">
         <a href="/#funcionalidades">Recursos</a>
-        <Link to="/demonstracao">Demonstração</Link>
+        <a href="/#demonstracao">Demonstração</a>
         <Link to="/admin/login">Entrar</Link>
         <Link className="primary-button" to="/admin/login">Criar meu espaço <span aria-hidden="true">→</span></Link>
       </nav>

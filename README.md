@@ -31,6 +31,8 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 
 Não coloque `service_role`, chave secreta do Gemini ou token do WhatsApp em variáveis `VITE_*`.
 
+Para configurar o Vite, preencher o telefone de teste e entender o admin demonstrativo, veja [Configuração local](docs/CONFIGURACAO_LOCAL.md). A rota `/admin/demo` é somente uma prévia local; o admin real é criado pelo fluxo do Supabase em `/admin/login`.
+
 ## Supabase
 
 As migrations em `supabase/migrations/` foram aplicadas ao projeto `Academia`. Todas as tabelas públicas têm RLS. A vitrine só lê workspaces e produtos publicados. O Admin Master precisa de um usuário já cadastrado no Supabase Auth e de um registro inserido por um administrador do banco:

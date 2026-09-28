@@ -29,8 +29,7 @@ const steps: { id: DemoStep; number: string; label: string }[] = [
   { id: 'pedido', number: '03', label: 'Pedido e Pix' },
 ]
 
-export function DemoPage() {
-  useEffect(() => { document.title = 'Demonstração interativa | Impulso' }, [])
+export function DemoExperience() {
   const [step, setStep] = useState<DemoStep>('conteudo')
   const [niche, setNiche] = useState<Niche>('fitness')
   const [format, setFormat] = useState<Format>('story')
@@ -51,7 +50,7 @@ export function DemoPage() {
     setOrderView('customer')
   }
 
-  return <MarketingFrame>
+  return <>
     <section className="demo-intro">
       <p className="eyebrow">Conheça por dentro</p>
       <h1>Uma demonstração do caminho completo.</h1>
@@ -80,5 +79,10 @@ export function DemoPage() {
       </div>
       <div className="demo-stage-foot"><p>Os dados desta simulação ficam apenas na página atual.</p><div><button type="button" className="secondary-button" onClick={() => resetDemo()}>Reiniciar demonstração</button><Link to="/" className="secondary-button plain-link">Ver recursos</Link><Link to="/admin/login" className="primary-button plain-link">Criar meu espaço <span>→</span></Link></div></div>
     </section>
-  </MarketingFrame>
+  </>
+}
+
+export function DemoPage() {
+  useEffect(() => { document.title = 'Demonstração interativa | Impulso' }, [])
+  return <MarketingFrame><DemoExperience /></MarketingFrame>
 }

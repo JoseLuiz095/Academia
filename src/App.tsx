@@ -8,6 +8,7 @@ import { PublicLayout } from './layouts/PublicLayout'
 const LoginPage = lazy(() => import('./pages/LoginPage').then((module) => ({ default: module.LoginPage })))
 const LandingPage = lazy(() => import('./pages/LandingPage').then((module) => ({ default: module.LandingPage })))
 const DemoPage = lazy(() => import('./pages/DemoPage').then((module) => ({ default: module.DemoPage })))
+const DemoAdminPage = lazy(() => import('./pages/DemoAdminPage').then((module) => ({ default: module.DemoAdminPage })))
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard').then((module) => ({ default: module.AdminDashboard })))
 const AdminProducts = lazy(() => import('./pages/admin/Products').then((module) => ({ default: module.AdminProducts })))
 const AdminOrders = lazy(() => import('./pages/admin/Orders').then((module) => ({ default: module.AdminOrders })))
@@ -52,6 +53,7 @@ export default function App() {
     </Route>
 
     <Route path="/admin/login" element={<LoginPage area="admin" />} />
+    <Route path="/admin/demo" element={<DemoAdminPage />} />
     <Route element={<ProtectedAdmin />}>
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin/primeiros-passos" element={<AdminOnboarding />} />
