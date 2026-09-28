@@ -6,6 +6,8 @@ import { MasterLayout } from './layouts/MasterLayout'
 import { PublicLayout } from './layouts/PublicLayout'
 
 const LoginPage = lazy(() => import('./pages/LoginPage').then((module) => ({ default: module.LoginPage })))
+const PasswordRecoveryPage = lazy(() => import('./pages/PasswordPages').then((module) => ({ default: module.PasswordRecoveryPage })))
+const ChangePasswordPage = lazy(() => import('./pages/PasswordPages').then((module) => ({ default: module.ChangePasswordPage })))
 const LandingPage = lazy(() => import('./pages/LandingPage').then((module) => ({ default: module.LandingPage })))
 const DemoPage = lazy(() => import('./pages/DemoPage').then((module) => ({ default: module.DemoPage })))
 const DemoAdminPage = lazy(() => import('./pages/DemoAdminPage').then((module) => ({ default: module.DemoAdminPage })))
@@ -54,6 +56,9 @@ export default function App() {
 
     <Route path="/admin/login" element={<LoginPage area="admin" />} />
     <Route path="/admin/demo" element={<DemoAdminPage />} />
+    <Route path="/admin-master/login" element={<LoginPage area="master" />} />
+    <Route path="/recuperar-senha" element={<PasswordRecoveryPage />} />
+    <Route path="/conta/seguranca" element={<ChangePasswordPage />} />
     <Route element={<ProtectedAdmin />}>
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin/primeiros-passos" element={<AdminOnboarding />} />
@@ -64,7 +69,6 @@ export default function App() {
       <Route path="/admin/configuracoes" element={<AdminSettings />} />
     </Route>
 
-    <Route path="/admin-master/login" element={<LoginPage area="master" />} />
     <Route element={<ProtectedMaster />}>
       <Route path="/admin-master" element={<MasterDashboard />} />
       <Route path="/admin-master/workspaces" element={<MasterWorkspaces />} />

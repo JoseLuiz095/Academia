@@ -33,6 +33,12 @@ Não coloque `service_role`, chave secreta do Gemini ou token do WhatsApp em var
 
 Para configurar o Vite, preencher o telefone de teste e entender o admin demonstrativo, veja [Configuração local](docs/CONFIGURACAO_LOCAL.md). A rota `/admin/demo` é somente uma prévia local; o admin real é criado pelo fluxo do Supabase em `/admin/login`.
 
+### E-mail de confirmação, recuperação e Turnstile
+
+O cadastro e a recuperação de senha usam o SMTP do Supabase Auth. O SMTP padrão é limitado para testes e pode entregar somente a endereços autorizados no projeto; para uso normal, configure um SMTP próprio em Authentication > Emails > SMTP Settings e confira os Auth Logs. A aplicação agora oferece “Reenviar confirmação”, “Esqueci minha senha” e troca de senha em `/conta/seguranca`.
+
+`TURNSTILE_SECRET_KEY` não envia e-mails. Ela só é usada quando o CAPTCHA do Supabase está habilitado e o frontend também renderiza o widget com um `site key`, obtém um `captchaToken` e passa esse token para `signUp`, login ou recuperação. O fluxo atual ainda não habilita CAPTCHA no formulário; portanto, adicionar apenas o secret no Supabase não altera a entrega de e-mails.
+
 ## Supabase
 
 As migrations em `supabase/migrations/` foram aplicadas ao projeto `Academia`. Todas as tabelas públicas têm RLS. A vitrine só lê workspaces e produtos publicados. O Admin Master precisa de um usuário já cadastrado no Supabase Auth e de um registro inserido por um administrador do banco:

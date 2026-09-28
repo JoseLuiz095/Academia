@@ -44,6 +44,7 @@ export function AdminLayout() {
         {navigation.slice(2, 6).map((item) => <NavLink key={item.to} to={item.to} className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">{item.icon}</span><span>{item.label}</span></NavLink>)}
         <p className="nav-heading nav-heading-spaced">Conta</p>
         <NavLink to="/admin/configuracoes" className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">⚙</span><span>Configurações</span></NavLink>
+        <a href="/conta/seguranca?area=admin" className="nav-item plain-link"><span className="nav-icon">⌁</span><span>Alterar senha</span></a>
       </nav>
       <div className="sidebar-footer">
         {workspace?.published && <a className="nav-item plain-link" href={`/p/${workspace.slug}`} target="_blank" rel="noreferrer"><span className="nav-icon">↗</span><span>Ver página pública</span></a>}

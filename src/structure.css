@@ -92,6 +92,8 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .auth-setup-notice strong { color: #72563e; font-size: 11px; }
 .auth-setup-notice code { padding: 1px 4px; border-radius: 4px; background: rgba(255,255,255,.65); font-size: 10px; }
 .demo-access-link { display: block; margin-top: 17px; color: #668b6d; font-size: 11px; font-weight: 700; text-decoration: none; }
+.password-recovery-link { display: block; margin-top: 3px; color: #668b6d; font-size: 11px; font-weight: 700; text-decoration: none; }
+.auth-resend { margin-top: 14px; color: #668b6d; font-size: 11px; font-weight: 700; }
 
 .landing-shell { min-height: 100vh; }
 .landing-header, .store-topbar { max-width: 1280px; margin: auto; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
