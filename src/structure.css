@@ -283,3 +283,17 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 
 @media (max-width: 900px) { .admin-plan-grid, .commercial-plan-grid { grid-template-columns: 1fr; }.admin-plan-card.featured, .commercial-plan-card.featured { transform: none; }.admin-plan-card ul, .commercial-plan-card ul { min-height: auto; }.subscription-overview, .plan-next-steps { align-items: flex-start; flex-direction: column; }.subscription-status { justify-items: start; text-align: left; }.settings-checks { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .subscription-alert { align-items: flex-start; flex-wrap: wrap; }.subscription-alert a { margin-left: 39px; }.dashboard-subscription { align-items: flex-start; flex-wrap: wrap; }.dashboard-subscription-meta { margin-left: 52px; text-align: left; }.dashboard-subscription > .secondary-button { width: 100%; justify-content: center; }.plan-note { align-items: flex-start; flex-wrap: wrap; }.plan-note .secondary-button { width: 100%; }.section-heading-inline { align-items: flex-start; flex-direction: column; }.store-trust-row { display: grid; gap: 7px; }.commercial-plan-card, .admin-plan-card { padding: 21px; } }
+.approval-card { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 20px; padding: 25px; border: 1px solid #e5eadf; border-radius: 15px; background: linear-gradient(110deg, #f2f7ed, #fffaf2); }
+.approval-icon { display: grid; place-items: center; width: 46px; height: 46px; flex: 0 0 46px; border-radius: 14px; color: #fff; background: #719a77; font-size: 23px; }
+.approval-card h2 { margin: 10px 0 5px; color: #344d3d; font-family: 'Playfair Display', serif; font-size: 26px; }
+.approval-card p { max-width: 680px; margin: 6px 0 0; color: #77877b; font-size: 12px; line-height: 1.55; }
+.request-list { display: grid; gap: 12px; }
+.request-card { display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 19px; border: 1px solid #e2e8df; border-radius: 12px; background: #fbfcf9; }
+.request-card-main { min-width: 0; flex: 1; }
+.request-card-main h3 { margin: 9px 0 3px; color: #354c3d; font-family: 'Playfair Display', serif; font-size: 21px; }
+.request-card-main p, .request-card-main strong, .request-card-main small { display: block; }
+.request-card-main p { margin: 0 0 8px; color: #859187; font-size: 11px; }
+.request-card-main strong { color: #608069; font-size: 12px; }
+.request-card-main small { margin-top: 7px; color: #a0aaa1; font-size: 10px; }
+.request-card-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+@media (max-width: 760px) { .approval-card, .request-card { align-items: flex-start; flex-direction: column; }.request-card-actions { width: 100%; justify-content: stretch; }.request-card-actions > button { flex: 1; justify-content: center; } }

@@ -16,6 +16,9 @@ export type Workspace = {
   subscription_started_at?: string | null
   subscription_ends_at?: string | null
   store_settings?: StoreSettings | null
+  approval_status?: 'pending' | 'approved' | 'rejected' | 'suspended' | null
+  approved_at?: string | null
+  approved_by?: string | null
   created_at?: string
 }
 
@@ -27,6 +30,19 @@ export type StoreSettings = {
   show_pix?: boolean
   show_service_area?: boolean
   show_ai_badge?: boolean
+}
+
+export type WorkspaceRequest = {
+  id: string
+  owner_id: string
+  name: string
+  slug: string
+  niche: 'fitness' | 'wellness' | 'creator'
+  plan_code: 'starter' | 'creator' | 'pro'
+  status: 'pending' | 'approved' | 'rejected'
+  reviewer_note: string | null
+  created_at: string
+  reviewed_at?: string | null
 }
 
 export type Product = {

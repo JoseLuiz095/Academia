@@ -41,7 +41,8 @@ export function LoginPage({ area }: { area: 'admin' | 'master' }) {
         navigate(validFrom && from ? from : area === 'master' ? '/admin-master' : '/admin', { replace: true })
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Não foi possível acessar a conta.')
+      const caughtMessage = caught instanceof Error ? caught.message : 'Não foi possível acessar a conta.'
+      setError(/invalid api key/i.test(caughtMessage) ? 'A chave publicável do Supabase foi rejeitada. Confira se ela pertence ao projeto vnpoinodvchmmbyxpacj, se não tem aspas ou espaços e refaça o deploy do Cloudflare.' : caughtMessage)
     } finally { setBusy(false) }
   }
 

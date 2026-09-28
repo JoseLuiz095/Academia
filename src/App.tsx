@@ -21,6 +21,7 @@ const AdminWhatsApp = lazy(() => import('./pages/admin/WhatsApp').then((module) 
 const AdminOnboarding = lazy(() => import('./pages/admin/Onboarding').then((module) => ({ default: module.AdminOnboarding })))
 const MasterDashboard = lazy(() => import('./pages/master/Dashboard').then((module) => ({ default: module.MasterDashboard })))
 const MasterWorkspaces = lazy(() => import('./pages/master/Workspaces').then((module) => ({ default: module.MasterWorkspaces })))
+const MasterRequests = lazy(() => import('./pages/master/Requests').then((module) => ({ default: module.MasterRequests })))
 const Storefront = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreHome })))
 const StoreProduct = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreProduct })))
 const StoreCart = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreCart })))
@@ -74,6 +75,7 @@ export default function App() {
     <Route element={<ProtectedMaster />}>
       <Route path="/admin-master" element={<MasterDashboard />} />
       <Route path="/admin-master/workspaces" element={<MasterWorkspaces />} />
+      <Route path="/admin-master/solicitacoes" element={<MasterRequests />} />
     </Route>
 
     <Route path="*" element={<div className="loading-page"><div><h1>Página não encontrada</h1><a href="/">Voltar ao início</a></div></div>} />

@@ -44,7 +44,7 @@ export function PublicLayout() {
     const client = supabase
     async function load() {
       const storeResult = await client.from('workspaces')
-        .select('id,name,slug,niche,description,whatsapp_number,pix_key,pix_receiver,pix_city,service_cities,published,store_settings')
+        .select('id,name,slug,niche,description,whatsapp_number,pix_key,pix_receiver,pix_city,service_cities,published,store_settings,approval_status')
         .eq('slug', slug).eq('published', true).maybeSingle()
       if (!active) return
       if (storeResult.error || !storeResult.data) {
