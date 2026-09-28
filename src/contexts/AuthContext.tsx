@@ -36,9 +36,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentRequest = ++requestId.current
     setLoading(true)
     setAuthError(null)
-    setUser(null)
-    setWorkspaces([])
-    setIsMaster(false)
     try {
       if (!supabase) return { user: null, isMaster: false }
       const { data: userData, error: userError } = await supabase.auth.getUser()
@@ -89,7 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void refresh().catch(() => {})
     if (!supabase) return
     const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'INITIAL_SESSION') return
+      // O login/cadastro chama refresh explicitamente. Uma segunda chamada aqui
+      // disputava a sessão e podia anular a validação do Admin Master.
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') return
       if (event === 'SIGNED_OUT') {
         if (pendingRefresh.current !== null) window.clearTimeout(pendingRefresh.current)
         pendingRefresh.current = null

@@ -1,6 +1,6 @@
 # Academia — orientação para agentes
 
-- Este é um produto novo e independente. O FoodWeb é referência de organização em três áreas (Admin Master, Admin do profissional, página pública), não uma fonte de regras de alimentação ou uma lista de recursos a copiar.
+- Este é um produto novo e independente. O FoodWeb é referência da lógica operacional: Admin Master gerencia lojistas, planos, renovações e pagamentos; cada profissional gerencia sua própria vitrine. O nicho, conteúdo com IA e lembretes são próprios do Impulso.
 - Priorize necessidades de personal trainers e criadores: produtos/serviços, vitrine, conteúdo com IA revisado por humano e atendimento via WhatsApp.
 - Preserve a identidade visual atual do Academia. Mantenha a aplicação simples de operar por uma pessoa.
 - Banco oficial: projeto Supabase `Academia` (`vnpoinodvchmmbyxpacj`). Não grave dados em projetos ou tabelas do FoodWeb/FloriWeb.

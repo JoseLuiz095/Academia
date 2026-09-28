@@ -28,11 +28,13 @@ const StoreCart = lazy(() => import('./pages/store/Storefront').then((module) =>
 const StoreCheckout = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreCheckout })))
 
 function ProtectedAdmin() {
-  const { user, loading, workspace } = useAuth()
+  const { user, loading, workspace, isMaster } = useAuth()
   const location = useLocation()
   if (loading) return <div className="loading-page">Carregando seu espaço…</div>
   if (!user) return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />
+  if (isMaster && !workspace) return <Navigate to="/admin-master" replace />
   if (!workspace && location.pathname !== '/admin/primeiros-passos') return <Navigate to="/admin/primeiros-passos" replace />
+  if (workspace?.approval_status && workspace.approval_status !== 'approved') return <div className="loading-page"><div><h1>Espaço indisponível</h1><p>O acesso deste espaço precisa de liberação do Admin Master.</p></div></div>
   return <AdminLayout />
 }
 

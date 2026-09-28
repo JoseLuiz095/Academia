@@ -5,6 +5,8 @@ import { whatsappLink } from '../../lib/format'
 import { supabase } from '../../lib/supabase'
 import type { ContentIdea } from '../../types'
 
+type WhatsAppReminder = { id: string; title: string; body: string; scheduled_for: string; status: string }
+
 export function AdminWhatsApp() {
   const { workspace } = useAuth()
   const [ideas, setIdeas] = useState<ContentIdea[]>([])
@@ -13,9 +15,23 @@ export function AdminWhatsApp() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [reminders, setReminders] = useState<WhatsAppReminder[]>([])
+  const [reminderError, setReminderError] = useState('')
 
   useEffect(() => {
     if (workspace && !testPhone) setTestPhone(workspace.whatsapp_number ?? '')
+  }, [workspace?.id])
+
+  useEffect(() => {
+    if (!supabase || !workspace) { setReminders([]); return }
+    let active = true
+    setReminders([]); setReminderError('')
+    void supabase.from('content_reminders').select('id,title,body,scheduled_for,status').eq('workspace_id', workspace.id).eq('channel', 'whatsapp').eq('status', 'pending').order('scheduled_for', { ascending: true }).then(({ data, error: loadError }) => {
+      if (!active) return
+      if (loadError) setReminderError('Lembretes indisponíveis. Confira a configuração da tabela e suas permissões.')
+      else setReminders((data ?? []) as WhatsAppReminder[])
+    })
+    return () => { active = false }
   }, [workspace?.id])
 
   useEffect(() => {
@@ -53,6 +69,12 @@ export function AdminWhatsApp() {
       {error && <p className="form-error" role="alert">{error}</p>}
       {loading ? <p className="empty-copy">Carregando ideias aprovadas…</p> : !error && ideas.length === 0 ? <p className="empty-copy">Ainda não há ideias aprovadas. <Link to="/admin/conteudo">Crie e revise uma ideia</Link> antes do teste.</p> : null}
       <div className="form-grid"><label>Ideia aprovada<select value={selected} disabled={loading || !!error || ideas.length === 0} onChange={(event) => { setSelected(event.target.value); setMessage('') }}><option value="">Selecione uma ideia</option>{ideas.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label><label>Seu telefone de teste com DDI 55 e DDD<input type="tel" inputMode="tel" value={testPhone} onChange={(event) => setTestPhone(event.target.value)} placeholder="5511999999999" /></label><p className="field-help">Digite o seu próprio número com 55 + DDD + número. Você também pode deixar este campo preenchido no arquivo local como <code>VITE_WHATSAPP_TEST_PHONE</code>. O teste abre uma conversa; não envia sozinho.</p>{testPhone && !validPhone && <p className="form-error" role="alert">Confira o número: use 55, DDD e 10 ou 11 dígitos nacionais.</p>}{idea && <label>Prévia da mensagem<textarea rows={7} readOnly value={text} onFocus={(event) => event.target.select()} /></label>}{message && <p className="form-success" role="status">{message}</p>}<div className="form-actions form-actions-start"><button type="button" className="secondary-button" disabled={!idea} onClick={() => void copyMessage()}>Copiar mensagem</button>{link ? <a className="primary-button plain-link" href={link} target="_blank" rel="noopener noreferrer">Abrir prévia no WhatsApp <span>↗</span></a> : <button type="button" className="primary-button" disabled>Selecione ideia e número válido</button>}</div><p className="field-help">Depois de abrir, confira destinatário e texto no WhatsApp. Só o botão de envio do próprio WhatsApp envia a mensagem. Não há disparo automático neste painel.</p></div>
+    </section>
+    <section className="panel" aria-labelledby="whatsapp-reminders-title"><div className="panel-heading"><div><span className="panel-kicker">Planejamento manual</span><h2 id="whatsapp-reminders-title">Lembretes para WhatsApp</h2></div></div>
+      <p className="field-help">Estes horários são lembretes, não disparos programados. Confira a ideia aprovada e o destinatário antes de enviar.</p>
+      {reminderError && <p className="form-error" role="alert">{reminderError}</p>}
+      {!reminderError && reminders.length === 0 && <p className="empty-copy">Nenhum lembrete pendente para WhatsApp.</p>}
+      {reminders.length > 0 && <div className="simple-list">{reminders.map((reminder) => <div className="idea-list-row" key={reminder.id}><div><strong>{reminder.title}</strong><small>{new Date(reminder.scheduled_for).toLocaleString('pt-BR')}</small><p>{reminder.body}</p></div></div>)}</div>}
     </section>
     <section className="panel whatsapp-roadmap" aria-labelledby="whatsapp-roadmap-title"><div className="panel-heading"><div><span className="panel-kicker">Como a integração evolui</span><h2 id="whatsapp-roadmap-title">WhatsApp Business sem surpresas</h2></div></div><div className="whatsapp-roadmap-grid"><article><span>Agora</span><strong>Conversa e teste manual</strong><p>O cliente inicia a conversa pelo seu número. Você revisa uma ideia aprovada e envia manualmente se quiser.</p></article><article><span>Laboratório opcional</span><strong>n8n com API oficial</strong><p>Um fluxo de teste pode usar o WhatsApp Business Cloud com números autorizados. O n8n organiza etapas; ele não substitui a API da Meta.</p></article><article><span>Depois</span><strong>Envio programado</strong><p>Exigirá consentimento dos contatos, modelos aprovados quando aplicáveis, fila, limites e acompanhamento de falhas por profissional.</p></article></div><p className="field-help">Disparos automáticos ainda não estão ativos. Automação não oficial do WhatsApp Web não é uma base segura para a plataforma.</p></section>
   </>
