@@ -32,7 +32,7 @@ export function AdminLayout() {
 
   return <div className="app-shell">
     <aside className="sidebar">
-      <a className="brand-lockup plain-link" href="/"><div className="brand-mark">M</div><div><strong>movência</strong><span>conteúdo que move</span></div></a>
+      <a className="brand-lockup plain-link" href="/"><div className="brand-mark">I</div><div><strong>impulso</strong><span>conteúdo que move</span></div></a>
       {workspace ? <div className="workspace-switcher">
         <div className="avatar avatar-orange">{workspace.name.slice(0, 2).toUpperCase()}</div>
         {workspaces.length > 1 ? <select className="workspace-select" aria-label="Espaço ativo" value={workspace.id} onChange={(event) => selectWorkspace(event.target.value)}>{workspaces.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select> : <div className="workspace-copy"><strong>{workspace.name}</strong><span>Meu espaço</span></div>}
@@ -54,7 +54,7 @@ export function AdminLayout() {
       </div>
     </aside>
     <main className="main-area">
-      <header className="topbar"><div className="mobile-brand"><div className="brand-mark">M</div><strong>movência</strong></div><div className="breadcrumb"><span>Meu espaço</span><b>/</b><strong>{activeLabel}</strong></div><div className="topbar-actions"><span className={`connection-status ${isSupabaseConfigured ? 'online' : ''}`}><i /> {isSupabaseConfigured ? 'Supabase configurado' : 'Configure o Supabase'}</span><span className="top-avatar">{user?.email?.slice(0, 2).toUpperCase()}</span></div></header>
+      <header className="topbar"><div className="mobile-brand"><div className="brand-mark">I</div><strong>impulso</strong></div><div className="breadcrumb"><span>Meu espaço</span><b>/</b><strong>{activeLabel}</strong></div><div className="topbar-actions"><span className={`connection-status ${isSupabaseConfigured ? 'online' : ''}`}><i /> {isSupabaseConfigured ? 'Supabase configurado' : 'Configure o Supabase'}</span><span className="top-avatar">{user?.email?.slice(0, 2).toUpperCase()}</span></div></header>
       <div className="content-wrap" key={workspace?.id ?? 'setup'}><Outlet /></div>
     </main>
   </div>

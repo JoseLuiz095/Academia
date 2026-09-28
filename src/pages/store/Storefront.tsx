@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useStore } from '../../layouts/PublicLayout'
 import { currency, whatsappLink } from '../../lib/format'
-import { buildPixCopyPaste } from '../../lib/pix'
+import { buildPixCopyPaste, buildPixFromStaticBase, isPixCopyPaste, readStaticPixReceiver } from '../../lib/pix'
 import { createPendingOrder, finishOrderAttempt, loadOrderReceipt, rememberOrderReceipt } from '../../lib/orders'
 import type { OrderReceipt, Product } from '../../types'
 
@@ -45,11 +45,21 @@ export function StoreCheckout() {
   const receipt = rows.length ? null : lastReceipt
   const total = rows.reduce((sum, row) => sum + (row.product.price ?? 0) * row.item.quantity, 0)
   const pixCode = useMemo(() => {
-    if (!receipt || !workspace.pix_key || !workspace.pix_receiver || !workspace.pix_city || receipt.total <= 0) return null
-    try { return buildPixCopyPaste({ key: workspace.pix_key, receiver: workspace.pix_receiver, city: workspace.pix_city, amount: receipt.total }) }
+    if (!receipt || !workspace.pix_key || receipt.total <= 0) return null
+    try {
+      if (isPixCopyPaste(workspace.pix_key)) return buildPixFromStaticBase(workspace.pix_key, receipt.total)
+      if (workspace.pix_receiver && workspace.pix_city) return buildPixCopyPaste({ key: workspace.pix_key, receiver: workspace.pix_receiver, city: workspace.pix_city, amount: receipt.total })
+      return null
+    }
     catch { return null }
   }, [workspace.pix_key, workspace.pix_receiver, workspace.pix_city, receipt])
-  const contact = receipt ? whatsappLink(workspace.whatsapp_number, `Olá! Registrei o pedido ${receipt.reference} na página ${workspace.name}:\n${receipt.items.map((item) => `• ${item.quantity}x ${item.name} — ${currency.format(item.line_total)}`).join('\n')}\nTotal: ${currency.format(receipt.total)}. Pode confirmar a disponibilidade e os dados de pagamento? Após pagar, aviso por aqui para sua confirmação manual.`) : null
+  const pixReceiver = useMemo(() => {
+    if (workspace.pix_key && isPixCopyPaste(workspace.pix_key)) {
+      try { return readStaticPixReceiver(workspace.pix_key) } catch { return '' }
+    }
+    return workspace.pix_receiver ?? ''
+  }, [workspace.pix_key, workspace.pix_receiver])
+  const contact = receipt ? whatsappLink(workspace.whatsapp_number, `Olá! Registrei o pedido ${receipt.reference} na página ${workspace.name}:\n${receipt.items.map((item) => `• ${item.quantity}x ${item.name} — ${currency.format(item.line_total)}`).join('\n')}\nTotal: ${currency.format(receipt.total)}. Fiz o pagamento Pix e aguardo sua conferência no banco para combinar a entrega ou o agendamento.`) : null
 
   async function registerOrder() {
     if (submitting.current) return
@@ -78,14 +88,14 @@ export function StoreCheckout() {
     {!receipt && <Link className="back-link" to={`/p/${workspace.slug}/carrinho`}>← Voltar à sacola</Link>}
     <p className="eyebrow">Pagamento direto com o profissional</p>
     <h1>{receipt ? `Pedido ${receipt.reference}` : 'Combinar pedido'}</h1>
-    <p className="checkout-intro">{receipt ? 'Pedido registrado como pendente. Envie a referência ao profissional pelo WhatsApp e confirme disponibilidade e dados de pagamento antes de fazer o Pix.' : 'Registre a seleção para receber uma referência. Depois, combine disponibilidade e pagamento pelo WhatsApp.'}</p>
+    <p className="checkout-intro">{receipt ? 'Pedido registrado como pendente. Confira os dados Pix no banco, pague e envie a referência ao profissional pelo WhatsApp para conferência.' : 'Registre a seleção para receber uma referência e os dados de pagamento.'}</p>
     <div className="checkout-grid">
       <div className="panel">
         <h2>Pix manual</h2>
         {receipt ? <>
           <p>Confira o nome do recebedor e o valor no aplicativo do seu banco. O profissional confirma o pagamento antes de liberar o produto ou agendamento.</p>
-          <div className="checkout-payee"><span>Recebedor</span><strong>{workspace.pix_receiver || 'A confirmar com o profissional'}</strong><span>Total</span><strong>{currency.format(receipt.total)}</strong></div>
-          {pixCode ? <><label>Pix copia e cola<textarea readOnly rows={5} value={pixCode} /></label><button className="primary-button" onClick={() => void copy(pixCode, 'Código Pix')}>Copiar Pix <span aria-hidden="true">▣</span></button></> : workspace.pix_key ? <><label>Chave Pix<input readOnly value={workspace.pix_key} /></label><button className="primary-button" onClick={() => void copy(workspace.pix_key!, 'Chave Pix')}>Copiar chave <span aria-hidden="true">▣</span></button><p className="field-help">A chave Pix não inclui o valor. Confirme os dados com o profissional e informe o total no banco.</p></> : <p className="field-help">Os dados Pix ainda não foram cadastrados. Combine o pagamento diretamente com o profissional.</p>}
+          <div className="checkout-payee"><span>Recebedor</span><strong>{pixReceiver || 'A confirmar com o profissional'}</strong><span>Total</span><strong>{currency.format(receipt.total)}</strong></div>
+          {pixCode ? <><label>Pix copia e cola com o valor do pedido<textarea readOnly rows={5} value={pixCode} /></label><button className="primary-button" onClick={() => void copy(pixCode, 'Código Pix')}>Copiar Pix <span aria-hidden="true">▣</span></button></> : workspace.pix_key && !isPixCopyPaste(workspace.pix_key) ? <><label>Chave Pix<input readOnly value={workspace.pix_key} /></label><button className="primary-button" onClick={() => void copy(workspace.pix_key!, 'Chave Pix')}>Copiar chave <span aria-hidden="true">▣</span></button><p className="field-help">A chave Pix não inclui o valor. Informe o total mostrado acima no aplicativo do banco.</p></> : <p className="field-help">O Pix automático não está disponível. Combine o pagamento diretamente com o profissional.</p>}
           {message && <p className={message.error ? 'form-error' : 'form-success'} role={message.error ? 'alert' : 'status'}>{message.text}</p>}
         </> : <p>Os dados para pagamento aparecem após o registro do pedido.</p>}
       </div>
@@ -95,7 +105,7 @@ export function StoreCheckout() {
         <div className="cart-total"><span>Total</span><strong>{currency.format(receipt?.total ?? total)}</strong></div>
         {receipt ? <><p className="form-success" role="status">Referência {receipt.reference} registrada. Aguardando confirmação manual do profissional.</p>{contact && <a className="primary-button plain-link" href={contact} target="_blank" rel="noreferrer">Enviar pedido no WhatsApp <span aria-hidden="true">↗</span></a>}</> : <button className="primary-button" type="button" disabled={busy} onClick={() => void registerOrder()}>{busy ? 'Registrando…' : 'Registrar pedido pendente'} <span aria-hidden="true">→</span></button>}
         {error && <p className="form-error" role="alert">{error}</p>}
-        <p className="field-help">O pedido fica pendente até o profissional confirmar manualmente o pagamento. Nenhum dado pessoal é solicitado aqui.</p>
+        <p className="field-help">Após pagar, envie a referência pelo WhatsApp. O pedido fica pendente até o profissional conferir o crédito no banco. A entrega do manual ou o agendamento são combinados por WhatsApp. Nenhum dado pessoal é solicitado aqui.</p>
       </div>
     </div>
   </section>

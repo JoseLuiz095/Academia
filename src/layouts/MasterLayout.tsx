@@ -17,7 +17,7 @@ export function MasterLayout() {
   }
   return <div className="app-shell master-shell">
     <aside className="sidebar">
-      <a className="brand-lockup plain-link" href="/"><div className="brand-mark">M</div><div><strong>movência</strong><span>admin master</span></div></a>
+      <a className="brand-lockup plain-link" href="/"><div className="brand-mark">I</div><div><strong>impulso</strong><span>admin master</span></div></a>
       <div className="workspace-switcher"><div className="avatar avatar-dark">AM</div><div className="workspace-copy"><strong>Plataforma</strong><span>Gestão central</span></div></div>
       <nav className="main-nav" aria-label="Navegação do Admin Master">
         <p className="nav-heading">Plataforma</p>
@@ -26,6 +26,6 @@ export function MasterLayout() {
       </nav>
       <div className="sidebar-footer"><a className="nav-item plain-link" href="/admin"><span className="nav-icon">↗</span><span>Painel do criador</span></a><button className="nav-item" onClick={() => void logout()}><span className="nav-icon">⇥</span><span>Sair</span></button>{logoutError && <p className="form-error" role="alert">{logoutError}</p>}<div className="user-profile"><div className="avatar avatar-dark">AM</div><div className="workspace-copy"><strong>{user?.email}</strong><span>Admin Master</span></div></div></div>
     </aside>
-    <main className="main-area"><header className="topbar"><div className="mobile-brand"><div className="brand-mark">M</div><strong>movência</strong></div><div className="breadcrumb"><span>Plataforma</span><b>/</b><strong>Admin Master</strong></div><span className="connection-status online"><i /> Área restrita</span></header><div className="content-wrap"><Outlet /></div></main>
+    <main className="main-area"><header className="topbar"><div className="mobile-brand"><div className="brand-mark">I</div><strong>impulso</strong></div><div className="breadcrumb"><span>Plataforma</span><b>/</b><strong>Admin Master</strong></div><span className="connection-status online"><i /> Área restrita</span></header><div className="content-wrap"><Outlet /></div></main>
   </div>
 }

@@ -1,6 +1,6 @@
-# Movência
+# Impulso
 
-SaaS para personal trainers e criadores, construído em React, TypeScript, Vite e Supabase. A marca provisória Movência representa movimento no treino e constância na criação de conteúdo. O repositório e o projeto Supabase ainda se chamam `Academia`. O FoodWeb serviu apenas como referência de estrutura.
+SaaS para personal trainers e criadores, construído em React, TypeScript, Vite e Supabase. Impulso é a marca da plataforma; cada profissional ou empresa usa seu próprio nome e endereço `/p/:slug`. O repositório e o projeto Supabase ainda se chamam `Academia`. O FoodWeb serviu apenas como referência de estrutura.
 
 ## Áreas
 
@@ -53,7 +53,11 @@ Cada resposta de IA é salva como `review` e só passa a `approved` por ação d
 
 ## Pix e pedidos
 
-O profissional cadastra chave Pix, nome e cidade do recebedor. No checkout, o cliente primeiro registra um pedido pendente; preços e total são recalculados no banco, que devolve uma referência. O navegador então monta um BR Code estático. O cliente envia a referência pelo WhatsApp e confere os dados no banco. O profissional verifica o crédito no extrato e marca o pedido como confirmado no painel. O site não libera manuais nem confirma avaliações automaticamente. Para outras formas de pagamento, o cliente combina diretamente com o profissional. O fluxo público ainda não tem proteção antiabuso dedicada; avalie Turnstile antes de divulgar amplamente.
+O profissional cadastra preferencialmente um Pix copia e cola **estático** do banco, ou uma chave Pix (inclusive CPF) com nome e cidade do recebedor. No checkout, o cliente primeiro registra um pedido pendente; preços e total são recalculados no banco, que devolve uma referência. O navegador insere esse total no código estático e recalcula sua verificação, ou monta um BR Code a partir da chave. Códigos dinâmicos são rejeitados. O cliente confere recebedor e valor no aplicativo do banco, paga e envia a referência pelo WhatsApp. O profissional verifica o crédito no extrato e marca o pedido como confirmado no painel. Na primeira versão, entrega manual digital, serviço e envio de produto são combinados por WhatsApp; o site não libera arquivos automaticamente. Para outras formas de pagamento, o cliente combina diretamente com o profissional. O fluxo público ainda não tem proteção antiabuso dedicada; avalie Turnstile antes de divulgar amplamente.
+
+## Marca própria e domínio
+
+Cada espaço possui nome e slug próprios, como `/p/minha-marca`. Atualmente cada conta administra um espaço; outra empresa pode criar outra conta com outra marca. Uma conta administrando várias empresas exige uma evolução do painel e do vínculo de espaços. Domínios próprios por profissional ainda não estão ativos. Para suportá-los depois, será necessário verificar a titularidade do domínio, configurar DNS/SSL no Cloudflare e mapear cada hostname a um único espaço publicado sem permitir que um cliente reivindique o domínio de outro.
 
 ## Cloudflare Pages
 

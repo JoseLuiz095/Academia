@@ -1,4 +1,4 @@
-# Movência — plano de produto e arquitetura do MVP
+# Impulso — plano de produto e arquitetura do MVP
 
 ## 1. Proposta
 
@@ -113,7 +113,7 @@ Nunca liberar produto digital apenas porque o cliente enviou uma imagem de compr
 - Supabase Storage para imagens e arquivos digitais;
 - Supabase Edge Functions para webhooks, IA e integração WhatsApp;
 - Cloudflare Pages para hospedagem, domínio e cache;
-- CSS próprio para preservar a identidade visual aprovada da Movência.
+- CSS próprio para preservar a identidade visual aprovada da Impulso.
 
 ### Integrações
 
@@ -152,7 +152,7 @@ O código deve esconder cada integração atrás de uma interface simples (`AiPr
 | Supabase | autenticação, PostgreSQL, Storage, RLS e funções de backend |
 | WhatsApp Business | entrega das mensagens e webhooks de status |
 | Gemini | geração de ideias, roteiros e respostas simples |
-| Movência | regras de negócio, aprovação, consentimento, campanhas e auditoria |
+| Impulso | regras de negócio, aprovação, consentimento, campanhas e auditoria |
 
 ### Fluxo seguro da IA
 
@@ -255,7 +255,7 @@ Todas as tabelas de domínio devem possuir `workspace_id`, salvo entidades globa
 
 ## 8. Base visual
 
-A Movência usa identidade própria em CSS. O FoodWeb serviu como referência para as três áreas, a navegação e o fluxo comercial; não copiamos regras de alimentação, banco compartilhado ou componentes visuais do outro produto.
+A Impulso usa identidade própria em CSS. O FoodWeb serviu como referência para as três áreas, a navegação e o fluxo comercial; não copiamos regras de alimentação, banco compartilhado ou componentes visuais do outro produto.
 
 Referências consultadas:
 
