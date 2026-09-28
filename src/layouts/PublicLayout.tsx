@@ -44,7 +44,7 @@ export function PublicLayout() {
     const client = supabase
     async function load() {
       const storeResult = await client.from('workspaces')
-        .select('id,name,slug,niche,description,whatsapp_number,pix_key,pix_receiver,pix_city,service_cities,published')
+        .select('id,name,slug,niche,description,whatsapp_number,pix_key,pix_receiver,pix_city,service_cities,published,store_settings')
         .eq('slug', slug).eq('published', true).maybeSingle()
       if (!active) return
       if (storeResult.error || !storeResult.data) {
@@ -85,7 +85,7 @@ export function PublicLayout() {
   if (!workspace) return <div className="loading-page"><div><h1>Espaço indisponível</h1><p>{error}</p><Link to="/">Voltar ao início</Link></div></div>
   const totalItems = safeCart.reduce((total, item) => total + item.quantity, 0)
   return <StoreContext.Provider value={{ workspace, products, cart: safeCart, addToCart, changeQuantity, clearCart }}>
-    <div className="store-shell">
+    <div className={`store-shell store-theme-${workspace.store_settings?.theme ?? 'sage'}`}>
       <header className="store-topbar"><Link className="store-logo plain-link" to={`/p/${slug}`}><span className="brand-mark">I</span><span><strong>{workspace.name}</strong><small>por impulso</small></span></Link><nav><Link to={`/p/${slug}`}>Início</Link><Link to={`/p/${slug}/carrinho`}>Sacola <span className="cart-badge">{totalItems}</span></Link></nav></header>
       {error && <p className="form-error">{error}</p>}
       <main><Outlet /></main>

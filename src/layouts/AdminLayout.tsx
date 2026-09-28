@@ -10,6 +10,7 @@ const navigation = [
   { to: '/admin/pedidos', label: 'Pedidos', icon: '◫' },
   { to: '/admin/conteudo', label: 'Conteúdo IA', icon: '✦' },
   { to: '/admin/whatsapp', label: 'WhatsApp', icon: '◔' },
+  { to: '/admin/planos', label: 'Plano e assinatura', icon: '◇' },
   { to: '/admin/configuracoes', label: 'Configurações', icon: '⚙' },
 ]
 
@@ -19,6 +20,8 @@ export function AdminLayout() {
   const navigate = useNavigate()
   const [logoutError, setLogoutError] = useState('')
   const activeLabel = navigation.find((item) => item.to === location.pathname)?.label ?? 'Meu espaço'
+  const daysRemaining = workspace?.subscription_ends_at ? Math.ceil((new Date(workspace.subscription_ends_at).getTime() - Date.now()) / 86400000) : null
+  const subscriptionNotice = daysRemaining !== null && daysRemaining <= 7
 
   async function logout() {
     setLogoutError('')
@@ -41,7 +44,7 @@ export function AdminLayout() {
         <p className="nav-heading">Operação</p>
         {navigation.slice(0, 2).map((item) => <NavLink key={item.to} end={item.end} to={item.to} className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">{item.icon}</span><span>{item.label}</span></NavLink>)}
         <p className="nav-heading nav-heading-spaced">Vendas e conteúdo</p>
-        {navigation.slice(2, 6).map((item) => <NavLink key={item.to} to={item.to} className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">{item.icon}</span><span>{item.label}</span></NavLink>)}
+        {navigation.slice(2, 7).map((item) => <NavLink key={item.to} to={item.to} className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">{item.icon}</span><span>{item.label}</span></NavLink>)}
         <p className="nav-heading nav-heading-spaced">Conta</p>
         <NavLink to="/admin/configuracoes" className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">⚙</span><span>Configurações</span></NavLink>
         <a href="/conta/seguranca?area=admin" className="nav-item plain-link"><span className="nav-icon">⌁</span><span>Alterar senha</span></a>
@@ -56,7 +59,7 @@ export function AdminLayout() {
     </aside>
     <main className="main-area">
       <header className="topbar"><div className="mobile-brand"><div className="brand-mark">I</div><strong>impulso</strong></div><div className="breadcrumb"><span>Meu espaço</span><b>/</b><strong>{activeLabel}</strong></div><div className="topbar-actions"><span className={`connection-status ${isSupabaseConfigured ? 'online' : ''}`}><i /> {isSupabaseConfigured ? 'Supabase configurado' : 'Configure o Supabase'}</span><span className="top-avatar">{user?.email?.slice(0, 2).toUpperCase()}</span></div></header>
-      <div className="content-wrap" key={workspace?.id ?? 'setup'}><Outlet /></div>
+      <div className="content-wrap" key={workspace?.id ?? 'setup'}>{subscriptionNotice && <div className={`subscription-alert ${daysRemaining !== null && daysRemaining <= 0 ? 'expired' : ''}`} role="status"><span>{daysRemaining !== null && daysRemaining <= 0 ? '!' : '◷'}</span><div><strong>{daysRemaining !== null && daysRemaining <= 0 ? 'Sua assinatura precisa de atenção' : `Sua assinatura vence em ${daysRemaining} ${daysRemaining === 1 ? 'dia' : 'dias'}`}</strong><small>{daysRemaining !== null && daysRemaining <= 0 ? 'Atualize o plano para manter sua operação ativa.' : 'Revise seu plano e evite ficar sem acesso às ferramentas.'}</small></div><a href="/admin/planos">Ver assinatura →</a></div>}<Outlet /></div>
     </main>
   </div>
 }

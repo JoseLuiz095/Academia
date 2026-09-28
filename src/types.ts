@@ -11,7 +11,22 @@ export type Workspace = {
   pix_city: string | null
   service_cities: string | null
   published: boolean
+  plan_code?: 'starter' | 'creator' | 'pro' | null
+  subscription_status?: 'trial' | 'active' | 'past_due' | 'cancelled' | null
+  subscription_started_at?: string | null
+  subscription_ends_at?: string | null
+  store_settings?: StoreSettings | null
   created_at?: string
+}
+
+export type StoreSettings = {
+  theme?: 'sage' | 'sunset' | 'lavender'
+  tagline?: string | null
+  cta_label?: string | null
+  show_whatsapp?: boolean
+  show_pix?: boolean
+  show_service_area?: boolean
+  show_ai_badge?: boolean
 }
 
 export type Product = {

@@ -16,6 +16,7 @@ const AdminProducts = lazy(() => import('./pages/admin/Products').then((module) 
 const AdminOrders = lazy(() => import('./pages/admin/Orders').then((module) => ({ default: module.AdminOrders })))
 const AdminContent = lazy(() => import('./pages/admin/Content').then((module) => ({ default: module.AdminContent })))
 const AdminSettings = lazy(() => import('./pages/admin/Settings').then((module) => ({ default: module.AdminSettings })))
+const AdminPlans = lazy(() => import('./pages/admin/Plans').then((module) => ({ default: module.AdminPlans })))
 const AdminWhatsApp = lazy(() => import('./pages/admin/WhatsApp').then((module) => ({ default: module.AdminWhatsApp })))
 const AdminOnboarding = lazy(() => import('./pages/admin/Onboarding').then((module) => ({ default: module.AdminOnboarding })))
 const MasterDashboard = lazy(() => import('./pages/master/Dashboard').then((module) => ({ default: module.MasterDashboard })))
@@ -67,6 +68,7 @@ export default function App() {
       <Route path="/admin/conteudo" element={<AdminContent />} />
       <Route path="/admin/whatsapp" element={<AdminWhatsApp />} />
       <Route path="/admin/configuracoes" element={<AdminSettings />} />
+      <Route path="/admin/planos" element={<AdminPlans />} />
     </Route>
 
     <Route element={<ProtectedMaster />}>
