@@ -198,3 +198,10 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .orders-list { display: grid; gap: 1rem; }
 .order-card .simple-list { margin: 1rem 0; }
 .order-card .form-actions { margin-top: 1rem; }
+.whatsapp-roadmap { margin-top: 24px; }
+.whatsapp-roadmap-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin: 20px 0; }
+.whatsapp-roadmap-grid article { min-width: 0; padding: 17px; border: 1px solid var(--line); border-radius: 10px; background: #f8faf5; }
+.whatsapp-roadmap-grid article > span { display: block; margin-bottom: 11px; color: #bd7956; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; }
+.whatsapp-roadmap-grid strong { color: #405849; font-size: 12px; }
+.whatsapp-roadmap-grid p { color: var(--muted); font-size: 11px; line-height: 1.6; }
+@media (max-width: 760px) { .whatsapp-roadmap-grid { grid-template-columns: 1fr; } }

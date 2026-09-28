@@ -6,7 +6,7 @@ SaaS para personal trainers e criadores, construído em React, TypeScript, Vite 
 
 | Área | Rotas | O que funciona agora |
 | --- | --- | --- |
-| Página pública | `/`, `/p/:slug`, produto, sacola e finalizar | Vitrine, catálogo, pedido pendente com referência e Pix manual |
+| Página pública | `/`, `/demonstracao`, `/p/:slug`, produto, sacola e finalizar | Página comercial, demonstração interativa local, vitrine, catálogo, pedido pendente com referência e Pix manual |
 | Admin do criador | `/admin/*` | Conta, espaço, produtos, pedidos, ideias com IA, WhatsApp de teste e configurações |
 | Admin Master | `/admin-master/*` | Acesso restrito, visão geral e listagem de espaços |
 
@@ -50,6 +50,8 @@ Substitua o e-mail e confira o usuário antes de executar. Em Auth > URL Configu
 A Edge Function `generate-content-idea` já está publicada e exige sessão autenticada. O botão de geração fica operacional quando `GEMINI_API_KEY` for configurada como secret da Edge Function no Supabase. A chave de teste local está em `supabase/functions/.env`, ignorado pelo Git; ela **não** é enviada automaticamente ao servidor. `GEMINI_MODEL` é opcional; o padrão é `gemini-3.5-flash-lite`. O limite inicial é de 20 pedidos por dia por usuário e espaço. Sem secret remoto, o usuário pode preparar e copiar o prompt ou salvar uma ideia manualmente.
 
 Cada resposta de IA é salva como `review` e só passa a `approved` por ação do criador. O WhatsApp automático ainda não foi integrado; a tela permite testar individualmente uma ideia aprovada pelo aplicativo.
+
+Para a decisão de modelo Gemini e a evolução segura do WhatsApp Business — incluindo n8n opcional com a API oficial — veja [IA e WhatsApp](docs/INTEGRACOES_IA_WHATSAPP.md).
 
 ## Pix e pedidos
 
