@@ -71,6 +71,6 @@ O profissional cadastra preferencialmente um Pix copia e cola **estático** do b
 
 Cada espaço possui nome e slug próprios, como `/p/minha-marca`. Atualmente cada conta administra um espaço; outra empresa pode criar outra conta com outra marca. Uma conta administrando várias empresas exige uma evolução do painel e do vínculo de espaços. Domínios próprios por profissional ainda não estão ativos. Para suportá-los depois, será necessário verificar a titularidade do domínio, configurar DNS/SSL no Cloudflare e mapear cada hostname a um único espaço publicado sem permitir que um cliente reivindique o domínio de outro.
 
-## Cloudflare Pages
+## Homologação no Cloudflare Workers
 
-Conecte o repositório `JoseLuiz095/Academia`, branch `main`, com build `npm run build`, saída `dist` e raiz do projeto `/`. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` no Pages para produção e preview. O projeto Pages ainda depende de autenticação com permissão de criação na conta Cloudflare do proprietário.
+A URL `academia.joseluizacama.workers.dev` pertence a um Worker de assets estáticos, não a um projeto Pages conectado ao GitHub. O arquivo `wrangler.jsonc` configura a saída `dist` e o fallback das rotas React. O GitHub guarda o código, mas fazer push não publica automaticamente esse Worker. Para publicar: configure as variáveis públicas do Supabase no ambiente de build, rode `npm run build` e depois `wrangler deploy`. Nunca publique `.env.local` ou a chave secreta do Gemini. Se desejar CI para cada push na `main`, configure um workflow com credencial limitada do Cloudflare em etapa separada.
