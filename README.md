@@ -1,16 +1,18 @@
 # Impulso
 
-SaaS para personal trainers e criadores, construído em React, TypeScript, Vite e Supabase. Impulso é a marca da plataforma; cada profissional ou empresa usa seu próprio nome e endereço `/p/:slug`. O repositório e o projeto Supabase ainda se chamam `Academia`. O FoodWeb serviu apenas como referência de estrutura.
+SaaS para personal trainers e criadores, construído em React, TypeScript, Vite e Supabase. Impulso é a marca da plataforma; cada profissional ou empresa usa seu próprio nome e endereço `/p/:slug`. O repositório e o projeto Supabase ainda se chamam `Academia`. A operação segue o modelo do FoodWeb: Admin Master → lojista → loja pública, com aprovação, planos e renovação manual.
 
 ## Áreas
 
 | Área | Rotas | O que funciona agora |
 | --- | --- | --- |
 | Página pública | `/`, `/demonstracao`, `/p/:slug`, produto, sacola e finalizar | Página comercial, demonstração interativa local, vitrine, catálogo, pedido pendente com referência e Pix manual |
-| Admin do criador | `/admin/*` | Conta, espaço, produtos, pedidos, ideias com IA, WhatsApp de teste e configurações |
-| Admin Master | `/admin-master/*` | Acesso restrito, visão geral e listagem de espaços |
+| Admin do criador | `/admin/*` | Cadastro sujeito à aprovação, loja, pedidos, plano, Pix da assinatura, ideias, assistente de nicho e lembretes |
+| Admin Master | `/admin-master/*` | Aprovação de lojistas, controle de espaços/planos, Pix da plataforma e confirmação manual de mensalidades |
 
-O Admin Master não é liberado pelo cadastro público. Um operador do banco deve adicionar o usuário autorizado em `public.platform_admins`. Planos e cobrança SaaS ainda não foram implementados. O pedido é registrado como pendente e o cliente envia sua referência pelo WhatsApp; não há confirmação automática do Pix nem entrega automática de arquivo digital.
+O Admin Master não é liberado pelo cadastro público. Um operador do banco adiciona o usuário autorizado em `public.platform_admins`. O lojista escolhe o plano e aguarda aprovação. Para renovar, solicita cobrança Pix, informa o comprovante e aguarda o Master conferir o crédito. Só a confirmação do Master avança o vencimento. Os pedidos da loja têm Pix próprio e confirmação manual pelo profissional; não há entrega automática de arquivo digital.
+
+O contrato atual do produto, o ciclo de acesso e os limites estão em [Contrato do produto](docs/CONTRATO_DO_PRODUTO.md).
 
 ## Execução local
 
@@ -55,9 +57,9 @@ Substitua o e-mail e confira o usuário antes de executar. Em Auth > URL Configu
 
 ### Gemini
 
-A Edge Function `generate-content-idea` já está publicada e exige sessão autenticada. O botão de geração fica operacional quando `GEMINI_API_KEY` for configurada como secret da Edge Function no Supabase. A chave de teste local está em `supabase/functions/.env`, ignorado pelo Git; ela **não** é enviada automaticamente ao servidor. `GEMINI_MODEL` é opcional; o padrão é `gemini-3.5-flash-lite`. O limite inicial é de 20 pedidos por dia por usuário e espaço. Sem secret remoto, o usuário pode preparar e copiar o prompt ou salvar uma ideia manualmente.
+A Edge Function `generate-content-idea` exige sessão autenticada. O botão de geração depende de `GEMINI_API_KEY` como secret da Edge Function no Supabase. A chave de teste local em `supabase/functions/.env` é ignorada pelo Git e **não** é enviada automaticamente ao servidor. `GEMINI_MODEL` é opcional; o padrão é `gemini-3.5-flash-lite`. Os limites diários por espaço são 5/12/20 solicitações (Essencial/Criador/Crescimento), compartilhadas entre ideias e assistente; há teto de 20 por usuário. Sem secret remoto, o usuário pode copiar o prompt ou salvar uma ideia manualmente.
 
-Cada resposta de IA é salva como `review` e só passa a `approved` por ação do criador. O WhatsApp automático ainda não foi integrado; a tela permite testar individualmente uma ideia aprovada pelo aplicativo.
+Cada resposta de IA é salva como `review` e só passa a `approved` por ação do criador. Pesquisa de tendências é opcional e precisa produzir fontes verificáveis para que a ideia seja rotulada como atual. O mini assistente limita perguntas ao nicho do criador. Lembretes são marcações no painel; o WhatsApp automático ainda não foi integrado e a tela permite testar individualmente uma ideia aprovada pelo aplicativo.
 
 Para a decisão de modelo Gemini e a evolução segura do WhatsApp Business — incluindo n8n opcional com a API oficial — veja [IA e WhatsApp](docs/INTEGRACOES_IA_WHATSAPP.md).
 

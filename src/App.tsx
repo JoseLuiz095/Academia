@@ -15,6 +15,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/Dashboard').then((module
 const AdminProducts = lazy(() => import('./pages/admin/Products').then((module) => ({ default: module.AdminProducts })))
 const AdminOrders = lazy(() => import('./pages/admin/Orders').then((module) => ({ default: module.AdminOrders })))
 const AdminContent = lazy(() => import('./pages/admin/Content').then((module) => ({ default: module.AdminContent })))
+const AdminAssistant = lazy(() => import('./pages/admin/Assistant').then((module) => ({ default: module.AdminAssistant })))
 const AdminSettings = lazy(() => import('./pages/admin/Settings').then((module) => ({ default: module.AdminSettings })))
 const AdminPlans = lazy(() => import('./pages/admin/Plans').then((module) => ({ default: module.AdminPlans })))
 const AdminWhatsApp = lazy(() => import('./pages/admin/WhatsApp').then((module) => ({ default: module.AdminWhatsApp })))
@@ -22,6 +23,8 @@ const AdminOnboarding = lazy(() => import('./pages/admin/Onboarding').then((modu
 const MasterDashboard = lazy(() => import('./pages/master/Dashboard').then((module) => ({ default: module.MasterDashboard })))
 const MasterWorkspaces = lazy(() => import('./pages/master/Workspaces').then((module) => ({ default: module.MasterWorkspaces })))
 const MasterRequests = lazy(() => import('./pages/master/Requests').then((module) => ({ default: module.MasterRequests })))
+const MasterPayments = lazy(() => import('./pages/master/Payments').then((module) => ({ default: module.MasterPayments })))
+const MasterPlans = lazy(() => import('./pages/master/Plans').then((module) => ({ default: module.MasterPlans })))
 const Storefront = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreHome })))
 const StoreProduct = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreProduct })))
 const StoreCart = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreCart })))
@@ -35,6 +38,7 @@ function ProtectedAdmin() {
   if (isMaster && !workspace) return <Navigate to="/admin-master" replace />
   if (!workspace && location.pathname !== '/admin/primeiros-passos') return <Navigate to="/admin/primeiros-passos" replace />
   if (workspace?.approval_status && workspace.approval_status !== 'approved') return <div className="loading-page"><div><h1>Espaço indisponível</h1><p>O acesso deste espaço precisa de liberação do Admin Master.</p></div></div>
+  if (workspace?.subscription_ends_at && new Date(workspace.subscription_ends_at).getTime() <= Date.now() && location.pathname !== '/admin/planos') return <Navigate to="/admin/planos" replace />
   return <AdminLayout />
 }
 
@@ -69,6 +73,7 @@ export default function App() {
       <Route path="/admin/produtos" element={<AdminProducts />} />
       <Route path="/admin/pedidos" element={<AdminOrders />} />
       <Route path="/admin/conteudo" element={<AdminContent />} />
+      <Route path="/admin/assistente" element={<AdminAssistant />} />
       <Route path="/admin/whatsapp" element={<AdminWhatsApp />} />
       <Route path="/admin/configuracoes" element={<AdminSettings />} />
       <Route path="/admin/planos" element={<AdminPlans />} />
@@ -78,6 +83,8 @@ export default function App() {
       <Route path="/admin-master" element={<MasterDashboard />} />
       <Route path="/admin-master/workspaces" element={<MasterWorkspaces />} />
       <Route path="/admin-master/solicitacoes" element={<MasterRequests />} />
+      <Route path="/admin-master/pagamentos" element={<MasterPayments />} />
+      <Route path="/admin-master/planos" element={<MasterPlans />} />
     </Route>
 
     <Route path="*" element={<div className="loading-page"><div><h1>Página não encontrada</h1><a href="/">Voltar ao início</a></div></div>} />

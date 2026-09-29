@@ -209,7 +209,7 @@
   .landing-header nav { gap: 8px; }
   .landing-header nav a { font-size: 10px; }
   .landing-header nav .primary-button { padding: 9px; }
-  .commercial-hero { padding: 45px 18px 58px; }
+  .commercial-hero { grid-template-columns: minmax(0, 1fr); padding: 45px 18px 58px; }
   .commercial-scene { transform: none; }
   .commercial-ribbon { display: grid; grid-template-columns: repeat(2, 1fr); margin: 0 18px; padding: 16px; font-size: 10px; }
   .commercial-section { padding: 65px 18px; }

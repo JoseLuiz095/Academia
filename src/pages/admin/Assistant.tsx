@@ -26,6 +26,9 @@ export function AdminAssistant() {
       if (invokeError) {
         if (invokeError instanceof FunctionsHttpError && invokeError.context.status === 429) setError('Limite diário de IA atingido. Tente novamente amanhã.')
         else if (invokeError instanceof FunctionsHttpError && invokeError.context.status === 400) setError('Salve seu perfil de conteúdo e confira a pergunta.')
+        else if (invokeError instanceof FunctionsHttpError && invokeError.context.status === 401) setError('Sua sessão expirou. Entre novamente para continuar.')
+        else if (invokeError instanceof FunctionsHttpError && invokeError.context.status === 403) setError('O acesso ou a assinatura deste espaço precisa ser regularizado.')
+        else if (invokeError instanceof FunctionsHttpError && invokeError.context.status === 503) setError('O serviço de IA está indisponível no momento. Tente novamente mais tarde.')
         else setError('Não foi possível consultar o assistente agora.')
         return
       }
@@ -38,9 +41,9 @@ export function AdminAssistant() {
 
   return <section className="panel editor-panel" aria-labelledby="niche-assistant-title">
     <div className="panel-heading"><div><span className="panel-kicker">Ajuda contextual</span><h2 id="niche-assistant-title">Assistente do seu nicho</h2></div></div>
-    <p className="field-help">Pergunte sobre conteúdo e comunicação do seu negócio. O assistente usa o perfil salvo, não consulta tendências ao vivo e não publica nem envia nada. Conversa temporária nesta página; até 20 tentativas de IA por dia, compartilhadas com a geração de ideias.</p>
+    <p className="field-help">Pergunte sobre conteúdo e comunicação do nicho do seu espaço. O assistente usa o perfil salvo, não consulta tendências ao vivo e não publica nem envia nada. Revise as respostas antes de usá-las. Conversa temporária nesta página; o limite diário do seu plano é compartilhado com a geração de ideias.</p>
     {turns.length > 0 && <div className="simple-list" aria-live="polite">{turns.map((turn, index) => <div className="idea-list-row" key={index}><div><strong>{turn.role === 'user' ? 'Você' : 'Assistente'}</strong><p style={{ whiteSpace: 'pre-wrap' }}>{turn.text}</p></div></div>)}</div>}
     {error && <p className="form-error" role="alert">{error}</p>}
-    <form className="form-grid" onSubmit={(event) => void ask(event)}><label>Sua pergunta<textarea rows={3} maxLength={500} value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ex.: Como explicar meu serviço para iniciantes sem prometer resultados?" /></label><p className="field-help">{question.trim().length}/500 caracteres · mínimo de 8</p><div className="form-actions form-actions-start"><button className="primary-button" disabled={busy || question.trim().length < 8}>{busy ? 'Pensando…' : 'Perguntar'} <span>→</span></button>{turns.length > 0 && <button type="button" className="secondary-button" onClick={() => setTurns([])}>Limpar conversa</button>}</div></form>
+    <form className="form-grid" onSubmit={(event) => void ask(event)}><label>Sua pergunta<textarea rows={3} maxLength={500} value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ex.: Como explicar meu serviço para iniciantes sem prometer resultados?" /></label><p className="field-help">{question.trim().length}/500 caracteres · mínimo de 8</p><div className="form-actions form-actions-start"><button className="primary-button" disabled={busy || question.trim().length < 8 || question.trim().length > 500}>{busy ? 'Pensando…' : 'Perguntar'} <span>→</span></button>{turns.length > 0 && <button type="button" className="secondary-button" disabled={busy} onClick={() => setTurns([])}>Limpar conversa</button>}</div></form>
   </section>
 }

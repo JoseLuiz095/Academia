@@ -19,15 +19,32 @@ const faqs = [
   { question: 'Posso usar minha marca e meu domínio?', answer: 'Cada conta já pode ter seu nome e uma página como /p/minha-marca. Domínio próprio de cada empresa ainda não está disponível.' },
 ]
 
-const pricingPlans = [
-  { name: 'Essencial', price: 'R$ 29', description: 'Para começar a organizar sua marca.', features: ['Perfil público', 'Até 5 ofertas', 'Conteúdo com revisão manual'], cta: 'Começar grátis' },
-  { name: 'Criador', price: 'R$ 59', description: 'Para publicar, vender e manter constância.', features: ['Até 30 ofertas', 'Vitrine personalizada', 'Pedidos, Pix e WhatsApp'], cta: 'Escolher Criador', featured: true },
-  { name: 'Crescimento', price: 'R$ 99', description: 'Para uma rotina comercial mais completa.', features: ['Até 100 ofertas', 'Mais recursos de IA', 'Personalização avançada'], cta: 'Falar com o Impulso' },
-]
+type PlatformPlan = { code: 'starter' | 'creator' | 'pro'; name: string; monthly_price_cents: number; product_limit: number; ai_daily_limit: number }
+const planOrder = ['starter', 'creator', 'pro']
+const planDescriptions: Record<PlatformPlan['code'], string> = {
+  starter: 'Para começar a organizar sua marca.',
+  creator: 'Para publicar, vender e manter constância.',
+  pro: 'Para uma rotina comercial mais completa.',
+}
+const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export function LandingPage() {
   const [creators, setCreators] = useState<Workspace[]>([])
+  const [plans, setPlans] = useState<PlatformPlan[]>([])
+  const [plansLoading, setPlansLoading] = useState(true)
+  const [plansError, setPlansError] = useState(false)
   useEffect(() => { document.title = 'Impulso | Conteúdo, vitrine e pedidos com a sua marca' }, [])
+  useEffect(() => {
+    if (!supabase) { setPlansError(true); setPlansLoading(false); return }
+    let active = true
+    void supabase.from('platform_plans').select('code,name,monthly_price_cents,product_limit,ai_daily_limit').eq('enabled', true).then(({ data, error }) => {
+      if (!active) return
+      if (error) setPlansError(true)
+      else setPlans(((data ?? []) as PlatformPlan[]).sort((a, b) => planOrder.indexOf(a.code) - planOrder.indexOf(b.code)))
+      setPlansLoading(false)
+    })
+    return () => { active = false }
+  }, [])
   useEffect(() => {
     if (!supabase) return
     let active = true
@@ -41,7 +58,7 @@ export function LandingPage() {
         <p className="eyebrow">Conteúdo, vitrine e relacionamento em um lugar</p>
         <h1>Sua ideia vira presença. Sua presença vira oportunidade.</h1>
         <p>O Impulso ajuda profissionais a planejar posts e stories com contexto, mostrar o que vendem e organizar pedidos. Começa simples para personal trainers e acompanha criadores de outros nichos.</p>
-        <div className="landing-actions"><Link className="primary-button plain-link" to="/admin/login">Criar meu espaço grátis <span aria-hidden="true">→</span></Link><a className="secondary-button plain-link" href="#demonstracao">Ver demonstração</a></div>
+        <div className="landing-actions"><Link className="primary-button plain-link" to="/admin/login">Solicitar meu espaço <span aria-hidden="true">→</span></Link><a className="secondary-button plain-link" href="#demonstracao">Ver demonstração</a></div>
         <div className="commercial-hero-proof"><span>✦ Ideias revisadas por você</span><span>▣ Vitrine opcional</span><span>◇ Pix direto com o profissional</span></div>
       </div>
       <div className="commercial-scene" aria-label="Prévia ilustrativa do painel, da vitrine e dos pedidos">
@@ -62,7 +79,7 @@ export function LandingPage() {
 
     <section id="demonstracao" className="commercial-inline-demo" aria-labelledby="demonstracao-titulo"><div className="commercial-inline-heading"><p className="eyebrow">Demonstração interativa</p><h2 id="demonstracao-titulo">Veja o fluxo completo na própria página.</h2><p>Escolha um nicho e percorra conteúdo, vitrine, pedido e confirmação manual. A simulação é local e não usa sua conta, Gemini ou dinheiro real.</p></div><DemoExperience /></section>
 
-    <section id="planos" className="commercial-section commercial-pricing"><div className="commercial-section-heading"><p className="eyebrow">Planos simples para começar</p><h2>Escolha o nível de apoio que combina com sua fase.</h2><p>Comece pelo essencial e evolua quando a sua rotina pedir. A assinatura ainda é combinada manualmente, sem cobrança automática nesta primeira versão.</p></div><div className="commercial-plan-grid">{pricingPlans.map((plan) => <article className={`commercial-plan-card ${plan.featured ? 'featured' : ''}`} key={plan.name}>{plan.featured && <span className="plan-recommended">Mais escolhido</span>}<span className="commercial-plan-label">{plan.name}</span><strong>{plan.price}<small>/mês</small></strong><p>{plan.description}</p><ul>{plan.features.map((feature) => <li key={feature}>✓ {feature}</li>)}</ul><Link className={plan.featured ? 'primary-button plain-link' : 'secondary-button plain-link'} to="/admin/login">{plan.cta} <span>→</span></Link></article>)}</div><p className="commercial-smallprint">Os limites e valores são iniciais para validação do produto. O plano não ativa disparos automáticos no WhatsApp: a conversa continua sob controle do profissional.</p></section>
+    <section id="planos" className="commercial-section commercial-pricing"><div className="commercial-section-heading"><p className="eyebrow">Planos simples para começar</p><h2>Escolha o nível de apoio que combina com sua fase.</h2><p>Solicite seu espaço e aguarde a aprovação. Após a liberação, você terá 14 dias de teste. A mensalidade é solicitada depois pelo painel e o Pix é confirmado manualmente pelo Admin Master; não há cobrança automática.</p></div>{plansLoading ? <p className="empty-copy">Carregando planos…</p> : plansError ? <p className="form-error" role="alert">Não foi possível consultar os planos agora. Tente novamente mais tarde.</p> : plans.length ? <div className="commercial-plan-grid">{plans.map((plan) => <article className={`commercial-plan-card ${plan.code === 'creator' ? 'featured' : ''}`} key={plan.code}>{plan.code === 'creator' && <span className="plan-recommended">Em destaque</span>}<span className="commercial-plan-label">{plan.name}</span><strong>{currency.format(plan.monthly_price_cents / 100)}<small>/mês</small></strong><p>{planDescriptions[plan.code]}</p><ul><li>✓ Até {plan.product_limit} produtos ou serviços</li><li>✓ Até {plan.ai_daily_limit} ideias com IA por dia</li><li>✓ Vitrine e atendimento pelo WhatsApp</li></ul><Link className={plan.code === 'creator' ? 'primary-button plain-link' : 'secondary-button plain-link'} to="/admin/login">Solicitar espaço <span>→</span></Link></article>)}</div> : <p className="empty-copy">Nenhum plano está disponível para novas solicitações no momento.</p>}<p className="commercial-smallprint">Preços e limites atuais dos planos disponíveis. A escolha do plano será analisada junto com a solicitação do espaço; não há disparos automáticos no WhatsApp.</p></section>
 
     <section className="commercial-section commercial-clarity"><div className="commercial-section-heading"><p className="eyebrow">Transparência</p><h2>O que já funciona — e o que vem depois.</h2></div><div className="commercial-clarity-grid"><article><span className="commercial-state ready">Disponível agora</span><ul><li>Painel do criador e vitrine pública por marca</li><li>Perfil de conteúdo, prompt e revisão de ideias</li><li>Catálogo, sacola, referência de pedido e Pix manual</li><li>Planos, status e aviso de vencimento no painel</li></ul></article><article><span className="commercial-state later">Próximas evoluções</span><ul><li>Entrega protegida de manuais dentro da plataforma</li><li>Domínio próprio por empresa</li><li>Envio automático de mensagens, sujeito à integração apropriada</li><li>Cobrança automática e renovação da assinatura SaaS</li></ul></article></div><p className="commercial-smallprint">A geração com Gemini depende da chave configurada no servidor. Sem ela, o criador ainda pode preparar o prompt e salvar ideias manualmente.</p></section>
 

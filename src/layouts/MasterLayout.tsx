@@ -24,6 +24,8 @@ export function MasterLayout() {
         <NavLink end to="/admin-master" className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">⌂</span><span>Visão geral</span></NavLink>
         <NavLink to="/admin-master/workspaces" className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">▣</span><span>Personais e criadores</span></NavLink>
         <NavLink to="/admin-master/solicitacoes" className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">◷</span><span>Solicitações de acesso</span></NavLink>
+        <NavLink to="/admin-master/pagamentos" className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">◇</span><span>Pagamentos e Pix</span></NavLink>
+        <NavLink to="/admin-master/planos" className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">◈</span><span>Planos e limites</span></NavLink>
         <a href="/conta/seguranca?area=master" className="nav-item plain-link"><span className="nav-icon">⌁</span><span>Alterar senha</span></a>
       </nav>
       <div className="sidebar-footer"><a className="nav-item plain-link" href="/admin"><span className="nav-icon">↗</span><span>Painel do criador</span></a><button className="nav-item" onClick={() => void logout()}><span className="nav-icon">⇥</span><span>Sair</span></button>{logoutError && <p className="form-error" role="alert">{logoutError}</p>}<div className="user-profile"><div className="avatar avatar-dark">AM</div><div className="workspace-copy"><strong>{user?.email}</strong><span>Admin Master</span></div></div></div>

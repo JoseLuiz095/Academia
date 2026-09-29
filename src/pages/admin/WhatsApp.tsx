@@ -19,10 +19,6 @@ export function AdminWhatsApp() {
   const [reminderError, setReminderError] = useState('')
 
   useEffect(() => {
-    if (workspace && !testPhone) setTestPhone(workspace.whatsapp_number ?? '')
-  }, [workspace?.id])
-
-  useEffect(() => {
     if (!supabase || !workspace) { setReminders([]); return }
     let active = true
     setReminders([]); setReminderError('')
@@ -40,6 +36,7 @@ export function AdminWhatsApp() {
     setLoading(true)
     setIdeas([])
     setSelected('')
+    setMessage('')
     setError('')
     void supabase.from('content_ideas').select('id,workspace_id,format,title,hook,body,cta,status,source,created_at').eq('workspace_id', workspace.id).eq('status', 'approved').order('created_at', { ascending: false }).then(({ data, error: loadError }) => {
       if (!active) return

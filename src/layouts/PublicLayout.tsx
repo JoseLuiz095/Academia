@@ -86,7 +86,7 @@ export function PublicLayout() {
   const totalItems = safeCart.reduce((total, item) => total + item.quantity, 0)
   return <StoreContext.Provider value={{ workspace, products, cart: safeCart, addToCart, changeQuantity, clearCart }}>
     <div className={`store-shell store-theme-${workspace.store_settings?.theme ?? 'sage'}`}>
-      <header className="store-topbar"><Link className="store-logo plain-link" to={`/p/${slug}`}><span className="brand-mark">I</span><span><strong>{workspace.name}</strong><small>por impulso</small></span></Link><nav><Link to={`/p/${slug}`}>Início</Link><Link to={`/p/${slug}/carrinho`}>Sacola <span className="cart-badge">{totalItems}</span></Link></nav></header>
+      <header className="store-topbar"><Link className="store-logo plain-link" to={`/p/${slug}`}><span className="brand-mark">I</span><span><strong>{workspace.name}</strong><small>por impulso</small></span></Link><nav aria-label="Navegação da loja"><Link to={`/p/${slug}`}>Início</Link><Link to={`/p/${slug}/carrinho`} aria-label={`Sacola, ${totalItems} ${totalItems === 1 ? 'item' : 'itens'}`}>Sacola <span className="cart-badge" aria-hidden="true">{totalItems}</span></Link></nav></header>
       {error && <p className="form-error">{error}</p>}
       <main><Outlet /></main>
       <footer className="store-footer"><span>{workspace.name} · feito com impulso</span><span>Pagamento e atendimento combinados diretamente com o profissional.</span></footer>

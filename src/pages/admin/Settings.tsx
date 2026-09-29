@@ -49,6 +49,7 @@ export function AdminSettings() {
     if (!supabase || !workspace) return
     const digits = whatsappNumber.replace(/\D/g, '')
     if (digits && !/^55\d{10,11}$/.test(digits)) { setError('Use o WhatsApp com DDI 55 e DDD. Ex.: 5511999999999.'); return }
+    if (published && !digits) { setError('Informe seu WhatsApp antes de publicar: os clientes precisam desse contato para concluir o pedido.'); return }
     const pixInput = pixKey.trim()
     if (isPixCopyPaste(pixInput)) {
       try { validateStaticPixBase(pixInput) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Pix copia e cola inválido.'); return }

@@ -37,11 +37,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     setAuthError(null)
     try {
-      if (!supabase) return { user: null, isMaster: false }
+      if (!supabase) {
+        setUser(null); setWorkspaces([]); setIsMaster(false)
+        return { user: null, isMaster: false }
+      }
       const { data: userData, error: userError } = await supabase.auth.getUser()
       if (userError && userError.name !== 'AuthSessionMissingError') throw userError
       const currentUser = userData.user
-      if (!currentUser) return { user: null, isMaster: false }
+      if (!currentUser) {
+        if (currentRequest === requestId.current) {
+          setUser(null); setWorkspaces([]); setIsMaster(false)
+        }
+        return { user: null, isMaster: false }
+      }
 
       const [memberResult, ownedResult, masterResult] = await Promise.all([
         supabase.from('workspace_members').select('workspace_id').eq('user_id', currentUser.id),

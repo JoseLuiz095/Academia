@@ -9,6 +9,7 @@ const navigation = [
   { to: '/admin/produtos', label: 'Produtos e serviços', icon: '▣' },
   { to: '/admin/pedidos', label: 'Pedidos', icon: '◫' },
   { to: '/admin/conteudo', label: 'Conteúdo IA', icon: '✦' },
+  { to: '/admin/assistente', label: 'Assistente do nicho', icon: '✳' },
   { to: '/admin/whatsapp', label: 'WhatsApp', icon: '◔' },
   { to: '/admin/planos', label: 'Plano e assinatura', icon: '◇' },
   { to: '/admin/configuracoes', label: 'Configurações', icon: '⚙' },
@@ -44,7 +45,7 @@ export function AdminLayout() {
         <p className="nav-heading">Operação</p>
         {navigation.slice(0, 2).map((item) => <NavLink key={item.to} end={item.end} to={item.to} className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">{item.icon}</span><span>{item.label}</span></NavLink>)}
         <p className="nav-heading nav-heading-spaced">Vendas e conteúdo</p>
-        {navigation.slice(2, 7).map((item) => <NavLink key={item.to} to={item.to} className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">{item.icon}</span><span>{item.label}</span></NavLink>)}
+        {navigation.slice(2, 8).map((item) => <NavLink key={item.to} to={item.to} className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">{item.icon}</span><span>{item.label}</span></NavLink>)}
         <p className="nav-heading nav-heading-spaced">Conta</p>
         <NavLink to="/admin/configuracoes" className={({ isActive }) => `nav-item plain-link ${isActive ? 'active' : ''}`}><span className="nav-icon">⚙</span><span>Configurações</span></NavLink>
         <a href="/conta/seguranca?area=admin" className="nav-item plain-link"><span className="nav-icon">⌁</span><span>Alterar senha</span></a>
