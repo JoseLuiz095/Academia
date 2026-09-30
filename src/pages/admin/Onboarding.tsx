@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { normalizeSlug } from '../../lib/format'
 import { supabase } from '../../lib/supabase'
@@ -12,13 +12,17 @@ const planLabel = (plan: PlatformPlan) => `${plan.name} · ${currency.format(pla
 
 export function AdminOnboarding() {
   const { user, workspace, refresh } = useAuth()
+  const [searchParams] = useSearchParams()
   const [request, setRequest] = useState<WorkspaceRequest | null>(null)
   const [requestLoading, setRequestLoading] = useState(true)
   const [requestError, setRequestError] = useState('')
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [niche, setNiche] = useState('fitness')
-  const [plan, setPlan] = useState<WorkspaceRequest['plan_code'] | ''>('')
+  const [plan, setPlan] = useState<WorkspaceRequest['plan_code'] | ''>(() => {
+    const requested = searchParams.get('plan')
+    return requested === 'starter' || requested === 'creator' || requested === 'pro' ? requested : ''
+  })
   const [plans, setPlans] = useState<PlatformPlan[]>([])
   const [plansLoading, setPlansLoading] = useState(true)
   const [plansError, setPlansError] = useState('')

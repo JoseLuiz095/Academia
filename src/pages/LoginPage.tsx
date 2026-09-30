@@ -1,10 +1,12 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { isSupabaseConfigured, supabase, supabaseConfigIssue } from '../lib/supabase'
 
 export function LoginPage({ area }: { area: 'admin' | 'master' }) {
-  const [register, setRegister] = useState(false)
+  const [searchParams] = useSearchParams()
+  const selectedPlan = searchParams.get('plan')
+  const [register, setRegister] = useState(area === 'admin' && searchParams.get('register') === '1')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -15,6 +17,10 @@ export function LoginPage({ area }: { area: 'admin' | 'master' }) {
   const location = useLocation()
   const { refresh, authError } = useAuth()
 
+  useEffect(() => {
+    if (area === 'admin' && searchParams.get('register') === '1') setRegister(true)
+  }, [area, searchParams])
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!supabase) { setError('Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY para acessar.'); return }
@@ -23,7 +29,7 @@ export function LoginPage({ area }: { area: 'admin' | 'master' }) {
       if (register && area === 'admin') {
         const result = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/admin/primeiros-passos` } })
         if (result.error) throw result.error
-        if (result.data.session) { await refresh(); navigate('/admin/primeiros-passos', { replace: true }) }
+        if (result.data.session) { await refresh(); navigate(`/admin/primeiros-passos${selectedPlan ? `?plan=${encodeURIComponent(selectedPlan)}` : ''}`, { replace: true }) }
         else { setMessage('Conta criada. Confirme seu e-mail e depois entre no painel.'); setCanResend(true) }
       } else {
         const result = await supabase.auth.signInWithPassword({ email, password })

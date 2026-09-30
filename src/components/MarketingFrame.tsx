@@ -10,7 +10,7 @@ export function MarketingFrame({ children }: { children: ReactNode }) {
         <a href="/#planos">Planos</a>
         <a href="/#demonstracao">Demonstração</a>
         <Link to="/admin/login">Entrar</Link>
-        <Link className="primary-button" to="/admin/login">Criar meu espaço <span aria-hidden="true">→</span></Link>
+        <Link className="primary-button" to="/solicitar-espaco">Criar meu espaço <span aria-hidden="true">→</span></Link>
       </nav>
     </header>
     <main>{children}</main>

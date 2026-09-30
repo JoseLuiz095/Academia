@@ -9,6 +9,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage').then((module) => ({ def
 const PasswordRecoveryPage = lazy(() => import('./pages/PasswordPages').then((module) => ({ default: module.PasswordRecoveryPage })))
 const ChangePasswordPage = lazy(() => import('./pages/PasswordPages').then((module) => ({ default: module.ChangePasswordPage })))
 const LandingPage = lazy(() => import('./pages/LandingPage').then((module) => ({ default: module.LandingPage })))
+const RequestAccessPage = lazy(() => import('./pages/RequestAccessPage').then((module) => ({ default: module.RequestAccessPage })))
 const DemoPage = lazy(() => import('./pages/DemoPage').then((module) => ({ default: module.DemoPage })))
 const DemoAdminPage = lazy(() => import('./pages/DemoAdminPage').then((module) => ({ default: module.DemoAdminPage })))
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard').then((module) => ({ default: module.AdminDashboard })))
@@ -54,6 +55,7 @@ function ProtectedMaster() {
 export default function App() {
   return <Suspense fallback={<div className="loading-page">Carregando…</div>}><Routes>
     <Route path="/" element={<LandingPage />} />
+    <Route path="/solicitar-espaco" element={<RequestAccessPage />} />
     <Route path="/demonstracao" element={<DemoPage />} />
     <Route element={<PublicLayout />}>
       <Route path="/p/:slug" element={<Storefront />} />

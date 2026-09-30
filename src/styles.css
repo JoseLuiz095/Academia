@@ -1,9 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
 
-:root { font-family: 'DM Sans', sans-serif; color: #1f2928; background: #f7f6f2; font-synthesis: none; text-rendering: optimizeLegibility; --ink: #1f2928; --muted: #76817e; --line: #e6e8e1; --soft: #f0f1eb; --orange: #ed7b45; --orange-dark: #c9582e; --green: #5f9c78; --blue: #668eb3; --purple: #8c7aaf; }
+:root { font-family: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; color: #1f2928; background: #f7f6f2; font-synthesis: none; text-rendering: auto; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; --ink: #1f2928; --muted: #76817e; --line: #e6e8e1; --soft: #f0f1eb; --orange: #ed7b45; --orange-dark: #c9582e; --green: #5f9c78; --blue: #668eb3; --purple: #8c7aaf; }
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; background: #f7f6f2; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { margin: 0; min-width: 320px; background: #f7f6f2; line-height: 1.45; }
 button { font: inherit; cursor: pointer; border: 0; }
+button, input, textarea, select { line-height: 1.25; }
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar { width: 255px; flex: 0 0 255px; min-height: 100vh; background: #eef0e8; border-right: 1px solid #e0e3d9; padding: 27px 16px 17px; display: flex; flex-direction: column; }
 .brand-lockup { display: flex; align-items: center; gap: 10px; padding: 0 10px 29px; }
