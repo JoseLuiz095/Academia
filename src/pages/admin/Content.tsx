@@ -52,6 +52,8 @@ export function AdminContent() {
   const [scheduledFor, setScheduledFor] = useState('')
   const [reminderChannel, setReminderChannel] = useState<'internal' | 'whatsapp'>('internal')
   const [reminderError, setReminderError] = useState('')
+  const [libraryFilter, setLibraryFilter] = useState<'all' | ContentIdea['status']>('all')
+  const [librarySearch, setLibrarySearch] = useState('')
 
   async function load() {
     if (!supabase || !workspace) return
@@ -71,6 +73,21 @@ export function AdminContent() {
   useEffect(() => { void load() }, [workspace?.id])
   const profileReady = profileSaved && JSON.stringify(profile) === JSON.stringify(savedProfile)
   const trendBrief = trendContext.trim() ? `${brief.trim()}\nContexto observado pelo criador (não verificado): ${trendContext.trim()}` : brief.trim()
+  const filteredIdeas = useMemo(() => {
+    const query = librarySearch.trim().toLocaleLowerCase('pt-BR')
+    return ideas.filter((idea) => {
+      const matchesStatus = libraryFilter === 'all' || idea.status === libraryFilter
+      const haystack = `${idea.title} ${idea.hook ?? ''} ${idea.body ?? ''} ${idea.cta ?? ''}`.toLocaleLowerCase('pt-BR')
+      return matchesStatus && (!query || haystack.includes(query))
+    })
+  }, [ideas, libraryFilter, librarySearch])
+
+  const quickBriefs = [
+    { label: 'Dica prática', brief: 'Ensinar uma dica prática que o meu público consiga aplicar hoje', format: 'story' as const },
+    { label: 'Bastidores', brief: 'Mostrar bastidores do meu trabalho e criar proximidade com o público', format: 'story' as const },
+    { label: 'Mito ou verdade', brief: 'Desmistificar uma dúvida frequente do meu público com clareza', format: 'post' as const },
+    { label: 'Oferta com contexto', brief: 'Apresentar um produto ou serviço sem parecer uma venda agressiva', format: 'post' as const },
+  ]
 
   const prompt = useMemo(() => [
     `Você é um assistente de conteúdo para um criador do nicho ${workspace?.niche || 'informado no perfil'}. Crie UMA ideia original, clara e adequada ao público descrito. Recuse pedidos fora desse nicho.`,
@@ -126,6 +143,12 @@ export function AdminContent() {
     setPreparedPrompt(prompt)
     try { await navigator.clipboard.writeText(prompt); setMessage('Prompt copiado. Cole em uma ferramenta de IA e revise o resultado antes de salvar.') }
     catch { setPreparedPrompt(prompt); setMessage('Selecione e copie o prompt abaixo.') }
+  }
+
+  async function copyIdea(idea: ContentIdea) {
+    const text = [idea.title, idea.hook && `Gancho: ${idea.hook}`, idea.body, idea.cta && `CTA: ${idea.cta}`].filter(Boolean).join('\n\n')
+    try { await navigator.clipboard.writeText(text); setMessage('Ideia copiada. Você pode colar no Instagram ou no WhatsApp.') }
+    catch { setError('Não foi possível copiar automaticamente. Abra a revisão e copie o texto manualmente.') }
   }
 
   async function generateWithGemini() {
@@ -198,6 +221,7 @@ export function AdminContent() {
       <section className="panel"><div className="panel-heading"><div><span className="panel-kicker">Briefing</span><h2>Gerar com Gemini</h2></div></div>
         <p className="empty-copy">Salve o perfil antes de gerar. Stories recebem roteiro por tela; posts recebem estrutura visual e legenda. A ideia entra em revisão. Geração e chat compartilham o limite diário de IA do seu plano.</p>
         <div className="form-grid">
+          <div className="quick-prompts" aria-label="Atalhos de briefing"><span>Comece por um atalho</span>{quickBriefs.map((item) => <button type="button" key={item.label} className="prompt-chip" onClick={() => { setBrief(item.brief); setFormat(item.format) }}>{item.label}</button>)}</div>
           <label>O que você quer comunicar?<textarea rows={4} maxLength={500} value={brief} onChange={(event) => setBrief(event.target.value)} placeholder="Ex.: Incentivar iniciantes a manter uma rotina possível" /></label>
           <p className="field-help">{brief.trim().length}/500 caracteres · mínimo de 8 para gerar</p>
           <label>Tema ou sinal que você observou (opcional)<textarea rows={2} maxLength={500} value={trendContext} onChange={(event) => setTrendContext(event.target.value)} placeholder="Ex.: meus clientes perguntaram sobre treinos curtos" /></label>
@@ -215,7 +239,8 @@ export function AdminContent() {
     <section className="panel">
       <div className="panel-heading"><div><span className="panel-kicker">Biblioteca</span><h2>Ideias salvas</h2></div><span>{ideas.length} ideias</span></div>
       <p className="field-help">Revise título, roteiro, fontes e chamada para ação. Somente ideias aprovadas aparecem no teste manual do WhatsApp.</p>
-      {ideas.length ? <div className="simple-list">{ideas.map((idea) => <div key={idea.id} className="idea-list-row">
+      <div className="library-toolbar"><input aria-label="Buscar ideias" value={librarySearch} onChange={(event) => setLibrarySearch(event.target.value)} placeholder="Buscar por título ou tema" /><div className="filter-tabs" role="tablist" aria-label="Filtrar ideias">{(['all', 'review', 'approved', 'draft'] as const).map((filter) => <button type="button" key={filter} className={libraryFilter === filter ? 'active' : ''} onClick={() => setLibraryFilter(filter)}>{filter === 'all' ? 'Todas' : filter === 'review' ? 'Em revisão' : filter === 'approved' ? 'Aprovadas' : 'Rascunhos'}</button>)}</div></div>
+      {ideas.length ? filteredIdeas.length ? <div className="simple-list">{filteredIdeas.map((idea) => <div key={idea.id} className="idea-list-row">
         {editing?.id === idea.id ? <form className="form-grid idea-edit-form" onSubmit={(event) => { event.preventDefault(); void saveEdited() }}>
           <label>Título<input required value={editing.title} onChange={(event) => setEditing({ ...editing, title: event.target.value })} /></label>
           <label>Gancho<input value={editing.hook ?? ''} onChange={(event) => setEditing({ ...editing, hook: event.target.value })} /></label>
@@ -227,9 +252,9 @@ export function AdminContent() {
           <div className="form-actions"><button type="button" className="secondary-button" onClick={() => { setEditing(null); setReviewed(false) }}>Cancelar</button><button className="secondary-button" disabled={busy} type="submit">Salvar revisão</button><button className="primary-button" disabled={busy || !reviewed || !editing.title.trim() || !editing.body?.trim()} type="button" onClick={() => void saveEdited(true)}>Aprovar ideia <span>→</span></button></div>
         </form> : <>
           <div><strong>{idea.title}</strong><small>{idea.format} · {idea.status === 'approved' ? 'Aprovada' : idea.status === 'review' ? 'Em revisão' : 'Rascunho'} · {idea.source === 'ai' ? 'IA' : 'Manual'}</small>{idea.hook && <p><b>Gancho:</b> {idea.hook}</p>}<p>{idea.body}</p>{idea.cta && <p><b>CTA:</b> {idea.cta}</p>}<IdeaSources idea={idea} /></div>
-          {idea.status !== 'approved' && <div className="idea-actions"><button className="secondary-button" onClick={() => { setEditing({ ...idea }); setReviewed(false); setError(''); setMessage('') }}>Revisar ideia</button></div>}
+          <div className="idea-actions"><button type="button" className="secondary-button" onClick={() => void copyIdea(idea)}>Copiar conteúdo</button>{idea.status !== 'approved' && <button className="secondary-button" onClick={() => { setEditing({ ...idea }); setReviewed(false); setError(''); setMessage('') }}>Revisar ideia</button>}</div>
         </>}
-      </div>)}</div> : <p className="empty-copy">Nenhuma ideia salva ainda.</p>}
+      </div>)}</div> : <p className="empty-copy">Nenhuma ideia corresponde ao filtro atual.</p> : <p className="empty-copy">Nenhuma ideia salva ainda.</p>}
     </section>
     <section className="panel editor-panel" aria-labelledby="reminders-title"><div className="panel-heading"><div><span className="panel-kicker">Planejamento</span><h2 id="reminders-title">Lembretes de conteúdo</h2></div></div>
       <p className="field-help">Escolha uma ideia aprovada e uma data. O lembrete fica registrado no painel; não há notificação, publicação ou envio automático.</p>

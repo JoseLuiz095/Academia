@@ -27,6 +27,8 @@ export function AdminOrders() {
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [filter, setFilter] = useState<'all' | OrderStatus>('all')
+  const [search, setSearch] = useState('')
 
   async function load(workspaceId: string) {
     if (!supabase) return
@@ -43,6 +45,11 @@ export function AdminOrders() {
 
   useEffect(() => { if (workspace) void load(workspace.id) }, [workspace?.id])
 
+  const shownOrders = orders.filter((order) => {
+    const query = search.trim().toLocaleLowerCase('pt-BR')
+    return (filter === 'all' || order.status === filter) && (!query || order.reference.toLocaleLowerCase('pt-BR').includes(query) || order.order_items.some((item) => item.product_name.toLocaleLowerCase('pt-BR').includes(query)))
+  })
+
   async function changeStatus(order: OrderRow, status: OrderStatus) {
     if (!supabase || !workspace || savingId) return
     if (status === 'confirmed' && !window.confirm(`Você conferiu no extrato o crédito do pedido ${order.reference}, no valor de ${currency.format(order.total)}? Somente confirme após receber o Pix.`)) return
@@ -58,7 +65,8 @@ export function AdminOrders() {
   return <>
     <div className="page-intro"><div><p className="eyebrow">Sua operação</p><h1>Pedidos</h1><p className="intro-description">Pedidos iniciados na vitrine. Confira o valor e a referência com o cliente, confirme o Pix no extrato e só então combine a entrega pelo WhatsApp.</p></div></div>
     {error && <p className="form-error" role="alert">{error}</p>}
-    {loading ? <p className="empty-copy">Carregando pedidos…</p> : orders.length ? <div className="orders-list">{orders.map((order) => <article className="panel order-card" key={order.id}>
+    {!loading && orders.length > 0 && <div className="orders-toolbar"><input aria-label="Buscar pedido" placeholder="Buscar referência ou produto" value={search} onChange={(event) => setSearch(event.target.value)} /><div className="filter-tabs" role="tablist" aria-label="Filtrar pedidos">{(['all', 'pending', 'confirmed', 'cancelled'] as const).map((item) => <button type="button" key={item} className={filter === item ? 'active' : ''} onClick={() => setFilter(item)}>{item === 'all' ? `Todos (${orders.length})` : item === 'pending' ? `Pendentes (${orders.filter((order) => order.status === item).length})` : item === 'confirmed' ? 'Confirmados' : 'Cancelados'}</button>)}</div></div>}
+    {loading ? <p className="empty-copy">Carregando pedidos…</p> : shownOrders.length ? <div className="orders-list">{shownOrders.map((order) => <article className="panel order-card" key={order.id}>
       <div className="panel-heading"><div><span className="panel-kicker">{order.reference}</span><h2>{statusLabel[order.status]}</h2></div><strong>{currency.format(order.total)}</strong></div>
       <p className="field-help">Criado em {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(order.created_at))}</p>
       {order.confirmed_at && <p className="field-help">Pagamento confirmado em {new Date(order.confirmed_at).toLocaleString('pt-BR')}.</p>}
@@ -66,6 +74,6 @@ export function AdminOrders() {
       <div className="simple-list">{order.order_items.map((item) => <div key={item.id}><strong>{item.quantity}× {item.product_name}</strong><span>{currency.format(item.line_total)}</span></div>)}</div>
       {order.status === 'pending' && <div className="form-actions"><button className="secondary-button" disabled={savingId !== null} onClick={() => void changeStatus(order, 'cancelled')}>Cancelar pedido</button><button className="primary-button" disabled={savingId !== null} onClick={() => void changeStatus(order, 'confirmed')}>{savingId === order.id ? 'Salvando…' : 'Confirmar pagamento'} <span>✓</span></button></div>}
       <p className="field-help">Localize a conversa do cliente pela referência {order.reference}. {order.status === 'confirmed' ? 'Pagamento marcado como confirmado; combine a entrega do manual, produto ou serviço na conversa.' : 'A plataforma não verifica o Pix automaticamente nem envia arquivos ao cliente.'}</p>
-    </article>)}</div> : <section className="panel empty-panel"><h2>Nenhum pedido ainda</h2><p>Os pedidos iniciados na sua vitrine aparecerão aqui.</p></section>}
+    </article>)}</div> : <section className="panel empty-panel"><h2>{orders.length ? 'Nenhum pedido corresponde ao filtro' : 'Nenhum pedido ainda'}</h2><p>{orders.length ? 'Tente buscar por outra referência ou status.' : 'Os pedidos iniciados na sua vitrine aparecerão aqui.'}</p></section>}
   </>
 }
