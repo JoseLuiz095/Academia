@@ -7,6 +7,8 @@ type Payment = {
   workspace_id: string
   requested_by: string
   plan_code: 'starter' | 'creator' | 'pro'
+  previous_plan_code: 'starter' | 'creator' | 'pro' | null
+  payment_intent: 'renewal' | 'plan_change'
   amount_cents: number
   status: 'pending' | 'proof_sent' | 'paid' | 'rejected'
   pix_code: string | null
@@ -31,6 +33,7 @@ type BillingSettings = {
 
 const planNames = { starter: 'Essencial', creator: 'Criador', pro: 'Crescimento' }
 const statusNames = { pending: 'Aguardando pagamento', proof_sent: 'Comprovante informado', paid: 'Pago', rejected: 'Recusado' }
+const intentNames = { renewal: 'Renovação', plan_change: 'Alteração de plano' }
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 const dateTime = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 const emptySettings: BillingSettings = { pix_key: '', pix_receiver: '', pix_city: '', pix_static_code: '', whatsapp: '' }
@@ -44,6 +47,7 @@ function formatDate(value: string | null) {
 export function MasterPayments() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [names, setNames] = useState<Record<string, string>>({})
+  const [currentPlans, setCurrentPlans] = useState<Record<string, Payment['plan_code']>>({})
   const [settings, setSettings] = useState<BillingSettings>(emptySettings)
   const [loading, setLoading] = useState(true)
   const [savingSettings, setSavingSettings] = useState(false)
@@ -56,8 +60,8 @@ export function MasterPayments() {
     if (!supabase) { setError('Supabase não configurado.'); setLoading(false); return }
     setLoading(true)
     const [paymentsResult, workspacesResult, settingsResult] = await Promise.all([
-      supabase.from('subscription_payments').select('id,workspace_id,requested_by,plan_code,amount_cents,status,pix_code,pix_key,pix_receiver,pix_city,reference,proof_sent_at,reviewed_at,reviewed_by,reviewer_note,created_at').order('created_at', { ascending: false }).limit(100),
-      supabase.from('workspaces').select('id,name'),
+      supabase.from('subscription_payments').select('id,workspace_id,requested_by,plan_code,previous_plan_code,payment_intent,amount_cents,status,pix_code,pix_key,pix_receiver,pix_city,reference,proof_sent_at,reviewed_at,reviewed_by,reviewer_note,created_at').order('created_at', { ascending: false }).limit(100),
+      supabase.from('workspaces').select('id,name,plan_code'),
       supabase.from('platform_billing_settings').select('pix_key,pix_receiver,pix_city,pix_static_code,whatsapp').eq('id', true).maybeSingle(),
     ])
     const queryError = paymentsResult.error ?? workspacesResult.error ?? settingsResult.error
@@ -65,6 +69,7 @@ export function MasterPayments() {
     else {
       setPayments((paymentsResult.data ?? []) as Payment[])
       setNames(Object.fromEntries((workspacesResult.data ?? []).map((item) => [item.id, item.name])))
+      setCurrentPlans(Object.fromEntries((workspacesResult.data ?? []).map((item) => [item.id, item.plan_code as Payment['plan_code']])))
       setSettings((settingsResult.data as BillingSettings | null) ?? emptySettings)
       setError(settingsResult.data ? '' : 'Configuração Pix da plataforma não encontrada (id=true).')
     }
@@ -127,7 +132,7 @@ export function MasterPayments() {
     {message && <p className="form-success" role="status">{message}</p>}
 
     <section className="panel"><div className="panel-heading"><div><span className="panel-kicker">Conferência manual</span><h2>{pending.length} cobrança(s) pendente(s)</h2></div></div>
-      {loading ? <p className="empty-copy">Carregando pagamentos…</p> : pending.length ? <div className="request-list">{pending.map((payment) => <article className="request-card" key={payment.id}><div className="request-card-main"><span className="status-pill">{statusNames[payment.status]}</span><h3>{names[payment.workspace_id] ?? payment.workspace_id}</h3><p>{planNames[payment.plan_code]} · {money.format(payment.amount_cents / 100)} · referência {payment.reference ?? payment.id}</p><small>Criada em {formatDate(payment.created_at)} · comprovante informado em {formatDate(payment.proof_sent_at)}</small><small>Recebedor: {payment.pix_receiver || 'Não informado'} · chave: {payment.pix_key || 'Código Pix na cobrança'}</small>{payment.status === 'pending' && <p>Aguardando o criador informar o envio do comprovante. A confirmação de crédito fica disponível depois disso.</p>}<label>Observação da análise<textarea value={notes[payment.id] ?? ''} onChange={(event) => setNotes((current) => ({ ...current, [payment.id]: event.target.value }))} placeholder="Obrigatória para recusar" /></label></div><div className="request-card-actions"><button type="button" className="secondary-button" disabled={Boolean(busyId)} onClick={() => void review(payment, 'reject')}>Recusar</button><button type="button" className="primary-button" disabled={Boolean(busyId) || payment.status !== 'proof_sent'} onClick={() => void review(payment, 'approve')}>{busyId === payment.id ? 'Processando…' : 'Confirmar crédito Pix'}</button></div></article>)}</div> : <p className="empty-copy">Nenhuma cobrança aguardando análise.</p>}
+      {loading ? <p className="empty-copy">Carregando pagamentos…</p> : pending.length ? <div className="request-list">{pending.map((payment) => { const previous = payment.previous_plan_code ?? currentPlans[payment.workspace_id] ?? 'starter'; return <article className="request-card" key={payment.id}><div className="request-card-main"><span className="status-pill">{statusNames[payment.status]}</span><h3>{names[payment.workspace_id] ?? payment.workspace_id}</h3><p>{intentNames[payment.payment_intent] ?? 'Renovação'} · {payment.payment_intent === 'plan_change' ? `${planNames[previous]} → ${planNames[payment.plan_code]}` : planNames[payment.plan_code]} · {money.format(payment.amount_cents / 100)}</p><small>Referência {payment.reference ?? payment.id} · criada em {formatDate(payment.created_at)} · comprovante informado em {formatDate(payment.proof_sent_at)}</small><small>Recebedor: {payment.pix_receiver || 'Não informado'} · chave: {payment.pix_key || 'Código Pix na cobrança'}</small>{payment.status === 'pending' && <p>Aguardando o criador informar o envio do comprovante. A confirmação de crédito fica disponível depois disso.</p>}{payment.status === 'proof_sent' && <p className="form-success">Comprovante informado. Confira o crédito no banco antes de confirmar.</p>}<label>Observação da análise<textarea value={notes[payment.id] ?? ''} onChange={(event) => setNotes((current) => ({ ...current, [payment.id]: event.target.value }))} placeholder="Obrigatória para recusar" /></label></div><div className="request-card-actions"><button type="button" className="secondary-button" disabled={Boolean(busyId)} onClick={() => void review(payment, 'reject')}>Recusar</button><button type="button" className="primary-button" disabled={Boolean(busyId) || payment.status !== 'proof_sent'} onClick={() => void review(payment, 'approve')}>{busyId === payment.id ? 'Processando…' : payment.payment_intent === 'plan_change' ? 'Confirmar alteração' : 'Confirmar renovação'}</button></div></article> })}</div> : <p className="empty-copy">Nenhuma cobrança aguardando análise.</p>}
     </section>
 
     <section className="panel"><div className="panel-heading"><div><span className="panel-kicker">Pix da plataforma</span><h2>Dados para mensalidades</h2></div></div><p>Estes dados são usados para novas cobranças da plataforma. O Pix das vendas de cada espaço é configurado separadamente.</p><form onSubmit={(event) => void saveSettings(event)}><div className="form-row"><label>Chave Pix<input value={settings.pix_key ?? ''} onChange={(event) => setSettings((current) => ({ ...current, pix_key: event.target.value }))} /></label><label>Favorecido<input value={settings.pix_receiver ?? ''} onChange={(event) => setSettings((current) => ({ ...current, pix_receiver: event.target.value }))} /></label><label>Cidade<input value={settings.pix_city ?? ''} onChange={(event) => setSettings((current) => ({ ...current, pix_city: event.target.value }))} /></label><label>WhatsApp financeiro<input inputMode="tel" value={settings.whatsapp ?? ''} onChange={(event) => setSettings((current) => ({ ...current, whatsapp: event.target.value }))} placeholder="55 + DDD + número" /></label></div><label>Pix copia e cola estático base (opcional)<textarea rows={3} value={settings.pix_static_code ?? ''} onChange={(event) => setSettings((current) => ({ ...current, pix_static_code: event.target.value }))} /></label><div className="form-actions"><button type="submit" className="primary-button" disabled={savingSettings || loading}>{savingSettings ? 'Salvando…' : 'Salvar dados Pix'}</button></div></form></section>

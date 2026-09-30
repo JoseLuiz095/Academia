@@ -21,16 +21,20 @@ function requestFor(workspaceId: string, items: OrderItemInput[]) {
   return { key, fingerprint, requestId }
 }
 
-export async function createPendingOrder(workspaceId: string, items: OrderItemInput[], expectedTotal: number): Promise<OrderReceipt> {
+export async function createPendingOrder(workspaceId: string, items: OrderItemInput[], expectedTotal: number, turnstileToken = ''): Promise<OrderReceipt> {
   if (!supabase) throw new Error('A vitrine está temporariamente indisponível.')
   if (!items.length || items.length > 20) throw new Error('Escolha de 1 a 20 produtos para o pedido.')
   const attempt = requestFor(workspaceId, items)
-  const { data, error } = await supabase.rpc('create_pending_order', {
+  const payload = {
     target_workspace_id: workspaceId,
     client_request_id: attempt.requestId,
     cart_items: items,
     expected_total: expectedTotal,
-  })
+  }
+  const result = turnstileToken
+    ? await supabase.functions.invoke('create-public-order', { body: { ...payload, turnstile_token: turnstileToken } })
+    : await supabase.rpc('create_pending_order', payload)
+  const { data, error } = result
   if (error) {
     const known = ['Os valores mudaram', 'Produto indisponível', 'Vitrine indisponível', 'Esta tentativa já foi usada']
     const message = known.find((text) => error.message.includes(text))
