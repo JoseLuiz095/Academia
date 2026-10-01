@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { TurnstileWidget } from '../components/TurnstileWidget'
+import { appConfig } from '../lib/config'
 import { supabase } from '../lib/supabase'
 
 function returnPath(area: string | null) {
@@ -17,18 +19,22 @@ export function PasswordRecoveryPage() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaReset, setCaptchaReset] = useState(0)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!supabase) { setError('Configure o Supabase antes de recuperar a senha.'); return }
+    if (appConfig.turnstileSiteKey && !captchaToken) { setError('Conclua a verificação de segurança.'); return }
     setBusy(true); setError(''); setMessage('')
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/conta/seguranca?area=${area === 'master' ? 'master' : 'admin'}` })
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/conta/seguranca?area=${area === 'master' ? 'master' : 'admin'}`, ...(captchaToken ? { captchaToken } : {}) })
     if (resetError) setError('Não foi possível solicitar a recuperação. Confira o e-mail e tente novamente.')
     else setMessage('Se este e-mail estiver cadastrado, enviaremos um link para criar uma nova senha. Confira também o spam.')
+    if (resetError && appConfig.turnstileSiteKey) { setCaptchaToken(''); setCaptchaReset((value) => value + 1) }
     setBusy(false)
   }
 
-  return <main className="auth-shell"><AuthBrand /><div className="auth-card"><p className="eyebrow">Segurança da conta</p><h1>Recupere sua senha</h1><p>Informe o e-mail usado no painel. O link recebido abrirá uma página segura para cadastrar uma nova senha.</p><form onSubmit={(event) => void submit(event)}><label>E-mail<input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>{error && <p className="form-error" role="alert">{error}</p>}{message && <p className="form-success" role="status">{message}</p>}<button className="primary-button" disabled={busy}>{busy ? 'Enviando…' : 'Enviar link'} <span>→</span></button></form><Link className="demo-access-link" to={area === 'master' ? '/admin-master/login' : '/admin/login'}>Voltar para o login</Link></div></main>
+  return <main className="auth-shell"><AuthBrand /><div className="auth-card"><p className="eyebrow">Segurança da conta</p><h1>Recupere sua senha</h1><p>Informe o e-mail usado no painel. O link recebido abrirá uma página segura para cadastrar uma nova senha.</p><form onSubmit={(event) => void submit(event)}><label>E-mail<input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>{appConfig.turnstileSiteKey && <div className="auth-security-card"><strong>Verificação de segurança</strong><small>Protege o envio do link de recuperação.</small><TurnstileWidget siteKey={appConfig.turnstileSiteKey} action="password-recovery" onToken={setCaptchaToken} resetSignal={captchaReset} /></div>}{error && <p className="form-error" role="alert">{error}</p>}{message && <p className="form-success" role="status">{message}</p>}<button className="primary-button" disabled={busy || Boolean(appConfig.turnstileSiteKey && !captchaToken)}>{busy ? 'Enviando…' : appConfig.turnstileSiteKey && !captchaToken ? 'Conclua a verificação' : 'Enviar link'} <span>→</span></button></form><Link className="demo-access-link" to={area === 'master' ? '/admin-master/login' : '/admin/login'}>Voltar para o login</Link></div></main>
 }
 
 export function ChangePasswordPage() {

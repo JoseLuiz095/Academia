@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { TurnstileWidget } from '../../components/TurnstileWidget'
 import { useStore } from '../../layouts/PublicLayout'
+import { appConfig } from '../../lib/config'
 import { currency, whatsappLink } from '../../lib/format'
 import { buildPixCopyPaste, buildPixFromStaticBase, isPixCopyPaste, readStaticPixReceiver } from '../../lib/pix'
 import { createPendingOrder, finishOrderAttempt, loadOrderReceipt, rememberOrderReceipt } from '../../lib/orders'
@@ -48,6 +50,8 @@ export function StoreCheckout() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null)
+  const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaReset, setCaptchaReset] = useState(0)
   const submitting = useRef(false)
   const rows = cart.map((item) => ({ item, product: products.find((product) => product.id === item.id) })).filter((row): row is { item: typeof row.item; product: Product } => Boolean(row.product))
   const receipt = rows.length ? null : lastReceipt
@@ -71,17 +75,19 @@ export function StoreCheckout() {
 
   async function registerOrder() {
     if (submitting.current) return
+    if (appConfig.turnstileSiteKey && !captchaToken) { setError('Conclua a verificação de segurança antes de registrar o pedido.'); return }
     submitting.current = true
     setBusy(true)
     setError('')
     try {
-      const saved = await createPendingOrder(workspace.id, rows.map(({ item }) => ({ product_id: item.id, quantity: item.quantity })), Math.round(total * 100) / 100)
+      const saved = await createPendingOrder(workspace.id, rows.map(({ item }) => ({ product_id: item.id, quantity: item.quantity })), Math.round(total * 100) / 100, captchaToken)
       rememberOrderReceipt(workspace.id, saved)
       setLastReceipt(saved)
       finishOrderAttempt(workspace.id)
       clearCart()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível registrar o pedido. Tente novamente.')
+      if (appConfig.turnstileSiteKey) { setCaptchaToken(''); setCaptchaReset((value) => value + 1) }
     } finally {
       submitting.current = false
       setBusy(false)
@@ -103,13 +109,13 @@ export function StoreCheckout() {
           <div className="checkout-payee"><span>Recebedor</span><strong>{pixReceiver || 'A confirmar com o profissional'}</strong><span>Total</span><strong>{currency.format(receipt.total)}</strong></div>
           {pixCode ? <><label>Pix copia e cola com o valor do pedido<textarea readOnly rows={5} value={pixCode} /></label><button className="primary-button" onClick={() => void copy(pixCode, 'Código Pix')}>Copiar Pix <span aria-hidden="true">▣</span></button></> : workspace.pix_key && !isPixCopyPaste(workspace.pix_key) ? <><label>Chave Pix<input readOnly value={workspace.pix_key} /></label><button className="primary-button" onClick={() => void copy(workspace.pix_key!, 'Chave Pix')}>Copiar chave <span aria-hidden="true">▣</span></button><p className="field-help">A chave Pix não inclui o valor. Informe o total mostrado acima no aplicativo do banco.</p></> : <p className="field-help">O Pix automático não está disponível. Combine o pagamento diretamente com o profissional.</p>}
           {message && <p className={message.error ? 'form-error' : 'form-success'} role={message.error ? 'alert' : 'status'}>{message.text}</p>}
-        </> : <p>Os dados para pagamento aparecem após o registro do pedido.</p>}
+        </> : <><p>Os dados para pagamento aparecem após o registro do pedido.</p>{appConfig.turnstileSiteKey ? <div className="checkout-security-card"><strong>Verificação de segurança</strong><small>Protege a criação do pedido contra automações abusivas.</small><TurnstileWidget siteKey={appConfig.turnstileSiteKey} action="checkout" onToken={setCaptchaToken} resetSignal={captchaReset} /></div> : <p className="field-help">A proteção anti-robô ainda não foi configurada neste ambiente de teste.</p>}</>}
       </div>
       <div className="panel">
         <h2>Resumo</h2>
         <div className="simple-list">{receipt ? receipt.items.map((item, index) => <div key={index}><strong>{item.quantity}× {item.name}</strong><span>{currency.format(item.line_total)}</span></div>) : rows.map(({ item, product }) => <div key={item.id}><strong>{item.quantity}× {product.name}</strong><span>{currency.format((product.price ?? 0) * item.quantity)}</span></div>)}</div>
         <div className="cart-total"><span>Total</span><strong>{currency.format(receipt?.total ?? total)}</strong></div>
-        {receipt ? <><p className="form-success" role="status">Referência {receipt.reference} registrada. Aguardando confirmação manual do profissional.</p>{contact ? <a className="primary-button plain-link" href={contact} target="_blank" rel="noreferrer">Enviar pedido no WhatsApp <span aria-hidden="true">↗</span></a> : <><button className="secondary-button" type="button" onClick={() => void copy(receipt.reference, 'Referência do pedido')}>Copiar referência</button><p className="field-help">O WhatsApp ainda não foi configurado. Guarde esta referência e combine a entrega pelo canal informado pelo profissional.</p></>}</> : <button className="primary-button" type="button" disabled={busy} onClick={() => void registerOrder()}>{busy ? 'Registrando…' : 'Registrar pedido pendente'} <span aria-hidden="true">→</span></button>}
+        {receipt ? <><p className="form-success" role="status">Referência {receipt.reference} registrada. Aguardando confirmação manual do profissional.</p>{contact ? <a className="primary-button plain-link" href={contact} target="_blank" rel="noreferrer">Enviar pedido no WhatsApp <span aria-hidden="true">↗</span></a> : <><button className="secondary-button" type="button" onClick={() => void copy(receipt.reference, 'Referência do pedido')}>Copiar referência</button><p className="field-help">O WhatsApp ainda não foi configurado. Guarde esta referência e combine a entrega pelo canal informado pelo profissional.</p></>}</> : <button className="primary-button" type="button" disabled={busy || Boolean(appConfig.turnstileSiteKey && !captchaToken)} onClick={() => void registerOrder()}>{busy ? 'Registrando…' : appConfig.turnstileSiteKey && !captchaToken ? 'Conclua a verificação' : 'Registrar pedido pendente'} <span aria-hidden="true">→</span></button>}
         {error && <p className="form-error" role="alert">{error}</p>}
         <p className="field-help">Após pagar, envie a referência pelo WhatsApp. O pedido fica pendente até o profissional conferir o crédito no banco. A entrega do manual ou o agendamento são combinados por WhatsApp. Nenhum dado pessoal é solicitado aqui.</p>
       </div>

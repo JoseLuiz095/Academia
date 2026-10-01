@@ -8,7 +8,7 @@ type Action = 'suspend' | 'restore' | 'extend' | 'change_plan'
 type PlanCode = 'starter' | 'creator' | 'pro'
 
 const planNames: Record<PlanCode, string> = { starter: 'Essencial', creator: 'Criador', pro: 'Crescimento' }
-const actionNames: Record<Action, string> = { suspend: 'Suspender acesso', restore: 'Restaurar acesso', extend: 'Estender prazo', change_plan: 'Alterar plano' }
+const actionNames: Record<Action, string> = { suspend: 'Suspender acesso', restore: 'Restaurar acesso', extend: 'Estender prazo', change_plan: 'Gerar cobrança para alterar plano' }
 const statusNames: Record<string, string> = { trial: 'Em teste', active: 'Ativa', past_due: 'Vencida', cancelled: 'Cancelada' }
 
 function dateLabel(value: string | null | undefined) {
@@ -64,19 +64,22 @@ export function MasterWorkspaces() {
       setError(action === 'extend' ? 'Informe o motivo da prorrogação administrativa.' : 'Informe o motivo da suspensão.')
       return
     }
-    const detail = action === 'extend' ? `${periodDays} dias. Esta é uma prorrogação administrativa do vencimento, sem confirmação de pagamento.` : action === 'change_plan' ? planNames[plan] : 'Confira os dados do espaço.'
+    const detail = action === 'extend' ? `${periodDays} dias. Esta é uma prorrogação administrativa do vencimento, sem confirmação de pagamento.` : action === 'change_plan' ? `Será criada uma cobrança Pix de ${planNames[plan]}. O plano só muda após comprovante e conferência do crédito.` : 'Confira os dados do espaço.'
     if (!window.confirm(`${actionNames[action]} de ${selected.name}? ${detail}`)) return
     setSaving(true); setError(''); setMessage('')
-    const { error: mutationError } = await supabase.rpc('manage_workspace_subscription', {
-      target_workspace_id: selected.id,
-      action,
-      plan: action === 'change_plan' ? plan : null,
-      period_days: action === 'extend' ? periodDays : null,
-      note: note.trim() || null,
-    })
+    const result = action === 'change_plan'
+      ? await supabase.rpc('request_subscription_payment', { target_workspace_id: selected.id, target_plan_code: plan })
+      : await supabase.rpc('manage_workspace_subscription', {
+        target_workspace_id: selected.id,
+        action,
+        plan: null,
+        period_days: action === 'extend' ? periodDays : null,
+        note: note.trim() || null,
+      })
+    const mutationError = result.error
     if (mutationError) setError(mutationError.message)
     else {
-      setMessage(`${actionNames[action]} registrada para ${selected.name}.`)
+      setMessage(action === 'change_plan' ? `Cobrança Pix de ${planNames[plan]} criada para ${selected.name}. Aguarde o pagamento e o comprovante do criador.` : `${actionNames[action]} registrada para ${selected.name}.`)
       setSelected(null)
       await load()
     }
@@ -97,6 +100,6 @@ export function MasterWorkspaces() {
       })}</div> : <p className="empty-copy">Nenhum espaço encontrado.</p>}
     </section>
 
-    {selected && <section className="panel" aria-label={`Gerenciar assinatura de ${selected.name}`}><div className="panel-heading"><div><span className="panel-kicker">Gestão</span><h2>{selected.name}</h2></div><button type="button" className="text-button" onClick={() => setSelected(null)}>Fechar</button></div><p>Plano atual: {planNames[selected.plan_code ?? 'starter']} · {statusNames[selected.subscription_status ?? ''] ?? 'Sem status'} · vence em {dateLabel(selected.subscription_ends_at)}.</p><form onSubmit={(event) => void save(event)}><div className="form-row"><label>Ação<select value={action} onChange={(event) => setAction(event.target.value as Action)}><option value="suspend">Suspender acesso</option><option value="restore">Restaurar acesso</option><option value="extend">Prorrogação administrativa</option><option value="change_plan">Alterar plano manualmente</option></select></label>{action === 'change_plan' && <label>Plano<select value={plan} onChange={(event) => setPlan(event.target.value as PlanCode)}>{Object.entries(planNames).map(([code, name]) => <option key={code} value={code}>{name}</option>)}</select></label>}{action === 'extend' && <label>Período (dias)<input type="number" min="1" max="365" step="1" required value={periodDays} onChange={(event) => setPeriodDays(Number(event.target.value))} /></label>}</div><label>Observação{action === 'suspend' || action === 'extend' ? ' (obrigatória)' : ' (opcional)'}<textarea value={note} required={action === 'suspend' || action === 'extend'} onChange={(event) => setNote(event.target.value)} placeholder="Motivo administrativo" /></label><p className="empty-copy">Esta ação é administrativa e não confirma pagamentos. Para renovar após Pix, confira o crédito e aprove a cobrança na página de pagamentos.</p><div className="form-actions"><button type="button" className="secondary-button" onClick={() => setSelected(null)}>Voltar</button><button type="submit" className="primary-button" disabled={saving}>{saving ? 'Salvando…' : actionNames[action]}</button></div></form></section>}
+    {selected && <section className="panel" aria-label={`Gerenciar assinatura de ${selected.name}`}><div className="panel-heading"><div><span className="panel-kicker">Gestão</span><h2>{selected.name}</h2></div><button type="button" className="text-button" onClick={() => setSelected(null)}>Fechar</button></div><p>Plano atual: {planNames[selected.plan_code ?? 'starter']} · {statusNames[selected.subscription_status ?? ''] ?? 'Sem status'} · vence em {dateLabel(selected.subscription_ends_at)}.</p><form onSubmit={(event) => void save(event)}><div className="form-row"><label>Ação<select value={action} onChange={(event) => setAction(event.target.value as Action)}><option value="suspend">Suspender acesso</option><option value="restore">Restaurar acesso</option><option value="extend">Prorrogação administrativa</option><option value="change_plan">Gerar cobrança para alterar plano</option></select></label>{action === 'change_plan' && <label>Plano<select value={plan} onChange={(event) => setPlan(event.target.value as PlanCode)}>{Object.entries(planNames).map(([code, name]) => <option key={code} value={code}>{name}</option>)}</select></label>}{action === 'extend' && <label>Período (dias)<input type="number" min="1" max="365" step="1" required value={periodDays} onChange={(event) => setPeriodDays(Number(event.target.value))} /></label>}</div><label>Observação{action === 'suspend' || action === 'extend' ? ' (obrigatória)' : ' (opcional)'}<textarea value={note} required={action === 'suspend' || action === 'extend'} onChange={(event) => setNote(event.target.value)} placeholder="Motivo administrativo" /></label><p className="empty-copy">A alteração de plano gera cobrança Pix e só entra em vigor depois do comprovante e da conferência do crédito. Prorrogações continuam sendo ações administrativas.</p><div className="form-actions"><button type="button" className="secondary-button" onClick={() => setSelected(null)}>Voltar</button><button type="submit" className="primary-button" disabled={saving}>{saving ? 'Salvando…' : actionNames[action]}</button></div></form></section>}
   </>
 }
