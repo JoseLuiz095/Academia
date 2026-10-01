@@ -65,8 +65,8 @@ Deno.serve(async (request) => {
     return reply({ error: 'A assinatura deste espaço não está ativa.' }, 403)
   }
   if (!profile.data) return reply({ error: 'Salve o perfil de conteúdo antes de usar o assistente.' }, 400)
-  const key = Deno.env.get('GEMINI_API_KEY')
-  if (!key) return reply({ error: 'Gemini não configurado no servidor.' }, 503)
+  const key = (Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GOOGLE_GENERATIVE_AI_API_KEY') || Deno.env.get('GOOGLE_API_KEY'))?.trim()
+  if (!key) return reply({ error: 'Gemini não configurado no Supabase. Cadastre o secret GEMINI_API_KEY na função e tente novamente.' }, 503)
 
   const quota = await client.rpc('consume_ai_quota', { target_workspace_id: workspaceId })
   if (quota.error?.message.includes('Limite diário deste espaço atingido') || quota.error?.message.includes('Limite diário do plano atingido')) return reply({ error: 'Limite diário de IA atingido.' }, 429)
@@ -98,7 +98,12 @@ Deno.serve(async (request) => {
       body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts: [{ text: instruction }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.5, maxOutputTokens: 2048 } }),
       signal: AbortSignal.timeout(25000),
     })
-    if (!response.ok) return reply({ error: 'O Gemini não pôde responder agora.' }, response.status === 429 ? 503 : 502)
+    if (!response.ok) {
+      if (response.status === 429) return reply({ error: 'O Gemini atingiu o limite temporário da API. Aguarde alguns instantes e tente novamente.' }, 429)
+      if (response.status === 401 || response.status === 403) return reply({ error: 'A chave do Gemini foi rejeitada pela API. Gere uma chave válida e atualize o secret GEMINI_API_KEY no Supabase.' }, 502)
+      if (response.status === 404) return reply({ error: `O modelo Gemini "${model}" não está disponível. Ajuste o secret GEMINI_MODEL no Supabase.` }, 502)
+      return reply({ error: 'O Gemini não pôde responder agora. Confira a configuração da API e tente novamente.' }, 502)
+    }
     const data = await response.json()
     const raw = data?.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? '').join('')
     output = JSON.parse(raw)

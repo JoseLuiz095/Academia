@@ -7,7 +7,8 @@ import { isSupabaseConfigured, supabase, supabaseConfigIssue } from '../lib/supa
 
 export function LoginPage({ area }: { area: 'admin' | 'master' }) {
   const [searchParams] = useSearchParams()
-  const selectedPlan = searchParams.get('plan')
+  const requestedPlan = searchParams.get('plan')
+  const selectedPlan = requestedPlan || localStorage.getItem('impulso:pending-plan') || ''
   const [register, setRegister] = useState(area === 'admin' && searchParams.get('register') === '1')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,6 +24,7 @@ export function LoginPage({ area }: { area: 'admin' | 'master' }) {
 
   useEffect(() => {
     if (area === 'admin' && searchParams.get('register') === '1') setRegister(true)
+    if (area === 'admin' && requestedPlan && ['demo', 'starter', 'creator', 'pro'].includes(requestedPlan)) localStorage.setItem('impulso:pending-plan', requestedPlan)
   }, [area, searchParams])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -32,9 +34,10 @@ export function LoginPage({ area }: { area: 'admin' | 'master' }) {
     setBusy(true); setError(''); setMessage(''); setCanResend(false)
     try {
       if (register && area === 'admin') {
-        const result = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/admin/primeiros-passos`, ...(captchaToken ? { captchaToken } : {}) } })
+        const redirect = `${window.location.origin}/admin/primeiros-passos${selectedPlan ? `?plan=${encodeURIComponent(selectedPlan)}` : ''}`
+        const result = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirect, ...(captchaToken ? { captchaToken } : {}) } })
         if (result.error) throw result.error
-        if (result.data.session) { await refresh(); navigate(`/admin/primeiros-passos${selectedPlan ? `?plan=${encodeURIComponent(selectedPlan)}` : ''}`, { replace: true }) }
+        if (result.data.session) { await refresh(); localStorage.removeItem('impulso:pending-plan'); navigate(`/admin/primeiros-passos${selectedPlan ? `?plan=${encodeURIComponent(selectedPlan)}` : ''}`, { replace: true }) }
         else { setMessage('Conta criada. Confirme seu e-mail e depois entre no painel.'); setCanResend(true) }
       } else {
         const result = await supabase.auth.signInWithPassword({ email, password, options: captchaToken ? { captchaToken } : undefined })

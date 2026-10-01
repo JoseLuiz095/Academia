@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { useAuth } from '../../contexts/AuthContext'
+import { readFunctionError } from '../../lib/functionErrors'
 import { supabase } from '../../lib/supabase'
 
 type Turn = { role: 'user' | 'assistant'; text: string }
@@ -24,11 +25,13 @@ export function AdminAssistant() {
         body: { workspaceId: workspace.id, action: 'chat', text, history: turns.slice(-4) },
       })
       if (invokeError) {
+        const serverMessage = await readFunctionError(invokeError)
         if (invokeError instanceof FunctionsHttpError && invokeError.context.status === 429) setError('Limite diário de IA atingido. Tente novamente amanhã.')
         else if (invokeError instanceof FunctionsHttpError && invokeError.context.status === 400) setError('Salve seu perfil de conteúdo e confira a pergunta.')
         else if (invokeError instanceof FunctionsHttpError && invokeError.context.status === 401) setError('Sua sessão expirou. Entre novamente para continuar.')
         else if (invokeError instanceof FunctionsHttpError && invokeError.context.status === 403) setError('O acesso ou a assinatura deste espaço precisa ser regularizado.')
-        else if (invokeError instanceof FunctionsHttpError && invokeError.context.status === 503) setError('O serviço de IA está indisponível no momento. Tente novamente mais tarde.')
+        else if (serverMessage) setError(serverMessage)
+        else if (invokeError instanceof FunctionsHttpError && invokeError.context.status >= 500) setError('O serviço de IA está indisponível no momento. Confira a chave do Gemini no Supabase e tente novamente.')
         else setError('Não foi possível consultar o assistente agora.')
         return
       }
