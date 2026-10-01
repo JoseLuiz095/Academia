@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase'
 import type { WorkspaceRequest } from '../../types'
 
 type PlatformPlan = { code: WorkspaceRequest['plan_code']; name: string; monthly_price_cents: number; product_limit: number; ai_daily_limit: number }
-const planOrder = ['starter', 'creator', 'pro']
+const planOrder = ['demo', 'starter', 'creator', 'pro']
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 const planLabel = (plan: PlatformPlan) => `${plan.name} · ${currency.format(plan.monthly_price_cents / 100)}/mês`
 
@@ -20,8 +20,8 @@ export function AdminOnboarding() {
   const [slug, setSlug] = useState('')
   const [niche, setNiche] = useState('fitness')
   const [plan, setPlan] = useState<WorkspaceRequest['plan_code'] | ''>(() => {
-    const requested = searchParams.get('plan')
-    return requested === 'starter' || requested === 'creator' || requested === 'pro' ? requested : ''
+    const requested = searchParams.get('plan') || localStorage.getItem('impulso:pending-plan')
+    return requested === 'demo' || requested === 'starter' || requested === 'creator' || requested === 'pro' ? requested : ''
   })
   const [plans, setPlans] = useState<PlatformPlan[]>([])
   const [plansLoading, setPlansLoading] = useState(true)
@@ -65,6 +65,7 @@ export function AdminOnboarding() {
     const { data, error: requestError } = await supabase.rpc('create_owner_workspace', { workspace_name: name.trim(), workspace_slug: safeSlug, workspace_niche: niche, workspace_plan: plan })
     if (requestError) { setError(requestError.code === '23505' ? 'Este endereço já está em uso.' : requestError.message); setBusy(false); return }
     setRequest({ id: String(data), owner_id: user.id, name: name.trim(), slug: safeSlug, niche: niche as WorkspaceRequest['niche'], plan_code: plan, status: 'pending', reviewer_note: null, created_at: new Date().toISOString() })
+    localStorage.removeItem('impulso:pending-plan')
     setBusy(false)
   }
 

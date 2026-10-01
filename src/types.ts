@@ -11,7 +11,7 @@ export type Workspace = {
   pix_city: string | null
   service_cities: string | null
   published: boolean
-  plan_code?: 'starter' | 'creator' | 'pro' | null
+  plan_code?: 'demo' | 'starter' | 'creator' | 'pro' | null
   subscription_status?: 'trial' | 'active' | 'past_due' | 'cancelled' | null
   subscription_started_at?: string | null
   subscription_ends_at?: string | null
@@ -38,7 +38,7 @@ export type WorkspaceRequest = {
   name: string
   slug: string
   niche: 'fitness' | 'wellness' | 'creator'
-  plan_code: 'starter' | 'creator' | 'pro'
+  plan_code: 'demo' | 'starter' | 'creator' | 'pro'
   status: 'pending' | 'approved' | 'rejected'
   reviewer_note: string | null
   created_at: string

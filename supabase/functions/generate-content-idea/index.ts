@@ -24,8 +24,8 @@ Deno.serve(async (request) => {
 
   const authHeader = request.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) return json({ error: 'Acesso não autorizado.' }, 401)
-  const apiKey = Deno.env.get('GEMINI_API_KEY')
-  if (!apiKey) return json({ error: 'Gemini ainda não foi configurado no servidor.' }, 503)
+  const apiKey = (Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GOOGLE_GENERATIVE_AI_API_KEY') || Deno.env.get('GOOGLE_API_KEY'))?.trim()
+  if (!apiKey) return json({ error: 'Gemini não configurado no Supabase. Cadastre o secret GEMINI_API_KEY na função e tente novamente.' }, 503)
 
   let input: { workspaceId?: unknown; brief?: unknown; format?: unknown; trendMode?: unknown }
   try { input = await request.json() }
@@ -105,7 +105,12 @@ Deno.serve(async (request) => {
       }),
       signal: AbortSignal.timeout(25000),
     })
-    if (!response.ok) return json({ error: 'O Gemini não pôde gerar a ideia agora. Tente novamente mais tarde.' }, 502)
+    if (!response.ok) {
+      if (response.status === 429) return json({ error: 'O Gemini atingiu o limite temporário da API. Aguarde alguns instantes e tente novamente.' }, 429)
+      if (response.status === 401 || response.status === 403) return json({ error: 'A chave do Gemini foi rejeitada pela API. Gere uma chave válida e atualize o secret GEMINI_API_KEY no Supabase.' }, 502)
+      if (response.status === 404) return json({ error: `O modelo Gemini "${model}" não está disponível. Ajuste o secret GEMINI_MODEL no Supabase.` }, 502)
+      return json({ error: 'O Gemini não pôde gerar a ideia agora. Confira a configuração da API e tente novamente.' }, 502)
+    }
     const result = await response.json()
     const raw = result?.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? '').join('')
     const parsed: unknown = JSON.parse(raw)

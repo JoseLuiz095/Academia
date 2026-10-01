@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from '@supabase/supabase-js'
 import { useAuth } from '../../contexts/AuthContext'
+import { readFunctionError } from '../../lib/functionErrors'
 import { supabase } from '../../lib/supabase'
 import type { ContentIdea, ContentProfile } from '../../types'
 import { AdminAssistant } from './Assistant'
@@ -162,10 +163,12 @@ export function AdminContent() {
         let detail = 'Não foi possível gerar a ideia agora.'
         if (invokeError instanceof FunctionsHttpError) {
           const status = invokeError.context.status
+          const serverMessage = await readFunctionError(invokeError)
           if (status === 429) detail = 'O limite diário de IA do seu plano foi atingido. Tente amanhã.'
           else if (status === 401) detail = 'Sua sessão expirou. Entre novamente e tente mais tarde.'
           else if (status === 403) detail = 'O acesso ou a assinatura deste espaço precisa ser regularizado.'
-          else if (status === 503) detail = 'O serviço de IA está indisponível ou não foi configurado no servidor.'
+          else if (serverMessage) detail = serverMessage
+          else if (status >= 500) detail = 'O serviço de IA está indisponível ou não foi configurado no servidor.'
           else if (status === 400 || status === 422) detail = 'Salve o perfil e confira se o objetivo está dentro do nicho. Uma tendência sem fontes verificáveis não deve ser apresentada como atual.'
         } else if (invokeError instanceof FunctionsFetchError || invokeError instanceof FunctionsRelayError) {
           detail = 'Não foi possível conectar ao serviço de IA. Confira sua conexão e tente novamente.'

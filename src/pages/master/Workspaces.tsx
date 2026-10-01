@@ -5,9 +5,9 @@ import type { Workspace } from '../../types'
 
 type MasterWorkspace = Pick<Workspace, 'id' | 'name' | 'slug' | 'niche' | 'published' | 'plan_code' | 'subscription_status' | 'subscription_started_at' | 'subscription_ends_at' | 'approval_status'>
 type Action = 'suspend' | 'restore' | 'extend' | 'change_plan'
-type PlanCode = 'starter' | 'creator' | 'pro'
+type PlanCode = 'demo' | 'starter' | 'creator' | 'pro'
 
-const planNames: Record<PlanCode, string> = { starter: 'Essencial', creator: 'Criador', pro: 'Crescimento' }
+const planNames: Record<PlanCode, string> = { demo: 'Demonstração', starter: 'Essencial', creator: 'Criador', pro: 'Crescimento' }
 const actionNames: Record<Action, string> = { suspend: 'Suspender acesso', restore: 'Restaurar acesso', extend: 'Estender prazo', change_plan: 'Gerar cobrança para alterar plano' }
 const statusNames: Record<string, string> = { trial: 'Em teste', active: 'Ativa', past_due: 'Vencida', cancelled: 'Cancelada' }
 
