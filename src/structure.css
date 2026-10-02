@@ -195,6 +195,14 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .checkout-payee { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 20px; padding: 16px; background: #f2f5ef; border-radius: 9px; font-size: 11px; }
 .checkout-payee span { color: var(--muted); }
 .checkout-payee strong { overflow-wrap: anywhere; text-align: right; }
+.onboarding-payment-panel { max-width: 760px; }
+.onboarding-payment-panel > p { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.onboarding-payment-panel textarea { width: 100%; min-height: 92px; margin-top: 7px; padding: 11px; border: 1px solid #dfe5db; border-radius: 8px; background: #fbfcf9; color: var(--ink); font: inherit; font-size: 11px; line-height: 1.5; resize: vertical; overflow-wrap: anywhere; }
+.payment-proof-steps { display: grid; gap: 8px; margin: 18px 0; padding: 15px; border-radius: 10px; background: #fff8e7; color: #6f614c; }
+.payment-proof-steps p { display: flex; align-items: center; gap: 9px; margin: 0; font-size: 11px; line-height: 1.45; }
+.payment-proof-steps b { display: grid; place-items: center; width: 22px; height: 22px; flex: 0 0 22px; border-radius: 50%; background: #f5c99f; color: #74472d; font-size: 10px; }
+.onboarding-payment-panel > .check-row { display: flex; align-items: flex-start; gap: 9px; margin: 18px 0 12px; color: #53635c; font-size: 12px; line-height: 1.5; }
+.onboarding-payment-panel > .check-row input { width: 16px; height: 16px; flex: 0 0 16px; margin-top: 1px; accent-color: var(--orange); }
 .checkout-grid .simple-list strong { min-width: 0; overflow-wrap: anywhere; }
 .checkout-grid .simple-list span { flex-shrink: 0; }
 .checkout-grid .form-success { margin-top: 12px; }

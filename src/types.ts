@@ -39,7 +39,16 @@ export type WorkspaceRequest = {
   slug: string
   niche: 'fitness' | 'wellness' | 'creator'
   plan_code: 'demo' | 'starter' | 'creator' | 'pro'
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'payment_pending' | 'pending' | 'approved' | 'rejected'
+  payment_status?: 'not_required' | 'awaiting_payment' | 'proof_sent' | 'confirmed' | 'rejected' | null
+  payment_amount_cents?: number | null
+  payment_reference?: string | null
+  payment_pix_static_code?: string | null
+  payment_pix_key?: string | null
+  payment_pix_receiver?: string | null
+  payment_pix_city?: string | null
+  payment_whatsapp?: string | null
+  payment_proof_declared_at?: string | null
   reviewer_note: string | null
   created_at: string
   reviewed_at?: string | null
