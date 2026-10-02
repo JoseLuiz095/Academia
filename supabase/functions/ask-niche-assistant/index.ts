@@ -71,11 +71,6 @@ Deno.serve(async (request) => {
   const key = (Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GOOGLE_GENERATIVE_AI_API_KEY') || Deno.env.get('GOOGLE_API_KEY'))?.trim()
   if (!key) return reply({ error: 'Gemini não configurado no Supabase. Cadastre o secret GEMINI_API_KEY na função e tente novamente.' }, 503)
 
-  const quota = await client.rpc('consume_ai_quota', { target_workspace_id: workspaceId })
-  if (quota.error?.message.includes('Limite diário deste espaço atingido') || quota.error?.message.includes('Limite diário do plano atingido')) return reply({ error: 'Limite diário de IA atingido.' }, 429)
-  if (quota.error) return reply({ error: 'Não foi possível verificar o limite diário.' }, 503)
-  if (!quota.data) return reply({ error: 'Limite diário de IA atingido.' }, 429)
-
   const limitedProfile = Object.fromEntries(Object.entries(profile.data).map(([field, value]) =>
     [field, typeof value === 'string' ? value.slice(0, 1000) : value]))
   const scope = JSON.stringify({ workspace: { name: workspace.data.name, niche: workspace.data.niche }, profile: limitedProfile })
@@ -115,6 +110,12 @@ Deno.serve(async (request) => {
   } catch { return reply({ error: 'O Gemini demorou ou respondeu em formato inesperado.' }, 502) }
   if (!output || typeof output !== 'object' || Array.isArray(output)) return reply({ error: 'Resposta inválida.' }, 502)
 
+  // A pergunta só consome cota quando a resposta do Gemini foi válida.
+  const quota = await client.rpc('consume_ai_quota', { target_workspace_id: workspaceId })
+  if (quota.error?.message.includes('Limite diário deste espaço atingido') || quota.error?.message.includes('Limite diário do plano atingido')) return reply({ error: 'Limite diário de IA atingido.' }, 429)
+  if (quota.error) return reply({ error: 'Não foi possível verificar o limite diário.' }, 503)
+  if (!quota.data) return reply({ error: 'Limite diário de IA atingido.' }, 429)
+
   if (action === 'chat') {
     if (typeof output.answer !== 'string' || typeof output.inScope !== 'boolean' || (output.inScope && !output.answer.trim())) return reply({ error: 'Resposta inválida.' }, 502)
     return reply({ answer: output.inScope ? output.answer.trim().slice(0, 1200) : 'Posso ajudar apenas com conteúdo e comunicação relacionados ao nicho e ao perfil deste espaço.', inScope: output.inScope })
@@ -127,6 +128,9 @@ Deno.serve(async (request) => {
     body: String(output.body).slice(0, 8000), cta: String(output.cta).slice(0, 1000),
     status: 'review', source: 'ai', created_by: authData.user.id,
   }).select('id').single()
-  if (saved.error) return reply({ error: 'A ideia foi criada, mas não foi possível salvar a revisão.' }, 500)
+  if (saved.error) {
+    await client.rpc('refund_ai_quota', { target_workspace_id: workspaceId })
+    return reply({ error: 'A ideia foi criada, mas não foi possível salvar a revisão.' }, 500)
+  }
   return reply({ id: saved.data.id, status: 'review' })
 })

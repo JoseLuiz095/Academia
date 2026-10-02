@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from '@supabase/supabase-js'
 import { useAuth } from '../../contexts/AuthContext'
 import { readFunctionError } from '../../lib/functionErrors'
@@ -8,6 +9,7 @@ import { AdminAssistant } from './Assistant'
 
 type Reminder = { id: string; workspace_id: string; title: string; body: string; scheduled_for: string; status: string; channel: string; created_at: string }
 type IdeaWithSources = ContentIdea & { trend_sources?: unknown; trend_checked_at?: string | null }
+type AiUsage = { used: number; workspace_limit: number; user_used: number; user_limit: number }
 
 function sourcesFor(idea: IdeaWithSources): { title: string; url: string }[] {
   if (!Array.isArray(idea.trend_sources)) return []
@@ -55,19 +57,22 @@ export function AdminContent() {
   const [reminderError, setReminderError] = useState('')
   const [libraryFilter, setLibraryFilter] = useState<'all' | ContentIdea['status']>('all')
   const [librarySearch, setLibrarySearch] = useState('')
+  const [aiUsage, setAiUsage] = useState<AiUsage | null>(null)
 
   async function load() {
     if (!supabase || !workspace) return
-    const [profileResult, ideasResult, remindersResult] = await Promise.all([
+    const [profileResult, ideasResult, remindersResult, usageResult] = await Promise.all([
       supabase.from('content_profiles').select('workspace_id,tone,audience,goals,guidelines,forbidden_topics,preferred_equipment,training_methods,weekly_frequency').eq('workspace_id', workspace.id).maybeSingle(),
       supabase.from('content_ideas').select('*').eq('workspace_id', workspace.id).order('created_at', { ascending: false }),
       supabase.from('content_reminders').select('id,workspace_id,title,body,scheduled_for,status,channel,created_at').eq('workspace_id', workspace.id).order('scheduled_for', { ascending: true }),
+      supabase.rpc('get_ai_usage_status', { target_workspace_id: workspace.id }),
     ])
     setProfile(profileResult.data ? profileResult.data as ContentProfile : emptyProfile)
     setSavedProfile(profileResult.data ? profileResult.data as ContentProfile : null)
     setProfileSaved(Boolean(profileResult.data))
     setIdeas((ideasResult.data ?? []) as IdeaWithSources[])
     setReminders((remindersResult.data ?? []) as Reminder[])
+    setAiUsage((usageResult.data?.[0] ?? null) as AiUsage | null)
     if (profileResult.error || ideasResult.error) setError('Não foi possível carregar o perfil ou as ideias. Atualize a página e tente novamente.')
     setReminderError(remindersResult.error ? 'Os lembretes ainda não estão disponíveis neste espaço. A tabela e sua política de acesso precisam ser criadas.' : '')
   }
@@ -218,7 +223,7 @@ export function AdminContent() {
     else await load()
   }
 
-  return <><div className="page-intro"><div><p className="eyebrow">Sua voz</p><h1>Conteúdo IA</h1><p className="intro-description">Descreva seu público, gere ou escreva uma ideia e aprove somente após revisar. Gerar ou aprovar não publica nem envia mensagens.</p></div></div>{error && <p className="form-error" role="alert">{error}</p>}{message && <p className="form-success" role="status">{message}</p>}
+  return <><div className="page-intro"><div><p className="eyebrow">Sua voz</p><h1>Conteúdo IA</h1><p className="intro-description">Descreva seu público, gere ou escreva uma ideia e aprove somente após revisar. Gerar ou aprovar não publica nem envia mensagens.</p></div></div>{aiUsage && <section className="ai-usage-card" aria-label="Uso diário de IA"><div><span className="panel-kicker">Uso de hoje</span><strong>{aiUsage.used} de {aiUsage.workspace_limit} gerações do espaço</strong><small>Seu usuário: {aiUsage.user_used} de {aiUsage.user_limit}</small></div><div className="ai-usage-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, Math.round((aiUsage.used / Math.max(1, aiUsage.workspace_limit)) * 100))}%` }} /></div><Link className="text-button plain-link" to="/admin/planos">Ver limites →</Link></section>}{error && <p className="form-error" role="alert">{error}</p>}{message && <p className="form-success" role="status">{message}</p>}
     <section className="panel editor-panel"><div className="panel-heading"><div><span className="panel-kicker">Base para a IA</span><h2>Como você se comunica</h2></div></div><form className="form-grid" onSubmit={(event) => void saveProfile(event)}><div className="form-row"><label>Público-alvo<textarea rows={2} value={profile.audience ?? ''} onChange={(event) => setProfile({ ...profile, audience: event.target.value })} placeholder="Ex.: Iniciantes de 25 a 45 anos com pouco tempo" /></label><label>Tom de voz<input value={profile.tone} onChange={(event) => setProfile({ ...profile, tone: event.target.value })} placeholder="Próximo, técnico e simples" /></label></div><div className="form-row"><label>Objetivos de conteúdo<input value={profile.goals ?? ''} onChange={(event) => setProfile({ ...profile, goals: event.target.value })} placeholder="Educar, engajar e apresentar avaliações" /></label><label>Equipamentos preferidos<input value={profile.preferred_equipment ?? ''} onChange={(event) => setProfile({ ...profile, preferred_equipment: event.target.value })} placeholder="Halteres, leg press, elásticos" /></label></div><div className="form-row"><label>Método ou tipo de treino<input value={profile.training_methods ?? ''} onChange={(event) => setProfile({ ...profile, training_methods: event.target.value })} placeholder="Musculação para iniciantes" /></label><label>Frequência semanal típica<input value={profile.weekly_frequency ?? ''} onChange={(event) => setProfile({ ...profile, weekly_frequency: event.target.value })} placeholder="3 a 4 vezes por semana" /></label></div><label>Instruções adicionais<textarea rows={2} value={profile.guidelines ?? ''} onChange={(event) => setProfile({ ...profile, guidelines: event.target.value })} placeholder="Termos que você usa, abordagem, exemplos preferidos" /></label><label>Temas a evitar<textarea rows={2} value={profile.forbidden_topics ?? ''} onChange={(event) => setProfile({ ...profile, forbidden_topics: event.target.value })} placeholder="Promessas de resultado, temas clínicos etc." /></label><button disabled={busy} className="primary-button">{busy ? 'Salvando…' : 'Salvar perfil'} <span>→</span></button></form></section>
     <div className="dashboard-grid content-workflow">
       <section className="panel"><div className="panel-heading"><div><span className="panel-kicker">Briefing</span><h2>Gerar com Gemini</h2></div></div>
