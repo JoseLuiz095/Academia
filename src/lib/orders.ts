@@ -21,19 +21,23 @@ function requestFor(workspaceId: string, items: OrderItemInput[]) {
   return { key, fingerprint, requestId }
 }
 
-export async function createPendingOrder(workspaceId: string, items: OrderItemInput[], expectedTotal: number, turnstileToken = ''): Promise<OrderReceipt> {
+export async function createPendingOrder(workspaceId: string, items: OrderItemInput[], expectedTotal: number, turnstileToken = '', customer?: { name: string; phone: string; note?: string; consent: boolean }): Promise<OrderReceipt> {
   if (!supabase) throw new Error('A vitrine está temporariamente indisponível.')
   if (!items.length || items.length > 20) throw new Error('Escolha de 1 a 20 produtos para o pedido.')
+  if (!turnstileToken) throw new Error('Conclua a verificação de segurança para registrar o pedido.')
+  if (!customer || customer.name.trim().length < 2 || !/^55\d{10,11}$/.test(customer.phone.replace(/\D/g, '')) || !customer.consent) throw new Error('Informe seu nome, WhatsApp e autorização de contato para continuar.')
   const attempt = requestFor(workspaceId, items)
   const payload = {
     target_workspace_id: workspaceId,
     client_request_id: attempt.requestId,
     cart_items: items,
     expected_total: expectedTotal,
+    customer_name: customer.name.trim(),
+    customer_phone: customer.phone.replace(/\D/g, ''),
+    customer_note: customer.note?.trim() || null,
+    customer_consent: customer.consent,
   }
-  const result = turnstileToken
-    ? await supabase.functions.invoke('create-public-order', { body: { ...payload, turnstile_token: turnstileToken } })
-    : await supabase.rpc('create_pending_order', payload)
+  const result = await supabase.functions.invoke('create-public-order', { body: { ...payload, turnstile_token: turnstileToken } })
   const { data, error } = result
   if (error) {
     const known = ['Os valores mudaram', 'Produto indisponível', 'Vitrine indisponível', 'Esta tentativa já foi usada']

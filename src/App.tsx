@@ -26,6 +26,7 @@ const MasterWorkspaces = lazy(() => import('./pages/master/Workspaces').then((mo
 const MasterRequests = lazy(() => import('./pages/master/Requests').then((module) => ({ default: module.MasterRequests })))
 const MasterPayments = lazy(() => import('./pages/master/Payments').then((module) => ({ default: module.MasterPayments })))
 const MasterPlans = lazy(() => import('./pages/master/Plans').then((module) => ({ default: module.MasterPlans })))
+const MasterDiagnostics = lazy(() => import('./pages/master/Diagnostics').then((module) => ({ default: module.MasterDiagnostics })))
 const Storefront = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreHome })))
 const StoreProduct = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreProduct })))
 const StoreCart = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreCart })))
@@ -87,6 +88,7 @@ export default function App() {
       <Route path="/admin-master/solicitacoes" element={<MasterRequests />} />
       <Route path="/admin-master/pagamentos" element={<MasterPayments />} />
       <Route path="/admin-master/planos" element={<MasterPlans />} />
+      <Route path="/admin-master/diagnostico" element={<MasterDiagnostics />} />
     </Route>
 
     <Route path="*" element={<div className="loading-page"><div><h1>Página não encontrada</h1><a href="/">Voltar ao início</a></div></div>} />

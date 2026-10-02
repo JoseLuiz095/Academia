@@ -51,6 +51,8 @@ export function AdminPlans() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [proofOpened, setProofOpened] = useState(false)
+  const [proofConfirmed, setProofConfirmed] = useState(false)
 
   const load = useCallback(async () => {
     if (!supabase || !workspace) { setLoading(false); return }
@@ -108,20 +110,31 @@ export function AdminPlans() {
     catch { setError('Não foi possível copiar. Selecione o código e copie manualmente.') }
   }
 
-  async function markProofSent() {
-    if (!supabase || !openPayment || busy || openPayment.status !== 'pending') return
+  async function markProofSent(): Promise<boolean> {
+    if (!supabase || !openPayment || busy || openPayment.status !== 'pending') return false
     setBusy(true); setError(''); setMessage('')
     const { error: proofError } = await supabase.rpc('mark_subscription_proof_sent', { target_payment_id: openPayment.id })
     if (proofError) setError(proofError.message)
     else { setMessage('Comprovante informado. Aguarde a conferência do Admin Master.'); await load() }
     setBusy(false)
+    return !proofError
   }
 
-  async function sendProofWhatsApp() {
+  function sendProofWhatsApp() {
     if (!openPayment || !phone || busy || openPayment.status !== 'pending') return
     const popup = window.open(`https://wa.me/${phone}?text=${proofText}`, '_blank', 'noopener,noreferrer')
     if (!popup) { setError('O navegador bloqueou a abertura do WhatsApp. Permita pop-ups e tente novamente.'); return }
-    await markProofSent()
+    setProofOpened(true)
+    setMessage('WhatsApp aberto. Anexe o comprovante, envie a mensagem e volte para confirmar abaixo.')
+  }
+
+  async function confirmProofSent() {
+    if (!proofOpened || !proofConfirmed) return
+    const confirmed = await markProofSent()
+    if (confirmed) {
+      setProofOpened(false)
+      setProofConfirmed(false)
+    }
   }
 
   async function update() {
@@ -130,13 +143,13 @@ export function AdminPlans() {
 
   const proofText = openPayment && workspace ? encodeURIComponent(`Olá! Enviei o comprovante do Pix da assinatura Impulso.\n\nEspaço: ${workspace.name}\nPlano: ${availablePlans.find((plan) => plan.code === openPayment.plan_code)?.name ?? openPayment.plan_code}\nValor: ${money.format(openPayment.amount_cents / 100)}\nReferência: ${openPayment.reference ?? openPayment.id}\n\nVou anexar o comprovante nesta conversa.`) : ''
 
-  return <>
+    return <>
     <div className="page-intro"><div><p className="eyebrow">Conta e crescimento</p><h1>Plano e assinatura</h1><p className="intro-description">Solicite a mensalidade, pague pelo Pix e envie o comprovante. O vencimento só muda após a confirmação do financeiro.</p></div><button type="button" className="secondary-button" onClick={() => void update()} disabled={loading || busy}>Atualizar ↻</button></div>
     {error && <p className="form-error" role="alert">{error}</p>}
     {message && <p className="form-success" role="status">{message}</p>}
     <section className={`subscription-overview ${statusLabel === 'Vencida' ? 'is-expired' : ''}`}><div><span className="subscription-label">Plano atual</span><h2>{currentPlan?.name ?? currentCode}</h2><p>{planDescriptions[currentCode]}</p></div><div className="subscription-status"><span className="status-pill">{statusLabel}</span><strong>{dateLabel(workspace?.subscription_ends_at)}</strong><small>{daysRemaining !== null && daysRemaining > 0 ? `Faltam ${daysRemaining} ${daysRemaining === 1 ? 'dia' : 'dias'} para o vencimento` : daysRemaining !== null ? 'Vencimento não renovado' : 'Vencimento ainda não definido'}</small></div></section>
 
-    {openPayment && <section className="panel" aria-label="Cobrança Pix em aberto"><div className="panel-heading"><div><span className="panel-kicker">{intentNames[openPayment.payment_intent] ?? 'Renovação'} · Pix manual · {statusNames[openPayment.status]}</span><h2>{availablePlans.find((plan) => plan.code === openPayment.plan_code)?.name ?? openPayment.plan_code} · {money.format(openPayment.amount_cents / 100)}</h2></div></div><p>Referência {openPayment.reference ?? openPayment.id} · solicitada em {dateLabel(openPayment.created_at)}. Confira valor e recebedor no seu banco antes de pagar.</p><div className="checkout-payee"><span>Recebedor</span><strong>{pixReceiver || 'Consulte o financeiro'}</strong><span>Valor</span><strong>{money.format(openPayment.amount_cents / 100)}</strong></div>{pixCode ? <><label>Pix copia e cola com valor<textarea readOnly rows={4} value={pixCode} /></label><button type="button" className="secondary-button" onClick={() => void copyPix()}>Copiar Pix</button></> : openPayment.pix_key ? <><label>Chave Pix<input readOnly value={openPayment.pix_key} /></label><p className="field-help">Esta chave não inclui o valor. Informe {money.format(openPayment.amount_cents / 100)} no aplicativo do banco.</p></> : <p className="form-error">Dados Pix indisponíveis nesta cobrança. Fale com o financeiro antes de pagar.</p>}{openPayment.status === 'pending' ? <><p className="field-help">Depois de pagar, clique para abrir o WhatsApp, anexe o comprovante e envie a mensagem. Ao abrir o canal, a cobrança ficará aguardando conferência; a aprovação ainda depende do Admin Master conferir o crédito.</p><div className="form-actions form-actions-start">{phone ? <button type="button" className="primary-button" disabled={busy} onClick={() => void sendProofWhatsApp()}>{busy ? 'Registrando…' : 'Enviar comprovante pelo WhatsApp ↗'}</button> : <p className="field-help">WhatsApp financeiro não configurado. Peça ao Admin Master o canal para enviar o comprovante antes de pagar.</p>}</div></> : <p className="form-success" role="status">Comprovante informado em {dateLabel(openPayment.proof_sent_at)}. A cobrança está aguardando a conferência do Admin Master; a assinatura será atualizada somente após a confirmação do crédito.</p>}</section>}
+    {openPayment && <section className="panel" aria-label="Cobrança Pix em aberto"><div className="panel-heading"><div><span className="panel-kicker">{intentNames[openPayment.payment_intent] ?? 'Renovação'} · Pix manual · {statusNames[openPayment.status]}</span><h2>{availablePlans.find((plan) => plan.code === openPayment.plan_code)?.name ?? openPayment.plan_code} · {money.format(openPayment.amount_cents / 100)}</h2></div></div><p>Referência {openPayment.reference ?? openPayment.id} · solicitada em {dateLabel(openPayment.created_at)}. Confira valor e recebedor no seu banco antes de pagar.</p><div className="checkout-payee"><span>Recebedor</span><strong>{pixReceiver || 'Consulte o financeiro'}</strong><span>Valor</span><strong>{money.format(openPayment.amount_cents / 100)}</strong></div>{pixCode ? <><label>Pix copia e cola com valor<textarea readOnly rows={4} value={pixCode} /></label><button type="button" className="secondary-button" onClick={() => void copyPix()}>Copiar Pix</button></> : openPayment.pix_key ? <><label>Chave Pix<input readOnly value={openPayment.pix_key} /></label><p className="field-help">Esta chave não inclui o valor. Informe {money.format(openPayment.amount_cents / 100)} no aplicativo do banco.</p></> : <p className="form-error">Dados Pix indisponíveis nesta cobrança. Fale com o financeiro antes de pagar.</p>}{openPayment.status === 'pending' ? <><p className="field-help">Depois de pagar, abra o WhatsApp, anexe o comprovante e envie a mensagem. Abrir o canal não registra o envio automaticamente.</p><div className="form-actions form-actions-start">{phone ? <button type="button" className="primary-button" disabled={busy} onClick={sendProofWhatsApp}>Abrir WhatsApp para enviar comprovante ↗</button> : <p className="field-help">WhatsApp financeiro não configurado. Peça ao Admin Master o canal para enviar o comprovante antes de pagar.</p>}</div><label className="check-row"><input type="checkbox" checked={proofConfirmed} disabled={!proofOpened || busy} onChange={(event) => setProofConfirmed(event.target.checked)} /><span>Confirmo que anexei e enviei o comprovante nesta conversa.</span></label><button type="button" className="primary-button" disabled={!proofOpened || !proofConfirmed || busy} onClick={() => void confirmProofSent()}>Confirmar envio do comprovante <span>→</span></button></> : <p className="form-success" role="status">Comprovante informado em {dateLabel(openPayment.proof_sent_at)}. A cobrança está aguardando a conferência do Admin Master; a assinatura será atualizada somente após a confirmação do crédito.</p>}</section>}
 
     {lastRejected && (!lastPaid || lastRejected.created_at > lastPaid.created_at) && <section className="panel"><span className="panel-kicker">Última cobrança não confirmada</span><p>{lastRejected.reviewer_note || 'O financeiro não confirmou o pagamento.'} Você pode solicitar uma nova cobrança.</p></section>}
     {lastPaid && <section className="panel"><span className="panel-kicker">Último pagamento confirmado</span><p>{availablePlans.find((plan) => plan.code === lastPaid.plan_code)?.name ?? lastPaid.plan_code} · {money.format(lastPaid.amount_cents / 100)} · confirmado em {dateLabel(lastPaid.reviewed_at)} · referência {lastPaid.reference ?? lastPaid.id}</p></section>}

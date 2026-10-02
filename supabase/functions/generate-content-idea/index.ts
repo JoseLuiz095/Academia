@@ -59,11 +59,6 @@ Deno.serve(async (request) => {
     return json({ error: 'A assinatura deste espaço precisa ser regularizada.' }, 403)
   }
 
-  const quota = await client.rpc('consume_ai_quota', { target_workspace_id: workspaceId })
-  if (quota.error?.message.includes('Limite diário do plano atingido')) return json({ error: 'Limite diário de IA do seu plano atingido.' }, 429)
-  if (quota.error) return json({ error: 'Não foi possível verificar o limite diário.' }, 500)
-  if (!quota.data) return json({ error: 'Limite diário de IA do seu plano atingido.' }, 429)
-
   const profile = profileResult.data
   if (!profile) return json({ error: 'Salve o perfil de conteúdo antes de gerar uma ideia.' }, 400)
   const bounded = (value: unknown) => typeof value === 'string' ? value.slice(0, 1000) : ''
@@ -134,11 +129,22 @@ Deno.serve(async (request) => {
     return json({ error: 'O Gemini demorou ou respondeu de forma inesperada.' }, 502)
   }
 
+  // Consume a cota somente depois que o Gemini respondeu com uma ideia válida.
+  // Falhas de chave, timeout, limite da API ou fontes não verificáveis não
+  // penalizam o criador.
+  const quota = await client.rpc('consume_ai_quota', { target_workspace_id: workspaceId })
+  if (quota.error?.message.includes('Limite diário do plano atingido')) return json({ error: 'Limite diário de IA do seu plano atingido.' }, 429)
+  if (quota.error) return json({ error: 'Não foi possível verificar o limite diário.' }, 500)
+  if (!quota.data) return json({ error: 'Limite diário de IA do seu plano atingido.' }, 429)
+
   const saved = await client.from('content_ideas').insert({
     workspace_id: workspaceId, format, title: generated.title.slice(0, 180), hook: generated.hook.slice(0, 1000),
     body: generated.body.slice(0, 8000), cta: generated.cta.slice(0, 1000), status: 'review', source: 'ai', created_by: userData.user.id,
     trend_sources: trendSources, trend_checked_at: trendMode ? new Date().toISOString() : null,
   }).select('id').single()
-  if (saved.error) return json({ error: 'A ideia foi gerada, mas não foi possível salvá-la.' }, 500)
+  if (saved.error) {
+    await client.rpc('refund_ai_quota', { target_workspace_id: workspaceId })
+    return json({ error: 'A ideia foi gerada, mas não foi possível salvá-la.' }, 500)
+  }
   return json({ id: saved.data.id })
 })

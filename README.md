@@ -7,8 +7,8 @@ SaaS para personal trainers e criadores, construído em React, TypeScript, Vite 
 | Área | Rotas | O que funciona agora |
 | --- | --- | --- |
 | Página pública | `/`, `/demonstracao`, `/p/:slug`, produto, sacola e finalizar | Página comercial, demonstração interativa local, vitrine, catálogo, pedido pendente com referência e Pix manual |
-| Admin do criador | `/admin/*` | Cadastro sujeito à aprovação, loja, pedidos, plano, Pix da assinatura, ideias, assistente de nicho e lembretes |
-| Admin Master | `/admin-master/*` | Aprovação de lojistas, controle de espaços/planos, Pix da plataforma e confirmação manual de mensalidades |
+| Admin do criador | `/admin/*` | Cadastro sujeito à aprovação, loja, pedidos com contato do cliente, plano, Pix da assinatura, ideias, assistente de nicho, cota de IA e lembretes |
+| Admin Master | `/admin-master/*` | Aprovação de lojistas, controle de espaços/planos, Pix da plataforma, confirmação manual, auditoria e diagnóstico |
 
 O Admin Master não é liberado pelo cadastro público. Um operador do banco adiciona o usuário autorizado em `public.platform_admins`. O lojista escolhe a Demonstração ou um plano pago e aguarda aprovação. A Demonstração libera 14 dias sem cobrança automática. Para continuar ou renovar, solicita cobrança Pix, informa o comprovante e aguarda o Master conferir o crédito. Só a confirmação do Master avança o vencimento. Os pedidos da loja têm Pix próprio e confirmação manual pelo profissional; não há entrega automática de arquivo digital.
 
@@ -61,13 +61,13 @@ A Edge Function `generate-content-idea` exige sessão autenticada. O botão de g
 
 O plano Demo é controlado pelo Admin Master, começa somente após aprovação e não gera cobrança Pix. O lojista vê o vencimento no painel; depois do teste, escolhe um plano pago. A cobrança paga só muda o plano após comprovante enviado pelo WhatsApp e confirmação manual do crédito.
 
-Cada resposta de IA é salva como `review` e só passa a `approved` por ação do criador. Pesquisa de tendências é opcional e precisa produzir fontes verificáveis para que a ideia seja rotulada como atual. O mini assistente limita perguntas ao nicho do criador. Lembretes são marcações no painel; o WhatsApp automático ainda não foi integrado e a tela permite testar individualmente uma ideia aprovada pelo aplicativo.
+Cada resposta de IA é salva como `review` e só passa a `approved` por ação do criador. A cota só é consumida depois de uma resposta válida do Gemini; se o salvamento falhar, ela é devolvida. Pesquisa de tendências é opcional e precisa produzir fontes verificáveis para que a ideia seja rotulada como atual. O mini assistente limita perguntas ao nicho do criador e o painel mostra o uso diário. Lembretes são marcações no painel; o WhatsApp automático ainda não foi integrado e a tela permite testar individualmente uma ideia aprovada pelo aplicativo.
 
 Para a decisão de modelo Gemini e a evolução segura do WhatsApp Business — incluindo n8n opcional com a API oficial — veja [IA e WhatsApp](docs/INTEGRACOES_IA_WHATSAPP.md).
 
 ## Pix e pedidos
 
-O profissional cadastra preferencialmente um Pix copia e cola **estático** do banco, ou uma chave Pix (inclusive CPF) com nome e cidade do recebedor. No checkout, o cliente primeiro registra um pedido pendente; preços e total são recalculados no banco, que devolve uma referência. O navegador insere esse total no código estático e recalcula sua verificação, ou monta um BR Code a partir da chave. Códigos dinâmicos são rejeitados. O cliente confere recebedor e valor no aplicativo do banco, paga e envia a referência pelo WhatsApp. O profissional verifica o crédito no extrato e marca o pedido como confirmado no painel. Na primeira versão, entrega manual digital, serviço e envio de produto são combinados por WhatsApp; o site não libera arquivos automaticamente. Para outras formas de pagamento, o cliente combina diretamente com o profissional. O fluxo público ainda não tem proteção antiabuso dedicada; avalie Turnstile antes de divulgar amplamente.
+O profissional cadastra preferencialmente um Pix copia e cola **estático** do banco, ou uma chave Pix (inclusive CPF) com nome e cidade do recebedor. No checkout, o cliente informa nome, WhatsApp, observação e consentimento para atendimento; o pedido pendente é criado somente após o Turnstile. Preços e total são recalculados no banco, que devolve uma referência. O navegador insere esse total no código estático e recalcula sua verificação, ou monta um BR Code a partir da chave. Códigos dinâmicos são rejeitados. O cliente confere recebedor e valor no aplicativo do banco, paga e envia a referência pelo WhatsApp. O profissional verifica o crédito no extrato e marca o pedido como confirmado no painel. Na primeira versão, entrega manual digital, serviço e envio de produto são combinados por WhatsApp; o site não libera arquivos automaticamente. Imagens do catálogo podem ser enviadas para o bucket público `product-images` ou informadas por URL HTTPS. Para outras formas de pagamento, o cliente combina diretamente com o profissional.
 
 ## Marca própria e domínio
 

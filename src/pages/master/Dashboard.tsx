@@ -5,11 +5,13 @@ import type { Workspace } from '../../types'
 
 type MasterWorkspace = Pick<Workspace, 'id' | 'name' | 'published' | 'plan_code' | 'subscription_status' | 'subscription_ends_at'>
 type PaymentStatus = { id: string; status: string }
+type AuditEvent = { id: string; entity_type: string; action: string; created_at: string }
 
 export function MasterDashboard() {
   const [workspaces, setWorkspaces] = useState<MasterWorkspace[]>([])
   const [payments, setPayments] = useState<PaymentStatus[]>([])
   const [pendingRequests, setPendingRequests] = useState(0)
+  const [events, setEvents] = useState<AuditEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -20,12 +22,14 @@ export function MasterDashboard() {
       supabase.from('workspaces').select('id,name,published,plan_code,subscription_status,subscription_ends_at').order('created_at', { ascending: false }),
       supabase.from('subscription_payments').select('id,status').in('status', ['pending', 'proof_sent']),
       supabase.from('workspace_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-    ]).then(([workspaceResult, paymentResult, requestsResult]) => {
+      supabase.from('platform_audit_events').select('id,entity_type,action,created_at').order('created_at', { ascending: false }).limit(8),
+    ]).then(([workspaceResult, paymentResult, requestsResult, eventsResult]) => {
       if (!active) return
       setWorkspaces((workspaceResult.data ?? []) as MasterWorkspace[])
       setPayments((paymentResult.data ?? []) as PaymentStatus[])
       setPendingRequests(requestsResult.count ?? 0)
-      setError(workspaceResult.error?.message ?? paymentResult.error?.message ?? requestsResult.error?.message ?? '')
+      setEvents((eventsResult.data ?? []) as AuditEvent[])
+      setError(workspaceResult.error?.message ?? paymentResult.error?.message ?? requestsResult.error?.message ?? eventsResult.error?.message ?? '')
       setLoading(false)
     })
     return () => { active = false }
@@ -46,5 +50,6 @@ export function MasterDashboard() {
     <section className="metric-grid"><div className="metric-card"><div className="metric-icon orange">▣</div><span className="metric-label">Espaços cadastrados</span><strong className="metric-value">{loading ? '—' : workspaces.length}</strong></div><div className="metric-card"><div className="metric-icon green">↗</div><span className="metric-label">Vitrines públicas</span><strong className="metric-value">{loading ? '—' : workspaces.filter((item) => item.published).length}</strong></div><div className="metric-card"><div className="metric-icon purple">◌</div><span className="metric-label">Vencem em 7 dias</span><strong className="metric-value">{loading ? '—' : expiring}</strong></div><div className="metric-card"><div className="metric-icon blue">◇</div><span className="metric-label">Comprovantes para conferir</span><strong className="metric-value">{loading ? '—' : awaitingReview}</strong></div></section>
     {overdue > 0 && <section className="panel"><span className="panel-kicker">Atenção</span><h2>{overdue} {overdue === 1 ? 'assinatura vencida' : 'assinaturas vencidas'}</h2><p>O vencimento de uma cobrança Pix só avança após a confirmação do crédito pelo Admin Master.</p><Link className="secondary-button plain-link" to="/admin-master/workspaces">Ver espaços →</Link></section>}
     <section className="panel"><div className="panel-heading"><div><span className="panel-kicker">Crescimento</span><h2>Espaços recentes</h2></div><Link className="text-button plain-link" to="/admin-master/workspaces">Ver todos →</Link></div>{loading ? <p className="empty-copy">Carregando espaços…</p> : workspaces.length ? <div className="simple-list">{workspaces.slice(0, 5).map((item) => <div key={item.id}><strong>{item.name}</strong><span>{item.published ? 'Publicado' : 'Em preparação'} · {item.plan_code === 'pro' ? 'Crescimento' : item.plan_code === 'creator' ? 'Criador' : 'Essencial'}</span></div>)}</div> : <p className="empty-copy">Nenhum espaço cadastrado ainda.</p>}</section>
+    <section className="panel"><div className="panel-heading"><div><span className="panel-kicker">Auditoria</span><h2>Atividade recente</h2></div></div>{events.length ? <div className="simple-list">{events.map((event) => <div key={event.id}><strong>{event.entity_type === 'workspace_requests' ? 'Solicitação de espaço' : event.entity_type === 'subscription_payments' ? 'Pagamento' : 'Espaço'} · {event.action === 'insert' ? 'criado' : event.action === 'update' ? 'atualizado' : 'removido'}</strong><span>{new Date(event.created_at).toLocaleString('pt-BR')}</span></div>)}</div> : <p className="empty-copy">Nenhuma atividade registrada ainda.</p>}</section>
   </>
 }

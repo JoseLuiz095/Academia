@@ -23,9 +23,13 @@ Deno.serve(async (request) => {
   const token = typeof input.turnstile_token === 'string' ? input.turnstile_token.trim() : ''
   const workspaceId = typeof input.target_workspace_id === 'string' ? input.target_workspace_id : ''
   const requestId = typeof input.client_request_id === 'string' ? input.client_request_id : ''
+  const customerName = typeof input.customer_name === 'string' ? input.customer_name.trim() : ''
+  const customerPhone = typeof input.customer_phone === 'string' ? input.customer_phone.replace(/\D/g, '') : ''
+  const customerNote = typeof input.customer_note === 'string' ? input.customer_note.trim() : ''
+  const customerConsent = input.customer_consent === true
   const items = input.cart_items
   const expectedTotal = input.expected_total
-  if (!token || !uuid.test(workspaceId) || !uuid.test(requestId) || !Array.isArray(items) || typeof expectedTotal !== 'number') {
+  if (!token || !uuid.test(workspaceId) || !uuid.test(requestId) || !Array.isArray(items) || typeof expectedTotal !== 'number' || customerName.length < 2 || customerName.length > 80 || !/^55\d{10,11}$/.test(customerPhone) || customerNote.length > 500 || !customerConsent) {
     return reply({ error: 'Conclua a verificação e confira o pedido.' }, 400)
   }
 
@@ -50,6 +54,10 @@ Deno.serve(async (request) => {
     client_request_id: requestId,
     cart_items: items,
     expected_total: expectedTotal,
+    customer_name: customerName,
+    customer_phone: customerPhone,
+    customer_note: customerNote || null,
+    customer_consent: customerConsent,
   })
   if (error) return reply({ error: error.message }, 400)
   return reply(data)

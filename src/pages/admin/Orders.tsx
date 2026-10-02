@@ -12,6 +12,9 @@ type OrderRow = {
   created_at: string
   confirmed_at: string | null
   cancelled_at: string | null
+  customer_name: string | null
+  customer_phone: string | null
+  customer_note: string | null
   order_items: { id: number; product_name: string; quantity: number; line_total: number }[]
 }
 
@@ -34,7 +37,7 @@ export function AdminOrders() {
     if (!supabase) return
     setLoading(true)
     const result = await supabase.from('orders')
-      .select('id,reference,status,total,created_at,confirmed_at,cancelled_at,order_items(id,product_name,quantity,line_total)')
+      .select('id,reference,status,total,created_at,confirmed_at,cancelled_at,customer_name,customer_phone,customer_note,order_items(id,product_name,quantity,line_total)')
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false })
       .limit(100)
@@ -71,6 +74,7 @@ export function AdminOrders() {
       <p className="field-help">Criado em {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(order.created_at))}</p>
       {order.confirmed_at && <p className="field-help">Pagamento confirmado em {new Date(order.confirmed_at).toLocaleString('pt-BR')}.</p>}
       {order.cancelled_at && <p className="field-help">Pedido cancelado em {new Date(order.cancelled_at).toLocaleString('pt-BR')}.</p>}
+      {order.customer_name && <div className="order-customer"><strong>Cliente: {order.customer_name}</strong>{order.customer_phone && <a href={`https://wa.me/${order.customer_phone}`} target="_blank" rel="noreferrer">WhatsApp ↗</a>}{order.customer_note && <p>{order.customer_note}</p>}</div>}
       <div className="simple-list">{order.order_items.map((item) => <div key={item.id}><strong>{item.quantity}× {item.product_name}</strong><span>{currency.format(item.line_total)}</span></div>)}</div>
       {order.status === 'pending' && <div className="form-actions"><button className="secondary-button" disabled={savingId !== null} onClick={() => void changeStatus(order, 'cancelled')}>Cancelar pedido</button><button className="primary-button" disabled={savingId !== null} onClick={() => void changeStatus(order, 'confirmed')}>{savingId === order.id ? 'Salvando…' : 'Confirmar pagamento'} <span>✓</span></button></div>}
       <p className="field-help">Localize a conversa do cliente pela referência {order.reference}. {order.status === 'confirmed' ? 'Pagamento marcado como confirmado; combine a entrega do manual, produto ou serviço na conversa.' : 'A plataforma não verifica o Pix automaticamente nem envia arquivos ao cliente.'}</p>
