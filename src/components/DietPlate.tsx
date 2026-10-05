@@ -14,7 +14,8 @@ const partPosition = [
   { x: '18px', y: '-13px', rotate: '5deg' },
   { x: '-18px', y: '17px', rotate: '4deg' },
   { x: '18px', y: '17px', rotate: '-4deg' },
-  { x: '0px', y: '0px', rotate: '0deg' },
+  { x: '0px', y: '-48px', rotate: '0deg' },
+  { x: '0px', y: '48px', rotate: '0deg' },
 ]
 
 function asParts(parts: DietPart[]) {
