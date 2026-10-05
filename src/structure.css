@@ -641,7 +641,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .exercise-library-filters > div { display: flex; flex-wrap: wrap; gap: 6px; }
 .exercise-filter { min-height: 29px; padding: 5px 9px; border: 1px solid #dce8d9; border-radius: 999px; color: #647969; background: #fff; font-size: 9px; font-weight: 700; }
 .exercise-filter:hover, .exercise-filter.active { border-color: #719d78; color: #2f5941; background: #eaf4e9; }
-.exercise-library-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; padding: 5px; border: 1px solid #dce8d9; border-radius: 10px; background: rgba(255, 255, 255, .72); }
+.exercise-library-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; padding: 5px; border: 1px solid #dce8d9; border-radius: 10px; background: rgba(255, 255, 255, .72); }
 .exercise-library-tabs button { display: flex; align-items: center; justify-content: space-between; min-height: 34px; padding: 7px 10px; border: 1px solid transparent; border-radius: 7px; color: #697c6d; background: transparent; font-size: 10px; font-weight: 800; text-align: left; }
 .exercise-library-tabs button span { display: grid; place-items: center; min-width: 24px; min-height: 20px; padding: 0 5px; border-radius: 99px; color: #6c806e; background: #eff4ec; font-size: 9px; }
 .exercise-library-tabs button.active { border-color: #b8d1ba; color: #365744; background: #f5faf3; box-shadow: 0 2px 7px rgba(57, 94, 65, .08); }
@@ -655,12 +655,14 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .exercise-library-thumbnail { position: relative; }
 .exercise-3d-chip { position: absolute; right: 6px; bottom: 6px; padding: 3px 5px; border-radius: 999px; color: #fff; background: rgba(38, 79, 51, .82); font-size: 8px; font-weight: 800; letter-spacing: .4px; }
 .exercise-2d-chip { position: absolute; right: 6px; bottom: 6px; padding: 3px 5px; border-radius: 999px; color: #fff; background: rgba(135, 91, 50, .84); font-size: 8px; font-weight: 800; letter-spacing: .4px; }
+.exercise-hd-chip { position: absolute; right: 6px; bottom: 6px; padding: 3px 5px; border-radius: 999px; color: #fff; background: rgba(157, 116, 61, .9); font-size: 8px; font-weight: 800; letter-spacing: .4px; }
 .exercise-library-empty { margin: 0; padding: 12px; border: 1px dashed #d9e5d8; border-radius: 9px; color: #74877a; background: #fff; font-size: 11px; text-align: center; }
 .integrated-model-note { margin: 0; padding: 10px 11px; border: 1px solid #d9e9d8; border-radius: 8px; color: #58745f; background: #f4faf3; font-size: 10px; line-height: 1.45; }
+.premium-video-note { border-color: #ead9b8; color: #80623e; background: linear-gradient(135deg, #fffaf0, #f7fbf5); }
 .muscle-focus-grid { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
 .muscle-focus-grid > span { flex: 0 0 100%; color: #63776a; font-size: 10px; font-weight: 700; }
 .muscle-focus-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 8px; border: 1px solid #dce7da; border-radius: 999px; color: #617568; background: #fff; font-size: 9px; font-weight: 600; }
-.muscle-focus-chip input { width: 13px; height: 13px; margin: 0; accent-color: #e47751; }
+.muscle-focus-chip input { width: 13px; height: 13px; margin: 0; accent-color: #658a70; }
 .exercise-library-picker .embedded-motion { min-height: 120px; }
 .exercise-library-picker .embedded-motion > svg { max-height: 92px; }
 .exercise-library-picker .motion-caption { padding-top: 0; }
@@ -675,6 +677,9 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .motion-frame { position: relative; display: grid; place-items: center; min-height: 150px; overflow: hidden; border-radius: 13px; background: radial-gradient(circle at 50% 20%, rgba(255,255,255,.85), transparent 50%), #eaf2e9; }
 .motion-frame.compact { min-height: 118px; }
 .motion-frame > img, .motion-frame > video { width: 100%; height: 100%; min-height: inherit; object-fit: cover; }
+.exercise-video-preview { background: linear-gradient(145deg, #17241f, #33483e); }
+.exercise-video-preview > video { display: block; object-fit: contain; }
+.exercise-video-preview.compact { min-height: 142px; }
 .exercise-sequence-preview { background: radial-gradient(circle at 50% 15%, #fff, transparent 48%), linear-gradient(145deg, #ebf3e8, #fff9ed); }
 .exercise-sequence-preview > img { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; padding: 5px; object-fit: contain; }
 .exercise-sequence-preview .sequence-peak { animation: exercise-sequence 1.5s steps(1, end) infinite; }
@@ -696,7 +701,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .motion-grid path { fill: none; stroke: rgba(104, 142, 112, .16); stroke-dasharray: 3 5; stroke-width: 1; }
 .mesh-silhouette { fill: none; stroke: #789780; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4; transform-origin: 120px 103px; animation: exercise-pose 2.4s ease-in-out infinite; }
 .muscle { fill: #b8d4b8; opacity: .28; transform-box: fill-box; transform-origin: center; }
-.muscle.active { fill: #ed7650; opacity: .95; filter: drop-shadow(0 0 5px rgba(237, 118, 80, .5)); animation: activation-pulse 1.15s ease-in-out infinite alternate; }
+.muscle.active { fill: #73977d; opacity: .82; filter: none; animation: activation-pulse-soft 1.5s ease-in-out infinite alternate; }
 .preset-pushup .mesh-silhouette { animation-name: exercise-pushup; }
 .preset-row .mesh-silhouette, .preset-deadlift .mesh-silhouette { animation-name: exercise-hinge; }
 .preset-lunge .mesh-silhouette { animation-name: exercise-lunge; }
@@ -706,6 +711,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .motion-caption strong { color: #4f7459; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
 .motion-caption span { overflow: hidden; color: #7b9180; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 @keyframes activation-pulse { from { transform: scale(.94); } to { transform: scale(1.09); } }
+@keyframes activation-pulse-soft { from { opacity: .58; transform: scale(.98); } to { opacity: .86; transform: scale(1.03); } }
 @keyframes exercise-pose { 0%, 100% { transform: translateY(0) rotate(0); } 45%, 58% { transform: translateY(8px) rotate(1deg); } }
 @keyframes exercise-pushup { 0%, 100% { transform: translateY(0) rotate(0); } 45%, 58% { transform: translateY(7px) rotate(-3deg) scaleY(.96); } }
 @keyframes exercise-hinge { 0%, 100% { transform: rotate(0); } 45%, 58% { transform: rotate(7deg) translate(5px, 4px); } }
@@ -715,8 +721,9 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 @keyframes mesh-squat { 0%, 100% { transform: translateY(0) scaleY(1); } 45%, 58% { transform: translateY(11px) scaleY(.84); } }
 @keyframes mesh-pulse { 0%, 100% { opacity: .65; transform: scale(1); transform-origin: center; } 50% { opacity: 1; transform: scale(1.28); transform-origin: center; } }
 @keyframes exercise-sequence { 0%, 47% { opacity: 0; } 48%, 100% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .exercise-sequence-preview .sequence-peak { animation: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .exercise-sequence-preview .sequence-peak, .muscle.active { animation: none; opacity: 1; } }
 @media (max-width: 760px) { .visual-color-grid, .content-motion-grid, .access-motion-grid, .exercise-library-grid { grid-template-columns: 1fr; }.exercise-library-heading, .exercise-selected { align-items: stretch; }.exercise-library-heading { display: flex; flex-direction: column; }.exercise-selected { grid-template-columns: 1fr; }.content-motion-card { grid-template-columns: 104px minmax(0, 1fr); }.motion-frame { min-height: 132px; }.motion-frame.compact { min-height: 104px; }.exercise-library-model.compact { min-height: 188px; }.exercise-library-model.compact model-viewer { height: 188px; }.exercise-library-filters > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }.exercise-filter { width: 100%; } }
+@media (max-width: 760px) { .exercise-library-tabs { grid-template-columns: 1fr; }.exercise-video-preview.compact { min-height: 188px; } }
 
 /* Public plan selection: the request becomes a guided product moment. */
 .request-access-page { min-height: 100vh; color: #26372f; background: radial-gradient(circle at 12% 8%, rgba(232, 241, 225, .92), transparent 29%), #f8f8f4; }
