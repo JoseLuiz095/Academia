@@ -710,6 +710,46 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .motion-caption { display: grid; gap: 3px; width: 100%; padding: 5px 2px 0; text-align: center; }
 .motion-caption strong { color: #4f7459; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
 .motion-caption span { overflow: hidden; color: #7b9180; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.diet-plate { display: grid; gap: 9px; min-width: 0; }
+.diet-plate-stage { position: relative; min-height: 188px; overflow: hidden; border: 1px solid rgba(126, 157, 130, .25); border-radius: 16px; background: radial-gradient(circle at 50% 32%, rgba(255,255,255,.95), transparent 42%), linear-gradient(145deg, #edf6eb, #fff8ed); }
+.diet-plate-stage::after { position: absolute; inset: 12px; border: 1px solid rgba(111, 146, 116, .12); border-radius: 50%; content: ''; pointer-events: none; }
+.diet-plate-shadow, .diet-plate-base { position: absolute; top: 50%; left: 50%; width: 142px; height: 142px; border-radius: 50%; transform: translate(-50%, -50%); }
+.diet-plate-shadow { margin-top: 9px; background: rgba(58, 79, 63, .14); filter: blur(9px); }
+.diet-plate-base { display: grid; place-items: center; border: 7px solid rgba(255,255,255,.9); background: radial-gradient(circle, #fdfbf5 0 45%, #e8efe3 46% 53%, #fdfbf5 54%); box-shadow: 0 16px 28px rgba(74, 104, 76, .14), inset 0 0 0 1px rgba(105, 137, 108, .17); color: #a0ad9e; font-size: 8px; letter-spacing: 1px; text-transform: uppercase; }
+.diet-plate-part { position: absolute; z-index: 2; top: 50%; left: 50%; display: grid; grid-template-columns: 25px minmax(0, 1fr); gap: 5px; align-items: center; width: 112px; min-height: 41px; padding: 7px 8px; border: 1px solid rgba(255,255,255,.84); border-radius: 12px; background: color-mix(in srgb, var(--part-color) 76%, white); box-shadow: 0 7px 14px rgba(55, 79, 61, .16); color: #415347; text-align: left; transform: translate(calc(-50% + var(--part-x)), calc(-50% + var(--part-y))) rotate(var(--part-rotate)); transition: transform .28s cubic-bezier(.2,.8,.2,1), opacity .2s ease, filter .2s ease, box-shadow .2s ease; }
+.diet-plate-part:hover, .diet-plate-part.is-open { z-index: 4; box-shadow: 0 13px 24px rgba(55, 79, 61, .22); }
+.diet-plate-part.is-open { transform: translate(calc(-50% + var(--part-x)), calc(-50% + var(--part-y) - 35px)) rotate(0deg) scale(1.08); }
+.diet-plate-part.is-muted { opacity: .42; filter: saturate(.55); }
+.diet-plate-part-icon { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: rgba(255,255,255,.62); font-size: 15px; }
+.diet-plate-part span:last-child { display: grid; gap: 2px; min-width: 0; }
+.diet-plate-part strong { overflow: hidden; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.diet-plate-part small { overflow: hidden; color: #708073; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.diet-plate-hint { position: absolute; z-index: 3; right: 10px; bottom: 9px; padding: 5px 7px; border-radius: 999px; color: #6d806e; background: rgba(255,255,255,.72); font-size: 8px; font-weight: 700; }
+.diet-plate-copy { display: grid; gap: 3px; }
+.diet-plate-copy strong { color: var(--store-text, #3e5948); font-size: 11px; }
+.diet-plate-copy p { margin: 0; color: var(--store-muted, #7b8c7d); font-size: 9px; line-height: 1.45; }
+.diet-plate-legend { display: flex; flex-wrap: wrap; gap: 5px; }
+.diet-plate-legend button { display: inline-flex; align-items: center; gap: 5px; padding: 5px 7px; border: 1px solid var(--store-border, #dce7da); border-radius: 999px; color: var(--store-muted, #6d7f70); background: var(--store-surface, #fff); font-size: 8px; }
+.diet-plate-legend button.active { border-color: #7da887; color: #31563b; background: #edf7ed; }
+.diet-plate-legend i { width: 7px; height: 7px; border-radius: 50%; }
+.diet-content-card { grid-template-columns: 150px minmax(0, 1fr); }
+.diet-editor { display: grid; gap: 12px; padding: 14px; border: 1px solid #eadfd6; border-radius: 13px; background: linear-gradient(135deg, #fffaf5, #f7fbf6); }
+.diet-editor .panel-heading { margin: 0; }
+.diet-editor h3 { margin: 4px 0 0; color: #3e5647; font-family: 'Playfair Display', serif; font-size: 20px; }
+.diet-editor .diet-plate { grid-template-columns: minmax(170px, .75fr) minmax(0, 1fr); align-items: center; }
+.diet-editor .diet-plate-stage { min-height: 218px; }
+.diet-parts-editor { display: grid; gap: 7px; }
+.diet-part-row { display: grid; grid-template-columns: 1.3fr 1fr .6fr 40px; gap: 7px; align-items: center; }
+.diet-part-row input { min-width: 0; }
+.diet-part-row input[type="color"] { width: 40px; height: 37px; padding: 3px; }
+.appointment-picker { box-shadow: 0 14px 30px rgba(83, 117, 87, .07); }
+.appointment-picker > .field-help { max-width: 620px; margin: 0; line-height: 1.55; }
+.appointment-days { max-height: 340px; padding-right: 3px; overflow-y: auto; scrollbar-color: #9ab99c transparent; }
+.appointment-day { padding: 10px; border: 1px solid rgba(216, 227, 214, .92); border-radius: 12px; background: rgba(255,255,255,.58); }
+.appointment-day > strong { margin-bottom: 9px; font-size: 12px; }
+.appointment-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)); }
+.appointment-slot { min-width: 0; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.appointment-slot:hover { border-color: #89ae8e; box-shadow: 0 7px 15px rgba(74, 113, 82, .12); transform: translateY(-2px); }
 @keyframes activation-pulse { from { transform: scale(.94); } to { transform: scale(1.09); } }
 @keyframes activation-pulse-soft { from { opacity: .58; transform: scale(.98); } to { opacity: .86; transform: scale(1.03); } }
 @keyframes exercise-pose { 0%, 100% { transform: translateY(0) rotate(0); } 45%, 58% { transform: translateY(8px) rotate(1deg); } }
@@ -722,6 +762,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 @keyframes mesh-pulse { 0%, 100% { opacity: .65; transform: scale(1); transform-origin: center; } 50% { opacity: 1; transform: scale(1.28); transform-origin: center; } }
 @keyframes exercise-sequence { 0%, 47% { opacity: 0; } 48%, 100% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .exercise-sequence-preview .sequence-peak, .muscle.active { animation: none; opacity: 1; } }
+@media (max-width: 760px) { .diet-content-card { grid-template-columns: 1fr; }.diet-editor .diet-plate { grid-template-columns: 1fr; }.diet-editor .diet-plate-stage { min-height: 198px; }.diet-part-row { grid-template-columns: 1fr 1fr; }.diet-part-row input:nth-child(3), .diet-part-row input:nth-child(4) { width: 100%; }.diet-part-row input[type="color"] { width: 100%; } }
 @media (max-width: 760px) { .visual-color-grid, .content-motion-grid, .access-motion-grid, .exercise-library-grid { grid-template-columns: 1fr; }.exercise-library-heading, .exercise-selected { align-items: stretch; }.exercise-library-heading { display: flex; flex-direction: column; }.exercise-selected { grid-template-columns: 1fr; }.content-motion-card { grid-template-columns: 104px minmax(0, 1fr); }.motion-frame { min-height: 132px; }.motion-frame.compact { min-height: 104px; }.exercise-library-model.compact { min-height: 188px; }.exercise-library-model.compact model-viewer { height: 188px; }.exercise-library-filters > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }.exercise-filter { width: 100%; } }
 @media (max-width: 760px) { .exercise-library-tabs { grid-template-columns: 1fr; }.exercise-video-preview.compact { min-height: 188px; } }
 
