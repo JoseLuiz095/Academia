@@ -57,6 +57,7 @@ export type ProductContentItem = {
   image_url?: string | null
   meta?: string | null
   motion_type?: MotionType
+  exercise_library_id?: string | null
   motion_preset?: MotionPreset
   muscle_focus?: MuscleGroup[] | null
   motion_url?: string | null
