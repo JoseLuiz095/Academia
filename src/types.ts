@@ -46,7 +46,9 @@ export type StoreSettings = {
   show_ai_badge?: boolean
 }
 
-export type MotionType = 'none' | 'video' | 'gif' | 'model'
+export type MotionType = 'embedded' | 'none' | 'video' | 'gif' | 'model'
+export type MotionPreset = 'auto' | 'squat' | 'lunge' | 'pushup' | 'row' | 'deadlift' | 'press' | 'plank' | 'strength'
+export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'core' | 'glutes' | 'quadriceps' | 'hamstrings' | 'calves'
 
 export type ProductContentItem = {
   title: string
@@ -55,6 +57,8 @@ export type ProductContentItem = {
   image_url?: string | null
   meta?: string | null
   motion_type?: MotionType
+  motion_preset?: MotionPreset
+  muscle_focus?: MuscleGroup[] | null
   motion_url?: string | null
   motion_poster?: string | null
   motion_label?: string | null
