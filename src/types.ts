@@ -107,14 +107,66 @@ export type Product = {
   level?: 'beginner' | 'intermediate' | 'advanced' | 'all'
   access_mode?: 'whatsapp' | 'portal' | 'both'
   access_days?: number
+  booking_enabled?: boolean
   content?: ProductContent | null
   created_at?: string
+}
+
+export type EvaluationAvailability = {
+  id: string
+  workspace_id: string
+  product_id: string
+  weekday: number
+  start_time: string
+  end_time: string
+  slot_minutes: number
+  location: string
+  active: boolean
+}
+
+export type EvaluationSlot = {
+  availability_id: string
+  scheduled_date: string
+  scheduled_start: string
+  scheduled_end: string
+  location: string
+}
+
+export type AppointmentSelection = {
+  product_id: string
+  availability_id: string
+  scheduled_date: string
+  scheduled_start: string
+  scheduled_end: string
+  location: string
+}
+
+export type EvaluationBooking = AppointmentSelection & {
+  id: string
+  workspace_id: string
+  order_id: string
+  order_item_id: number | null
+  customer_name: string
+  customer_phone: string
+  status: 'payment_pending' | 'awaiting_approval' | 'confirmed' | 'rejected' | 'cancelled' | 'expired'
+  hold_expires_at: string
+  payment_confirmed_at: string | null
+  approved_at: string | null
+  reviewer_note: string | null
 }
 
 export type OrderReceipt = {
   reference: string
   total: number
   items: { name: string; quantity: number; unit_price: number; line_total: number }[]
+  appointment?: {
+    id: string
+    status: EvaluationBooking['status']
+    scheduled_date: string
+    scheduled_start: string
+    scheduled_end: string
+    location: string
+  } | null
 }
 
 export type ContentProfile = {

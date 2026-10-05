@@ -54,7 +54,7 @@ export function PublicLayout() {
       }
       const current = storeResult.data as Workspace
       const productResult = await client.from('products')
-        .select('id,workspace_id,kind,name,description,price,currency,published,image_url,service_area,category,level,access_mode,access_days,content')
+        .select('id,workspace_id,kind,name,description,price,currency,published,image_url,service_area,category,level,access_mode,access_days,booking_enabled,content')
         .eq('workspace_id', current.id).eq('published', true)
       if (!active) return
       setWorkspace(current)

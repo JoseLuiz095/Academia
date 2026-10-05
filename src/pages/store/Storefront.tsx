@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { TurnstileWidget } from '../../components/TurnstileWidget'
 import { useStore } from '../../layouts/PublicLayout'
@@ -7,7 +7,7 @@ import { currency, whatsappLink } from '../../lib/format'
 import { buildPixCopyPaste, buildPixFromStaticBase, isPixCopyPaste, readStaticPixReceiver } from '../../lib/pix'
 import { createPendingOrder, finishOrderAttempt, loadOrderReceipt, rememberOrderReceipt } from '../../lib/orders'
 import { supabase } from '../../lib/supabase'
-import type { OrderReceipt, Product } from '../../types'
+import type { AppointmentSelection, OrderReceipt, Product } from '../../types'
 
 const label: Record<Product['kind'], string> = { service: 'Serviço', digital: 'Manual digital', physical: 'Produto físico' }
 const categoryLabel: Record<NonNullable<Product['category']>, string> = { workout: 'Ficha de treino', diet: 'Dieta', service: 'Serviço', physical: 'Produto físico', other: 'Conteúdo digital' }
@@ -70,6 +70,8 @@ export function StoreCart() {
   return <section className="store-section narrow"><Link className="back-link" to={`/p/${workspace.slug}`}>← Continuar explorando</Link><p className="eyebrow">Sua seleção</p><h1>Minha sacola</h1>{rows.length ? <><div className="cart-list">{rows.map(({ item, product }) => <div className="cart-row" key={item.id}><div><strong>{product.name}</strong><small>{label[product.kind]}</small></div><div className="quantity-control" role="group" aria-label={`Quantidade de ${product.name}`}><button aria-label={item.quantity === 1 ? `Remover ${product.name} da sacola` : `Diminuir quantidade de ${product.name}`} onClick={() => changeQuantity(item.id, item.quantity - 1)}>−</button><output aria-live="polite">{item.quantity}</output><button aria-label={`Aumentar quantidade de ${product.name}`} disabled={item.quantity >= 99} onClick={() => changeQuantity(item.id, item.quantity + 1)}>＋</button></div><strong>{currency.format((product.price ?? 0) * item.quantity)}</strong></div>)}</div><div className="cart-total"><span>Total</span><strong aria-live="polite">{currency.format(total)}</strong></div><Link className="primary-button plain-link" to={`/p/${workspace.slug}/finalizar`}>Continuar para o pedido <span>→</span></Link></> : <div className="panel empty-panel"><h2>Sua sacola está vazia</h2><p>Escolha um serviço ou produto para começar.</p><Link className="primary-button plain-link" to={`/p/${workspace.slug}`}>Ver catálogo <span>→</span></Link></div>}</section>
 }
 
+function appointmentStorageKey(workspaceId: string, productId: string) { return `impulso:appointment:${workspaceId}:${productId}` }
+
 export function StoreCheckout() {
   const { workspace, products, cart, clearCart } = useStore()
   const [lastReceipt, setLastReceipt] = useState<OrderReceipt | null>(() => loadOrderReceipt(workspace.id))
@@ -84,6 +86,12 @@ export function StoreCheckout() {
   const [captchaReset, setCaptchaReset] = useState(0)
   const submitting = useRef(false)
   const rows = cart.map((item) => ({ item, product: products.find((product) => product.id === item.id) })).filter((row): row is { item: typeof row.item; product: Product } => Boolean(row.product))
+  const bookingRow = rows.find(({ product }) => product.booking_enabled)
+  const [appointment, setAppointment] = useState<AppointmentSelection | null>(null)
+  useEffect(() => {
+    if (!bookingRow) { setAppointment(null); return }
+    try { const saved = sessionStorage.getItem(appointmentStorageKey(workspace.id, bookingRow.product.id)); setAppointment(saved ? JSON.parse(saved) as AppointmentSelection : null) } catch { setAppointment(null) }
+  }, [workspace.id, bookingRow?.product.id])
   const receipt = rows.length ? null : lastReceipt
   const total = rows.reduce((sum, row) => sum + (row.product.price ?? 0) * row.item.quantity, 0)
   const pixCode = useMemo(() => {
@@ -101,7 +109,8 @@ export function StoreCheckout() {
     }
     return workspace.pix_receiver ?? ''
   }, [workspace.pix_key, workspace.pix_receiver])
-  const contact = receipt ? whatsappLink(workspace.whatsapp_number, `Olá! Registrei o pedido ${receipt.reference} na página ${workspace.name}:\n${receipt.items.map((item) => `• ${item.quantity}x ${item.name} — ${currency.format(item.line_total)}`).join('\n')}\nTotal: ${currency.format(receipt.total)}. Fiz o pagamento Pix e aguardo sua conferência no banco para combinar a entrega ou o agendamento.`) : null
+  const appointmentSummary = receipt?.appointment ? `\nPré-agendamento: ${new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(`${receipt.appointment.scheduled_date}T12:00:00`))} às ${receipt.appointment.scheduled_start.slice(0, 5)} · ${receipt.appointment.location}.` : appointment ? `\nHorário escolhido: ${new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(`${appointment.scheduled_date}T12:00:00`))} às ${appointment.scheduled_start.slice(0, 5)} · ${appointment.location}.` : ''
+  const contact = receipt ? whatsappLink(workspace.whatsapp_number, `Olá! Registrei o pedido ${receipt.reference} na página ${workspace.name}:\n${receipt.items.map((item) => `• ${item.quantity}x ${item.name} — ${currency.format(item.line_total)}`).join('\n')}\nTotal: ${currency.format(receipt.total)}.${appointmentSummary}\nFiz o pagamento Pix e estou enviando o comprovante para conferência. Aguardo a confirmação e, no caso da avaliação, a aprovação do horário.`) : null
 
   async function registerOrder() {
     if (submitting.current) return
@@ -110,10 +119,12 @@ export function StoreCheckout() {
     setBusy(true)
     setError('')
     try {
-      const saved = await createPendingOrder(workspace.id, rows.map(({ item }) => ({ product_id: item.id, quantity: item.quantity })), Math.round(total * 100) / 100, captchaToken, { name: customerName, phone: customerPhone, note: customerNote, consent: customerConsent })
+      if (bookingRow && (!appointment || appointment.product_id !== bookingRow.product.id)) { setError('Escolha um horário de avaliação antes de registrar o pedido.'); return }
+      const saved = await createPendingOrder(workspace.id, rows.map(({ item }) => ({ product_id: item.id, quantity: item.quantity })), Math.round(total * 100) / 100, captchaToken, { name: customerName, phone: customerPhone, note: customerNote, consent: customerConsent }, appointment)
       rememberOrderReceipt(workspace.id, saved)
       setLastReceipt(saved)
       finishOrderAttempt(workspace.id)
+      if (bookingRow) { try { sessionStorage.removeItem(appointmentStorageKey(workspace.id, bookingRow.product.id)) } catch { /* Limpeza opcional. */ } }
       clearCart()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível registrar o pedido. Tente novamente.')
@@ -130,7 +141,7 @@ export function StoreCheckout() {
     {!receipt && <Link className="back-link" to={`/p/${workspace.slug}/carrinho`}>← Voltar à sacola</Link>}
     <p className="eyebrow">Pagamento direto com o profissional</p>
     <h1>{receipt ? `Pedido ${receipt.reference}` : 'Combinar pedido'}</h1>
-    <p className="checkout-intro">{receipt ? 'Pedido registrado como pendente. Confira os dados Pix no banco, pague e envie a referência ao profissional pelo WhatsApp para conferência.' : 'Registre a seleção para receber uma referência e os dados de pagamento.'}</p>
+    <p className="checkout-intro">{receipt ? 'Pedido registrado como pendente. Pague via Pix e envie o comprovante pelo WhatsApp; somente após a conferência o profissional analisará a liberação e, se for uma avaliação, aprovará o horário.' : bookingRow ? 'Confira o horário escolhido, informe seus dados e registre o pedido. O pré-agendamento só será efetivado após o pagamento e a aprovação do profissional.' : 'Registre a seleção para receber uma referência e os dados de pagamento.'}</p>
     <div className="checkout-grid">
       <div className="panel">
         <h2>Pix manual</h2>
@@ -145,7 +156,7 @@ export function StoreCheckout() {
         <h2>Resumo</h2>
         <div className="simple-list">{receipt ? receipt.items.map((item, index) => <div key={index}><strong>{item.quantity}× {item.name}</strong><span>{currency.format(item.line_total)}</span></div>) : rows.map(({ item, product }) => <div key={item.id}><strong>{item.quantity}× {product.name}</strong><span>{currency.format((product.price ?? 0) * item.quantity)}</span></div>)}</div>
         <div className="cart-total"><span>Total</span><strong>{currency.format(receipt?.total ?? total)}</strong></div>
-        {receipt ? <><p className="form-success" role="status">Referência {receipt.reference} registrada. Aguardando confirmação manual do profissional.</p>{contact ? <a className="primary-button plain-link" href={contact} target="_blank" rel="noreferrer">Enviar pedido no WhatsApp <span aria-hidden="true">↗</span></a> : <><button className="secondary-button" type="button" onClick={() => void copy(receipt.reference, 'Referência do pedido')}>Copiar referência</button><p className="field-help">O WhatsApp ainda não foi configurado. Guarde esta referência e combine a entrega pelo canal informado pelo profissional.</p></>}</> : <button className="primary-button" type="button" disabled={busy || !customerConsent || !appConfig.turnstileSiteKey || Boolean(!captchaToken)} onClick={() => void registerOrder()}>{busy ? 'Registrando…' : !appConfig.turnstileSiteKey ? 'Checkout indisponível' : !customerConsent ? 'Autorize o contato' : !captchaToken ? 'Conclua a verificação' : 'Registrar pedido pendente'} <span aria-hidden="true">→</span></button>}
+        {receipt ? <><p className="form-success" role="status">Referência {receipt.reference} registrada. Aguardando comprovante e confirmação manual do profissional.</p>{receipt.appointment && <div className="booking-receipt"><strong>Pré-agendamento guardado</strong><span>{new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(`${receipt.appointment.scheduled_date}T12:00:00`))} · {receipt.appointment.scheduled_start.slice(0, 5)} · {receipt.appointment.location}</span><small>Esse horário ainda não está confirmado. A aprovação aparece para o profissional depois da conferência do Pix.</small></div>}{contact ? <a className="primary-button plain-link" href={contact} target="_blank" rel="noreferrer">Enviar comprovante no WhatsApp <span aria-hidden="true">↗</span></a> : <><button className="secondary-button" type="button" onClick={() => void copy(receipt.reference, 'Referência do pedido')}>Copiar referência</button><p className="field-help">O WhatsApp ainda não foi configurado. Guarde esta referência e combine a entrega pelo canal informado pelo profissional.</p></>}</> : <><button className="primary-button" type="button" disabled={busy || !customerConsent || !appConfig.turnstileSiteKey || Boolean(!captchaToken) || Boolean(bookingRow && !appointment)} onClick={() => void registerOrder()}>{busy ? 'Registrando…' : !appConfig.turnstileSiteKey ? 'Checkout indisponível' : bookingRow && !appointment ? 'Escolha um horário' : !customerConsent ? 'Autorize o contato' : !captchaToken ? 'Conclua a verificação' : 'Gerar Pix e registrar pedido'} <span aria-hidden="true">→</span></button>{bookingRow && appointment && <p className="field-help">Horário selecionado: {appointment.scheduled_start.slice(0, 5)} · {appointment.location}. O Pix será gerado com o valor do pedido.</p>}</>}
         {error && <p className="form-error" role="alert">{error}</p>}
         <p className="field-help">Após pagar, envie a referência pelo WhatsApp. O pedido fica pendente até o profissional conferir o crédito no banco. Os dados informados são usados somente para responder este pedido.</p>
       </div>
