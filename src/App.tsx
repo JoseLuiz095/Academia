@@ -27,10 +27,13 @@ const MasterRequests = lazy(() => import('./pages/master/Requests').then((module
 const MasterPayments = lazy(() => import('./pages/master/Payments').then((module) => ({ default: module.MasterPayments })))
 const MasterPlans = lazy(() => import('./pages/master/Plans').then((module) => ({ default: module.MasterPlans })))
 const MasterDiagnostics = lazy(() => import('./pages/master/Diagnostics').then((module) => ({ default: module.MasterDiagnostics })))
+const MasterReports = lazy(() => import('./pages/master/Reports').then((module) => ({ default: module.MasterReports })))
 const Storefront = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreHome })))
 const StoreProduct = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreProduct })))
 const StoreCart = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreCart })))
 const StoreCheckout = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreCheckout })))
+const StoreAccess = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreAccess })))
+const StoreReport = lazy(() => import('./pages/store/StoreReport').then((module) => ({ default: module.StoreReport })))
 
 function ProtectedAdmin() {
   const { user, loading, workspace, isMaster } = useAuth()
@@ -61,6 +64,8 @@ export default function App() {
     <Route element={<PublicLayout />}>
       <Route path="/p/:slug" element={<Storefront />} />
       <Route path="/p/:slug/produto/:id" element={<StoreProduct />} />
+      <Route path="/p/:slug/acesso" element={<StoreAccess />} />
+      <Route path="/p/:slug/denunciar" element={<StoreReport />} />
       <Route path="/p/:slug/carrinho" element={<StoreCart />} />
       <Route path="/p/:slug/finalizar" element={<StoreCheckout />} />
     </Route>
@@ -89,6 +94,7 @@ export default function App() {
       <Route path="/admin-master/pagamentos" element={<MasterPayments />} />
       <Route path="/admin-master/planos" element={<MasterPlans />} />
       <Route path="/admin-master/diagnostico" element={<MasterDiagnostics />} />
+      <Route path="/admin-master/denuncias" element={<MasterReports />} />
     </Route>
 
     <Route path="*" element={<div className="loading-page"><div><h1>Página não encontrada</h1><a href="/">Voltar ao início</a></div></div>} />

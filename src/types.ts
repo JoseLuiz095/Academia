@@ -10,6 +10,10 @@ export type Workspace = {
   pix_receiver: string | null
   pix_city: string | null
   service_cities: string | null
+  training_document_type?: 'CREF' | 'Registro profissional' | 'Outro' | null
+  training_document_number?: string | null
+  nutrition_document_type?: 'CRN' | 'Registro profissional' | 'Outro' | null
+  nutrition_document_number?: string | null
   published: boolean
   plan_code?: 'demo' | 'starter' | 'creator' | 'pro' | null
   subscription_status?: 'trial' | 'active' | 'past_due' | 'cancelled' | null
@@ -26,10 +30,26 @@ export type StoreSettings = {
   theme?: 'sage' | 'sunset' | 'lavender'
   tagline?: string | null
   cta_label?: string | null
+  primary_color?: string | null
+  accent_color?: string | null
+  hero_title?: string | null
   show_whatsapp?: boolean
   show_pix?: boolean
   show_service_area?: boolean
   show_ai_badge?: boolean
+}
+
+export type ProductContentItem = {
+  title: string
+  details?: string | null
+  icon?: string | null
+  image_url?: string | null
+  meta?: string | null
+}
+
+export type ProductContent = {
+  intro?: string | null
+  items?: ProductContentItem[]
 }
 
 export type WorkspaceRequest = {
@@ -65,6 +85,11 @@ export type Product = {
   published: boolean
   image_url: string | null
   service_area: string | null
+  category?: 'workout' | 'diet' | 'service' | 'physical' | 'other'
+  level?: 'beginner' | 'intermediate' | 'advanced' | 'all'
+  access_mode?: 'whatsapp' | 'portal' | 'both'
+  access_days?: number
+  content?: ProductContent | null
   created_at?: string
 }
 
