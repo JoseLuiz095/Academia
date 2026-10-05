@@ -46,7 +46,7 @@ export type StoreSettings = {
   show_ai_badge?: boolean
 }
 
-export type MotionType = 'embedded' | 'none' | 'video' | 'gif' | 'model'
+export type MotionType = 'embedded' | 'none' | 'video' | 'gif' | 'model' | 'sequence'
 export type MotionPreset = 'auto' | 'squat' | 'lunge' | 'pushup' | 'row' | 'deadlift' | 'press' | 'plank' | 'strength'
 export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'core' | 'glutes' | 'quadriceps' | 'hamstrings' | 'calves'
 

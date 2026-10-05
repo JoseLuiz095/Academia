@@ -35,3 +35,9 @@ Para envio automático, escolha uma das opções:
 ## 5. Validação profissional e denúncias
 
 Antes de liberar venda de ficha de treino ou dieta, o Admin Master deve validar manualmente o documento profissional enviado, a área de atuação e o texto exibido na vitrine. Denúncias, suspensão e eventual fechamento de página continuam sendo decisões humanas do Admin Master, com registro do motivo.
+
+## 6. Biblioteca ampliada de exercícios
+
+A biblioteca 2D ampliada usa o catálogo público do RepDB. Ela não exige token, conta ou configuração de ambiente: o Admin carrega o catálogo somente ao abrir a aba **2D ampliado**. Para que essas ilustrações apareçam, o navegador precisa conseguir acessar `https://exercise-dataset.com`.
+
+O catálogo é permitido para uso comercial dentro do aplicativo, desde que o crédito visível para RepDB permaneça. Não remova o crédito da biblioteca administrativa, da prévia pública ou do conteúdo protegido. Caso a fonte externa fique indisponível, os modelos 3D já empacotados e as demais opções de mídia do produto continuam funcionando.
