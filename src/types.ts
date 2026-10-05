@@ -33,11 +33,20 @@ export type StoreSettings = {
   primary_color?: string | null
   accent_color?: string | null
   hero_title?: string | null
+  background_color?: string | null
+  surface_color?: string | null
+  text_color?: string | null
+  muted_color?: string | null
+  border_color?: string | null
+  button_text_color?: string | null
+  card_radius?: number | null
   show_whatsapp?: boolean
   show_pix?: boolean
   show_service_area?: boolean
   show_ai_badge?: boolean
 }
+
+export type MotionType = 'none' | 'video' | 'gif' | 'model'
 
 export type ProductContentItem = {
   title: string
@@ -45,6 +54,10 @@ export type ProductContentItem = {
   icon?: string | null
   image_url?: string | null
   meta?: string | null
+  motion_type?: MotionType
+  motion_url?: string | null
+  motion_poster?: string | null
+  motion_label?: string | null
 }
 
 export type ProductContent = {

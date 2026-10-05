@@ -593,6 +593,46 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 760px) { .content-preview-grid, .access-content-grid, .order-summary-strip { grid-template-columns: 1fr; }.product-content-preview { padding: 18px; }.product-content-preview .panel-heading { align-items: flex-start; flex-direction: column; }.access-release-row { align-items: stretch; flex-direction: column; }.access-release-row input { min-width: 0; width: 100%; }.access-release-row .secondary-button { width: 100%; }.content-builder { padding: 14px; } }
 @media print { .store-topbar, .store-footer, .back-link, .access-page > .page-intro > button { display: none !important; }.store-shell { background: #fff !important; }.access-content-card { break-inside: avoid; box-shadow: none; } }
 
+/* Store customization and motion-first exercise cards. */
+.store-shell { color: var(--store-text); background: var(--store-bg); }
+.store-shell .store-topbar, .store-shell .store-footer { border-color: var(--store-border); }
+.store-shell .store-product-card, .store-shell .store-section .panel, .store-shell .store-detail, .store-shell .content-motion-card, .store-shell .access-content-card { border-color: var(--store-border); border-radius: var(--store-radius); background: var(--store-surface); color: var(--store-text); }
+.store-shell .store-product-card h3, .store-shell .store-section h1, .store-shell .store-section h2, .store-shell .store-section h3, .store-shell .store-detail h1, .store-shell .content-motion-card strong, .store-shell .access-content-card h2 { color: var(--store-text); }
+.store-shell .store-product-card p, .store-shell .store-detail > div > p, .store-shell .store-footer, .store-shell .content-motion-card p, .store-shell .access-content-card p, .store-shell .field-help { color: var(--store-muted); }
+.store-shell .primary-button { color: var(--store-button-text); background: var(--store-primary); border-color: var(--store-primary); }
+.store-shell .secondary-button { color: var(--store-accent); border-color: var(--store-border); background: var(--store-surface); }
+.store-shell input, .store-shell textarea, .store-shell select { color: var(--store-text); border-color: var(--store-border); background: var(--store-surface); }
+.store-shell .store-hero-art { border-radius: var(--store-radius); background: radial-gradient(circle at 75% 30%, color-mix(in srgb, var(--store-primary) 36%, transparent), transparent 34%), linear-gradient(135deg, color-mix(in srgb, var(--store-accent) 22%, var(--store-bg)), color-mix(in srgb, var(--store-primary) 20%, var(--store-surface))); }
+.store-shell .store-product-cover { border-radius: calc(var(--store-radius) - 2px) calc(var(--store-radius) - 2px) 0 0; }
+.visual-settings { display: grid; gap: 18px; }
+.palette-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.visual-color-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+.visual-color-grid label { display: grid; gap: 8px; color: #52665a; font-size: 11px; font-weight: 700; }
+.visual-color-grid input[type="color"], .visual-settings input[type="color"] { width: 100%; height: 43px; min-height: 43px; padding: 4px; border: 1px solid #dce5da; border-radius: 9px; background: #fff; cursor: pointer; }
+.motion-editor { display: grid; gap: 12px; padding: 14px; border: 1px dashed #d9e5d8; border-radius: 12px; background: linear-gradient(135deg, #f7fbf6, #fffaf4); }
+.motion-editor > div:first-child { display: grid; gap: 4px; }
+.motion-editor .field-help { margin: 0; }
+.content-motion-grid, .access-motion-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.content-motion-card { display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 14px; min-width: 0; padding: 14px; border: 1px solid var(--store-border, #e3e9e0); }
+.content-motion-card > div:last-child { min-width: 0; }
+.content-motion-card strong { display: block; margin-top: 5px; font-size: 13px; }
+.content-motion-card small { display: block; margin-top: 5px; color: var(--store-muted, #7d917f); font-size: 10px; }
+.content-motion-card p { margin: 7px 0 0; color: var(--store-muted, #77877b); font-size: 11px; line-height: 1.5; }
+.motion-frame { position: relative; display: grid; place-items: center; min-height: 150px; overflow: hidden; border-radius: 13px; background: radial-gradient(circle at 50% 20%, rgba(255,255,255,.85), transparent 50%), #eaf2e9; }
+.motion-frame.compact { min-height: 118px; }
+.motion-frame > img, .motion-frame > video { width: 100%; height: 100%; min-height: inherit; object-fit: cover; }
+.motion-model model-viewer { width: 100%; height: 180px; background: transparent; }
+.motion-model.compact model-viewer { height: 118px; }
+.motion-badge { position: absolute; z-index: 1; top: 8px; left: 8px; padding: 5px 7px; border-radius: 99px; color: #fff; background: rgba(31, 55, 43, .78); font-size: 9px; font-weight: 700; }
+.motion-fallback { align-content: center; gap: 4px; color: #6c8e75; background: linear-gradient(145deg, #edf7ed, #fff5ed); }
+.motion-fallback svg { width: 86%; max-height: 135px; }
+.motion-fallback .mesh-body { fill: none; stroke: #668f70; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; transform-origin: 90px 86px; animation: mesh-squat 2.2s ease-in-out infinite; }
+.motion-fallback .mesh-points { fill: #e4875d; animation: mesh-pulse 2.2s ease-in-out infinite; }
+.motion-fallback span { color: #64806b; font-size: 9px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; }
+@keyframes mesh-squat { 0%, 100% { transform: translateY(0) scaleY(1); } 45%, 58% { transform: translateY(11px) scaleY(.84); } }
+@keyframes mesh-pulse { 0%, 100% { opacity: .65; transform: scale(1); transform-origin: center; } 50% { opacity: 1; transform: scale(1.28); transform-origin: center; } }
+@media (max-width: 760px) { .visual-color-grid, .content-motion-grid, .access-motion-grid { grid-template-columns: 1fr; }.content-motion-card { grid-template-columns: 104px minmax(0, 1fr); }.motion-frame { min-height: 132px; }.motion-frame.compact { min-height: 104px; } }
+
 /* Public plan selection: the request becomes a guided product moment. */
 .request-access-page { min-height: 100vh; color: #26372f; background: radial-gradient(circle at 12% 8%, rgba(232, 241, 225, .92), transparent 29%), #f8f8f4; }
 .request-access-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px; max-width: 1320px; margin: 0 auto; padding: 24px 32px; }

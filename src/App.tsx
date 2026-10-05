@@ -28,11 +28,11 @@ const MasterPayments = lazy(() => import('./pages/master/Payments').then((module
 const MasterPlans = lazy(() => import('./pages/master/Plans').then((module) => ({ default: module.MasterPlans })))
 const MasterDiagnostics = lazy(() => import('./pages/master/Diagnostics').then((module) => ({ default: module.MasterDiagnostics })))
 const MasterReports = lazy(() => import('./pages/master/Reports').then((module) => ({ default: module.MasterReports })))
-const Storefront = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreHome })))
-const StoreProduct = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreProduct })))
+const Storefront = lazy(() => import('./pages/store/StoreContent').then((module) => ({ default: module.StoreHomeEnhanced })))
+const StoreProduct = lazy(() => import('./pages/store/StoreContent').then((module) => ({ default: module.StoreProductEnhanced })))
 const StoreCart = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreCart })))
 const StoreCheckout = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreCheckout })))
-const StoreAccess = lazy(() => import('./pages/store/Storefront').then((module) => ({ default: module.StoreAccess })))
+const StoreAccess = lazy(() => import('./pages/store/StoreContent').then((module) => ({ default: module.StoreAccessEnhanced })))
 const StoreReport = lazy(() => import('./pages/store/StoreReport').then((module) => ({ default: module.StoreReport })))
 
 function ProtectedAdmin() {

@@ -75,7 +75,9 @@ O painel de configurações possui os registros de treinamento e nutrição. A p
 
 ### Conteúdo guiado e personalização
 
-O criador pode montar fichas e dietas em blocos com título, detalhes, metadados, ícone e imagem HTTPS, além de escolher cores, chamada principal, título do hero, CTA e informações exibidas na vitrine. O comprador acessa o conteúdo liberado em `/p/:slug/acesso` e pode imprimir/salvar uma cópia para uso pessoal, conforme a orientação comercial do profissional.
+O criador pode montar fichas e dietas em blocos com título, detalhes, metadados, ícone e imagem HTTPS, além de escolher cores, chamada principal, título do hero, CTA e informações exibidas na vitrine. Para exercícios, há demonstração por vídeo em loop, GIF/WebP animado ou modelo 3D `.glb/.gltf` com rotação/animação do próprio arquivo. Sem mídia, a plataforma mostra uma prévia animada de malha como fallback visual. O comprador acessa o conteúdo liberado em `/p/:slug/acesso` e pode imprimir/salvar uma cópia para uso pessoal, conforme a orientação comercial do profissional.
+
+Na configuração visual, o profissional pode escolher presets e ajustar separadamente fundo da página, fundo dos cards, texto principal, texto secundário, bordas, cor dos botões, texto dos botões e arredondamento dos cards. O modelo 3D usa o componente web `model-viewer` carregado do CDN do Google; o arquivo `.glb/.gltf` continua sob responsabilidade do profissional e deve permitir acesso HTTPS público.
 
 ## Marca própria e domínio
 

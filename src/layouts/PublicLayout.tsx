@@ -85,7 +85,17 @@ export function PublicLayout() {
   if (!workspace) return <div className="loading-page"><div><h1>Espaço indisponível</h1><p>{error}</p><Link to="/">Voltar ao início</Link></div></div>
   const totalItems = safeCart.reduce((total, item) => total + item.quantity, 0)
   const settings = workspace.store_settings ?? {}
-  const themeVars = { '--store-primary': settings.primary_color ?? '#ed7b45', '--store-accent': settings.accent_color ?? '#5f9c78' } as CSSProperties
+  const themeVars = {
+    '--store-primary': settings.primary_color ?? '#ed7b45',
+    '--store-accent': settings.accent_color ?? '#5f9c78',
+    '--store-bg': settings.background_color ?? '#f7f6f2',
+    '--store-surface': settings.surface_color ?? '#ffffff',
+    '--store-text': settings.text_color ?? '#26372f',
+    '--store-muted': settings.muted_color ?? '#718077',
+    '--store-border': settings.border_color ?? '#dfe7dd',
+    '--store-button-text': settings.button_text_color ?? '#ffffff',
+    '--store-radius': `${settings.card_radius ?? 16}px`,
+  } as CSSProperties
   return <StoreContext.Provider value={{ workspace, products, cart: safeCart, addToCart, changeQuantity, clearCart }}>
     <div className={`store-shell store-theme-${settings.theme ?? 'sage'}`} style={themeVars}>
       <header className="store-topbar"><Link className="store-logo plain-link" to={`/p/${slug}`}><span className="brand-mark">I</span><span><strong>{workspace.name}</strong><small>por impulso</small></span></Link><nav aria-label="Navegação da loja"><Link to={`/p/${slug}`}>Início</Link><Link to={`/p/${slug}/acesso`}>Acesso do cliente</Link><Link to={`/p/${slug}/carrinho`} aria-label={`Sacola, ${totalItems} ${totalItems === 1 ? 'item' : 'itens'}`}>Sacola <span className="cart-badge" aria-hidden="true">{totalItems}</span></Link></nav></header>
