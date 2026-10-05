@@ -629,6 +629,28 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .motion-fallback .mesh-body { fill: none; stroke: #668f70; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; transform-origin: 90px 86px; animation: mesh-squat 2.2s ease-in-out infinite; }
 .motion-fallback .mesh-points { fill: #e4875d; animation: mesh-pulse 2.2s ease-in-out infinite; }
 .motion-fallback span { color: #64806b; font-size: 9px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; }
+.embedded-motion { align-content: center; padding: 10px; background: radial-gradient(circle at 50% 25%, #fff, transparent 58%), linear-gradient(145deg, #edf7ed, #fff5ed); }
+.embedded-motion > svg { width: 100%; max-height: 164px; }
+.embedded-motion.compact > svg { max-height: 124px; }
+.motion-grid path { fill: none; stroke: rgba(104, 142, 112, .16); stroke-dasharray: 3 5; stroke-width: 1; }
+.mesh-silhouette { fill: none; stroke: #789780; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4; transform-origin: 120px 103px; animation: exercise-pose 2.4s ease-in-out infinite; }
+.muscle { fill: #b8d4b8; opacity: .28; transform-box: fill-box; transform-origin: center; }
+.muscle.active { fill: #ed7650; opacity: .95; filter: drop-shadow(0 0 5px rgba(237, 118, 80, .5)); animation: activation-pulse 1.15s ease-in-out infinite alternate; }
+.preset-pushup .mesh-silhouette { animation-name: exercise-pushup; }
+.preset-row .mesh-silhouette, .preset-deadlift .mesh-silhouette { animation-name: exercise-hinge; }
+.preset-lunge .mesh-silhouette { animation-name: exercise-lunge; }
+.preset-press .mesh-silhouette { animation-name: exercise-press; }
+.preset-plank .mesh-silhouette { animation-name: exercise-plank; }
+.motion-caption { display: grid; gap: 3px; width: 100%; padding: 5px 2px 0; text-align: center; }
+.motion-caption strong { color: #4f7459; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
+.motion-caption span { overflow: hidden; color: #7b9180; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes activation-pulse { from { transform: scale(.94); } to { transform: scale(1.09); } }
+@keyframes exercise-pose { 0%, 100% { transform: translateY(0) rotate(0); } 45%, 58% { transform: translateY(8px) rotate(1deg); } }
+@keyframes exercise-pushup { 0%, 100% { transform: translateY(0) rotate(0); } 45%, 58% { transform: translateY(7px) rotate(-3deg) scaleY(.96); } }
+@keyframes exercise-hinge { 0%, 100% { transform: rotate(0); } 45%, 58% { transform: rotate(7deg) translate(5px, 4px); } }
+@keyframes exercise-lunge { 0%, 100% { transform: translateX(0); } 45%, 58% { transform: translateX(-6px) rotate(-2deg); } }
+@keyframes exercise-press { 0%, 100% { transform: translateY(4px); } 45%, 58% { transform: translateY(-6px); } }
+@keyframes exercise-plank { 0%, 100% { transform: translateY(0) rotate(0); } 45%, 58% { transform: translateY(3px) rotate(-1deg); } }
 @keyframes mesh-squat { 0%, 100% { transform: translateY(0) scaleY(1); } 45%, 58% { transform: translateY(11px) scaleY(.84); } }
 @keyframes mesh-pulse { 0%, 100% { opacity: .65; transform: scale(1); transform-origin: center; } 50% { opacity: 1; transform: scale(1.28); transform-origin: center; } }
 @media (max-width: 760px) { .visual-color-grid, .content-motion-grid, .access-motion-grid { grid-template-columns: 1fr; }.content-motion-card { grid-template-columns: 104px minmax(0, 1fr); }.motion-frame { min-height: 132px; }.motion-frame.compact { min-height: 104px; } }
