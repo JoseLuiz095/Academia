@@ -1,13 +1,5 @@
 # Avisos de terceiros
 
-## OpenGym3D Exercise Pack
-
-- Fonte: <https://github.com/AssiamahS/opengym3d>
-- Uso no Impulso: os 24 modelos animados em formato GLB disponíveis em `public/exercise-models/`.
-- Licença: MIT. O texto integral da licença distribuída com os arquivos está em `public/exercise-models/OPENGYM3D-LICENSE.txt`.
-
-Os modelos são usados apenas como demonstração visual de movimento. A orientação de treino, a prescrição profissional e a indicação para cada cliente continuam sob responsabilidade do profissional cadastrado na vitrine.
-
 ## RepDB Exercise Dataset
 
 - Fonte: <https://github.com/RepDB/exercise-dataset> e <https://repdb.co>.
@@ -19,6 +11,16 @@ As ilustrações são carregadas da fonte pública do RepDB somente quando o cat
 ## Vital Animations Free Pack
 
 - Fonte: <https://vitalanimations.com/free-pack>.
-- Uso no Impulso: 50 demonstrações HD 3D em vídeo, carregadas sob demanda pela biblioteca administrativa e exibidas em loop na vitrine e no portal protegido.
+- Uso no Impulso: 50 demonstrações HD 3D em vídeo, empacotadas em `public/exercise-videos/vital/`, selecionadas pela biblioteca administrativa e exibidas em loop na vitrine e no portal protegido.
 - Termos: o fornecedor informa uso comercial no pacote gratuito para protótipos e MVPs; mantenha a atribuição e confirme os termos atuais antes de escalar a distribuição.
 - O pacote bruto não é versionado no repositório. Para produção, prefira adquirir o conjunto completo licenciado e hospedá-lo no próprio R2/CDN, evitando dependência do host público.
+
+## RepDB Preview Pack não incorporado
+
+O arquivo `repdb-preview.zip` fornecido para teste informa licença **CC BY-NC 4.0**. Por isso, seus arquivos não são incorporados ao SaaS comercial. O projeto continua usando apenas o catálogo comercial compatível já configurado, com crédito visível e validação da licença antes de qualquer expansão local.
+
+## Free Exercise DB fallback
+
+- Fonte: <https://github.com/yuhonas/free-exercise-db>.
+- Uso no Impulso: metadados locais com mais de 800 exercícios e imagens 2D carregadas dos caminhos públicos do projeto quando o catálogo principal não responde.
+- Licença: o repositório informa domínio público/Unlicense. O crédito permanece visível na biblioteca e no conteúdo liberado.

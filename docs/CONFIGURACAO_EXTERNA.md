@@ -40,10 +40,14 @@ Antes de liberar venda de ficha de treino ou dieta, o Admin Master deve validar 
 
 A biblioteca 2D ampliada usa o catálogo público do RepDB. Ela não exige token, conta ou configuração de ambiente: o Admin carrega o catálogo somente ao abrir a aba **2D ampliado**. Para que essas ilustrações apareçam, o navegador precisa conseguir acessar `https://exercise-dataset.com`.
 
-O catálogo é permitido para uso comercial dentro do aplicativo, desde que o crédito visível para RepDB permaneça. Não remova o crédito da biblioteca administrativa, da prévia pública ou do conteúdo protegido. Caso a fonte externa fique indisponível, os modelos 3D já empacotados e as demais opções de mídia do produto continuam funcionando.
+O catálogo é permitido para uso comercial dentro do aplicativo, desde que o crédito visível para RepDB permaneça. Não remova o crédito da biblioteca administrativa, da prévia pública ou do conteúdo protegido. Caso a fonte externa fique indisponível, as animações HD locais e as demais opções de mídia do produto continuam funcionando.
 
 ## Animações HD 3D
 
-A aba **HD 3D** usa os 50 exercícios do pacote gratuito publicado pela Vital Animations. Não é necessário token ou conta: o catálogo JSON e os vídeos são carregados sob demanda por URLs públicas. Essa opção melhora a apresentação sem adicionar uma API paga ao MVP.
+A aba **HD 3D** usa os 50 exercícios do pacote gratuito publicado pela Vital Animations. O catálogo JSON e os vídeos estão empacotados em `public/exercise-videos/vital/`, portanto o conteúdo aparece mesmo sem depender de uma API ou host externo.
 
 Para produção com maior volume, adquira o pacote licenciado desejado e hospede os MP4 em um bucket próprio do Cloudflare R2/CDN. O arquivo ZIP do pacote gratuito é grande e não deve ser commitado no repositório; o projeto utiliza somente os metadados e URLs dos exercícios escolhidos.
+
+## Fallback 2D aberto
+
+Se o catálogo RepDB não responder, o projeto usa `public/exercise-catalog/free-exercise-db.json`, com mais de 800 exercícios do Free Exercise DB. As imagens continuam sendo carregadas dos caminhos públicos do repositório oficial, e o crédito é mostrado ao cliente. O `repdb-preview.zip` não é usado no deploy porque sua licença informa uso não comercial.
