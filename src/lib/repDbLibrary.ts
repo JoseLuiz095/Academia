@@ -99,3 +99,4 @@ export async function fetchRepDbExercises(signal?: AbortSignal): Promise<RepDbEx
 
 export const repDbCreditUrl = 'https://repdb.co'
 export const openExerciseDbCreditUrl = 'https://github.com/yuhonas/free-exercise-db'
+export const openExerciseDbCount = 876

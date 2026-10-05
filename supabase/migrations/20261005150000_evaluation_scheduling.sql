@@ -169,7 +169,7 @@ create or replace function public.create_pending_order(
   customer_phone text,
   customer_note text,
   customer_consent boolean,
-  appointment jsonb default null
+  appointment jsonb
 )
 returns jsonb
 language plpgsql

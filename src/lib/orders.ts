@@ -41,9 +41,22 @@ export async function createPendingOrder(workspaceId: string, items: OrderItemIn
   const result = await supabase.functions.invoke('create-public-order', { body: { ...payload, turnstile_token: turnstileToken } })
   const { data, error } = result
   if (error) {
-    const known = ['Os valores mudaram', 'Produto indisponível', 'Vitrine indisponível', 'Esta tentativa já foi usada']
-    const message = known.find((text) => error.message.includes(text))
-    throw new Error(message ? error.message : 'Não foi possível registrar o pedido. Tente novamente.')
+    let detail = error.message
+    const context = (error as { context?: Response }).context
+    if (context) {
+      try {
+        const body = await context.clone().json() as { error?: unknown }
+        if (typeof body.error === 'string' && body.error.trim()) detail = body.error.trim()
+      } catch { /* A resposta pode não ser JSON. Mantemos a mensagem do SDK. */ }
+    }
+    console.error('[checkout] create-public-order failed', detail)
+    const normalized = detail.toLocaleLowerCase('pt-BR')
+    if (normalized.includes('não é unique') || normalized.includes('not unique') || normalized.includes('ambiguous')) {
+      throw new Error('O checkout encontrou uma configuração antiga no banco. A correção já foi preparada; atualize a página e tente novamente em instantes.')
+    }
+    const known = ['Os valores mudaram', 'Produto indisponível', 'Vitrine indisponível', 'Esta tentativa já foi usada', 'O horário', 'avaliação', 'Pix', 'verificação de segurança']
+    const message = known.some((text) => detail.toLocaleLowerCase('pt-BR').includes(text.toLocaleLowerCase('pt-BR'))) ? detail : `Não foi possível registrar o pedido. ${detail.slice(0, 180)}`
+    throw new Error(message)
   }
   const receipt = data as OrderReceipt | null
   if (!receipt || typeof receipt.reference !== 'string' || typeof receipt.total !== 'number' || !Array.isArray(receipt.items)) {
