@@ -1,5 +1,5 @@
 import type { MotionPreset, MuscleGroup } from '../types'
-import type { ExerciseEnvironment } from './exerciseMotionLibrary'
+import type { ExerciseEnvironment } from './exerciseLibraryTypes'
 
 export type VitalExercise = {
   id: string
@@ -25,8 +25,9 @@ type VitalApiExercise = {
   difficulty?: string
 }
 
-const metadataUrl = 'https://pub-a63d6296f71940e5b51f4f8065d7b660.r2.dev/VitalAnimations/Free50/50gymworkouts.json'
-const videoBaseUrl = 'https://pub-a63d6296f71940e5b51f4f8065d7b660.r2.dev/VitalAnimations/Free50/Free50/'
+const localMetadataUrl = '/exercise-videos/vital/50gymworkouts.json'
+const remoteMetadataUrl = 'https://pub-a63d6296f71940e5b51f4f8065d7b660.r2.dev/VitalAnimations/Free50/50gymworkouts.json'
+const videoBaseUrl = '/exercise-videos/vital/'
 
 const muscleMap: Record<string, MuscleGroup | undefined> = {
   chest: 'chest', pectorals: 'chest', pectoralis: 'chest',
@@ -72,8 +73,9 @@ function toMuscles(source: VitalApiExercise): MuscleGroup[] {
 }
 
 export async function fetchVitalExercises(signal?: AbortSignal): Promise<VitalExercise[]> {
-  const response = await fetch(metadataUrl, { signal })
-  if (!response.ok) throw new Error('Não foi possível carregar as animações HD 3D.')
+  let response = await fetch(localMetadataUrl, { signal })
+  if (!response.ok) response = await fetch(remoteMetadataUrl, { signal })
+  if (!response.ok) throw new Error('Não foi possível carregar as animações HD 3D locais.')
   const payload = await response.json() as VitalApiExercise[]
   return payload.flatMap((exercise) => {
     if (!exercise.id || !exercise.name) return []
