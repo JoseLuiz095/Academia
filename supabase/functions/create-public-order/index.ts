@@ -27,6 +27,7 @@ Deno.serve(async (request) => {
   const customerPhone = typeof input.customer_phone === 'string' ? input.customer_phone.replace(/\D/g, '') : ''
   const customerNote = typeof input.customer_note === 'string' ? input.customer_note.trim() : ''
   const customerConsent = input.customer_consent === true
+  const appointment = input.appointment && typeof input.appointment === 'object' && !Array.isArray(input.appointment) ? input.appointment : null
   const items = input.cart_items
   const expectedTotal = input.expected_total
   if (!token || !uuid.test(workspaceId) || !uuid.test(requestId) || !Array.isArray(items) || typeof expectedTotal !== 'number' || customerName.length < 2 || customerName.length > 80 || !/^55\d{10,11}$/.test(customerPhone) || customerNote.length > 500 || !customerConsent) {
@@ -58,6 +59,7 @@ Deno.serve(async (request) => {
     customer_phone: customerPhone,
     customer_note: customerNote || null,
     customer_consent: customerConsent,
+    appointment,
   })
   if (error) return reply({ error: error.message }, 400)
   return reply(data)

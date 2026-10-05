@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { OrderReceipt } from '../types'
+import type { AppointmentSelection, OrderReceipt } from '../types'
 
 type OrderItemInput = { product_id: string; quantity: number }
 const memoryRequests = new Map<string, { fingerprint: string; requestId: string }>()
@@ -21,7 +21,7 @@ function requestFor(workspaceId: string, items: OrderItemInput[]) {
   return { key, fingerprint, requestId }
 }
 
-export async function createPendingOrder(workspaceId: string, items: OrderItemInput[], expectedTotal: number, turnstileToken = '', customer?: { name: string; phone: string; note?: string; consent: boolean }): Promise<OrderReceipt> {
+export async function createPendingOrder(workspaceId: string, items: OrderItemInput[], expectedTotal: number, turnstileToken = '', customer?: { name: string; phone: string; note?: string; consent: boolean }, appointment?: AppointmentSelection | null): Promise<OrderReceipt> {
   if (!supabase) throw new Error('A vitrine está temporariamente indisponível.')
   if (!items.length || items.length > 20) throw new Error('Escolha de 1 a 20 produtos para o pedido.')
   if (!turnstileToken) throw new Error('Conclua a verificação de segurança para registrar o pedido.')
@@ -36,6 +36,7 @@ export async function createPendingOrder(workspaceId: string, items: OrderItemIn
     customer_phone: customer.phone.replace(/\D/g, ''),
     customer_note: customer.note?.trim() || null,
     customer_consent: customer.consent,
+    appointment: appointment ?? null,
   }
   const result = await supabase.functions.invoke('create-public-order', { body: { ...payload, turnstile_token: turnstileToken } })
   const { data, error } = result
