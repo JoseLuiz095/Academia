@@ -32,7 +32,9 @@ function BuiltInMotion({ item, compact = false }: { item: ProductContentItem; co
 
 export function MotionVisual({ item, compact = false, showEmbedded = true }: { item: ProductContentItem; compact?: boolean; showEmbedded?: boolean }) {
   const type: MotionType = item.motion_type ?? 'none'
-  if (item.motion_url && type === 'model') return <div className={`motion-frame motion-model ${compact ? 'compact' : ''}`}><span className="motion-badge">Modelo 3D</span>{createElement('model-viewer', { src: item.motion_url, alt: item.motion_label || item.title, 'camera-controls': true, autoplay: true, 'shadow-intensity': '1', loading: 'lazy' })}</div>
+  const selectedPreset = item.motion_preset && item.motion_preset !== 'auto' ? item.motion_preset : inferPreset(item.title)
+  const activated = (item.muscle_focus?.length ? item.muscle_focus : defaultMuscles[selectedPreset]).map((muscle) => muscleLabels[muscle]).join(' · ')
+  if (item.motion_url && type === 'model') return <div className={`model-motion-stack ${compact ? 'compact' : ''}`}><div className={`motion-frame motion-model ${compact ? 'compact' : ''}`}><span className="motion-badge">Modelo 3D</span>{createElement('model-viewer', { src: item.motion_url, alt: item.motion_label || item.title, 'camera-controls': true, autoplay: true, 'auto-rotate': true, 'interaction-prompt': 'none', 'animation-crossfade': true, 'shadow-intensity': '1', loading: 'lazy', reveal: 'auto' })}</div><p className="model-muscle-caption">Ativação: {activated}</p></div>
   if (item.motion_url && type === 'video') return <div className={`motion-frame ${compact ? 'compact' : ''}`}><video src={item.motion_url} poster={item.motion_poster || undefined} autoPlay muted loop playsInline controls={!compact} aria-label={item.motion_label || item.title} /></div>
   if (item.motion_url && type === 'gif') return <div className={`motion-frame ${compact ? 'compact' : ''}`}><img src={item.motion_url} alt={item.motion_label || item.title} loading="lazy" /></div>
   if (showEmbedded && (type === 'embedded' || type === 'none')) return <BuiltInMotion item={item} compact={compact} />
