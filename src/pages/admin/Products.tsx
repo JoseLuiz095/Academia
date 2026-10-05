@@ -64,14 +64,14 @@ function ExerciseLibraryPicker({ item, onChange }: { item: ProductContentItem; o
     setRepDbLoading(true)
     void fetchRepDbExercises(controller.signal).then((result) => { setRepDbExercises(result); setRepDbError('') }).catch((error: unknown) => { if (!(error instanceof DOMException && error.name === 'AbortError')) setRepDbError('A biblioteca 2D está indisponível agora. Você ainda pode usar as animações HD 3D locais.') }).finally(() => setRepDbLoading(false))
     return () => controller.abort()
-  }, [open, source, repDbExercises.length, repDbLoading, repDbError, repDbAttempt])
+  }, [open, source, repDbExercises.length, repDbError, repDbAttempt])
   useEffect(() => {
     if (!open || source !== 'vital' || vitalExercises.length || vitalLoading || vitalError) return
     const controller = new AbortController()
     setVitalLoading(true)
     void fetchVitalExercises(controller.signal).then((result) => { setVitalExercises(result); setVitalError('') }).catch((error: unknown) => { if (!(error instanceof DOMException && error.name === 'AbortError')) setVitalError('As animações HD 3D locais estão indisponíveis. Verifique os arquivos da biblioteca.') }).finally(() => setVitalLoading(false))
     return () => controller.abort()
-  }, [open, source, vitalExercises.length, vitalLoading, vitalError, vitalAttempt])
+  }, [open, source, vitalExercises.length, vitalError, vitalAttempt])
 
   function selectVitalExercise(exercise: VitalExercise) {
     onChange({ title: exercise.name, details: exercise.description, icon: '🏋️', exercise_library_id: `vital:${exercise.id}`, motion_type: 'video', motion_preset: exercise.preset, muscle_focus: exercise.muscles, motion_url: exercise.videoUrl, motion_poster: '', motion_label: `Animação HD 3D · Ativação: ${exercise.muscles.map((muscle) => muscleGroupLabels[muscle]).join(' · ')}` })
