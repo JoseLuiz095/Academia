@@ -1,4 +1,5 @@
 import { createElement, useEffect, useState, type FormEvent } from 'react'
+import '@google/model-viewer'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useStore } from '../../layouts/PublicLayout'
 import { currency, whatsappLink } from '../../lib/format'

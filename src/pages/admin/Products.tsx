@@ -1,4 +1,5 @@
 import { createElement, useEffect, useState, type FormEvent } from 'react'
+import '@google/model-viewer'
 import { useAuth } from '../../contexts/AuthContext'
 import { BuiltInExerciseMotion, muscleGroupLabels, motionPresetLabels } from '../../components/ExerciseMotion'
 import { EXERCISE_MOTION_LIBRARY, exerciseEnvironmentLabel, findExerciseMotion, type ExerciseEnvironment, type ExerciseMotionDefinition } from '../../lib/exerciseMotionLibrary'
