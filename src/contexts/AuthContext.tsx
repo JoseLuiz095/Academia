@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let availableWorkspaces: Workspace[] = []
       if (ids.length) {
         const { data, error } = await supabase.from('workspaces')
-          .select('id,owner_id,name,slug,niche,description,whatsapp_number,pix_key,pix_receiver,pix_city,service_cities,published,plan_code,subscription_status,subscription_started_at,subscription_ends_at,store_settings,approval_status,approved_at,approved_by,created_at')
+          .select('id,owner_id,name,slug,niche,description,whatsapp_number,pix_key,pix_receiver,pix_city,service_cities,training_document_type,training_document_number,nutrition_document_type,nutrition_document_number,published,plan_code,subscription_status,subscription_started_at,subscription_ends_at,store_settings,approval_status,approved_at,approved_by,created_at')
           .in('id', ids)
           .order('created_at', { ascending: true })
         if (error) throw error

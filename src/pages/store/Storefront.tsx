@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { TurnstileWidget } from '../../components/TurnstileWidget'
 import { useStore } from '../../layouts/PublicLayout'
@@ -6,9 +6,12 @@ import { appConfig } from '../../lib/config'
 import { currency, whatsappLink } from '../../lib/format'
 import { buildPixCopyPaste, buildPixFromStaticBase, isPixCopyPaste, readStaticPixReceiver } from '../../lib/pix'
 import { createPendingOrder, finishOrderAttempt, loadOrderReceipt, rememberOrderReceipt } from '../../lib/orders'
+import { supabase } from '../../lib/supabase'
 import type { OrderReceipt, Product } from '../../types'
 
 const label: Record<Product['kind'], string> = { service: 'Serviço', digital: 'Manual digital', physical: 'Produto físico' }
+const categoryLabel: Record<NonNullable<Product['category']>, string> = { workout: 'Ficha de treino', diet: 'Dieta', service: 'Serviço', physical: 'Produto físico', other: 'Conteúdo digital' }
+const levelLabel: Record<NonNullable<Product['level']>, string> = { beginner: 'Iniciante', intermediate: 'Intermediário', advanced: 'Avançado', all: 'Todos os níveis' }
 
 function ProductCover({ product }: { product: Product }) {
   return <div className={`store-product-cover ${product.kind}`} aria-hidden="true">{product.image_url ? <img src={product.image_url} alt="" loading="lazy" /> : <><span>{label[product.kind]}</span><strong>{product.name}</strong><i>✦</i></>}</div>
@@ -34,7 +37,30 @@ export function StoreProduct() {
   const product = products.find((item) => item.id === id)
   if (!product) return <section className="store-section"><h1>Produto indisponível</h1><Link to={`/p/${workspace.slug}`}>Voltar para a vitrine</Link></section>
   const contact = whatsappLink(workspace.whatsapp_number, `Olá! Tenho interesse em ${product.name} da página ${workspace.name}.`)
-  return <section className="store-section"><Link className="back-link" to={`/p/${workspace.slug}`}>← Voltar à vitrine</Link><div className="store-detail"><ProductCover product={product} /><div><p className="eyebrow">{label[product.kind]}</p><h1>{product.name}</h1><p>{product.description || 'Converse com o profissional para saber mais.'}</p>{product.service_area && <div className="detail-note">◎ Atendimento: {product.service_area}</div>}<strong className="store-price">{product.price === null ? 'Preço a combinar' : currency.format(product.price)}</strong><div className="detail-actions">{product.price !== null && <button className="primary-button" onClick={() => { addToCart(product.id); navigate(`/p/${workspace.slug}/carrinho`) }}>Adicionar à sacola <span>＋</span></button>}{contact && <a href={contact} target="_blank" rel="noreferrer" className="secondary-button plain-link">Conversar no WhatsApp ↗</a>}</div>{!contact && product.price === null && <p className="field-help">Este profissional ainda não informou um WhatsApp para combinar o preço.</p>}<small>Pagamento confirmado diretamente pelo profissional. Produto digital ou agendamento liberado após confirmação.</small></div></div></section>
+  const contentItems = product.content?.items ?? []
+  return <section className="store-section"><Link className="back-link" to={`/p/${workspace.slug}`}>← Voltar à vitrine</Link><div className="store-detail"><ProductCover product={product} /><div><p className="eyebrow">{product.category ? categoryLabel[product.category] : label[product.kind]}{product.kind === 'digital' && product.level && product.level !== 'all' ? ` · ${levelLabel[product.level]}` : ''}</p><h1>{product.name}</h1><p>{product.description || 'Converse com o profissional para saber mais.'}</p>{product.service_area && <div className="detail-note">◎ Atendimento: {product.service_area}</div>}<strong className="store-price">{product.price === null ? 'Preço a combinar' : currency.format(product.price)}</strong><div className="detail-actions">{product.price !== null && <button className="primary-button" onClick={() => { addToCart(product.id); navigate(`/p/${workspace.slug}/carrinho`) }}>Adicionar à sacola <span>＋</span></button>}{contact && <a href={contact} target="_blank" rel="noreferrer" className="secondary-button plain-link">Conversar no WhatsApp ↗</a>}</div>{!contact && product.price === null && <p className="field-help">Este profissional ainda não informou um WhatsApp para combinar o preço.</p>}<small>Pagamento confirmado diretamente pelo profissional. {product.access_mode === 'portal' || product.access_mode === 'both' ? 'Após a confirmação, o conteúdo é liberado em um portal protegido e vinculado ao primeiro dispositivo.' : 'A entrega é combinada pelo WhatsApp após a confirmação.'}</small></div></div>{product.kind === 'digital' && contentItems.length > 0 && <section className="product-content-preview"><div className="panel-heading"><div><span className="panel-kicker">Prévia do conteúdo</span><h2>O que você vai encontrar</h2></div><span className="content-lock-badge">Conteúdo completo após confirmação</span></div>{product.content?.intro && <p className="product-content-intro">{product.content.intro}</p>}<div className="content-preview-grid">{contentItems.map((item, index) => <article key={`${item.title}-${index}`}><div className="content-preview-icon">{item.image_url ? <img src={item.image_url} alt="" loading="lazy" /> : item.icon || '✦'}</div><div><strong>{item.title || `Etapa ${index + 1}`}</strong>{item.meta && <small>{item.meta}</small>}<p>{item.details || 'Detalhes liberados no portal após a confirmação do pedido.'}</p></div></article>)}</div></section>}</section>
+}
+
+export function StoreAccess() {
+  const { workspace } = useStore()
+  const [token, setToken] = useState(() => new URLSearchParams(window.location.search).get('token') ?? '')
+  const [deviceId] = useState(() => { const key = 'impulso:device-id'; const current = localStorage.getItem(key); if (current) return current; const created = crypto.randomUUID(); localStorage.setItem(key, created); return created })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [access, setAccess] = useState<{ product: Product; order_reference: string; expires_at: string } | null>(null)
+
+  async function openAccess(event?: FormEvent) {
+    event?.preventDefault()
+    if (!supabase || token.trim().length !== 48) { setError('Cole o link ou código de acesso recebido do profissional.'); return }
+    setLoading(true); setError('')
+    const result = await supabase.functions.invoke('access-product', { body: { token: token.trim().toLowerCase(), device_id: deviceId } })
+    if (result.error || !result.data?.product) setError(result.error?.message || 'Não foi possível abrir este conteúdo.')
+    else setAccess(result.data as { product: Product; order_reference: string; expires_at: string })
+    setLoading(false)
+  }
+
+  const items = access?.product.content?.items ?? []
+  return <section className="store-section access-page"><Link className="back-link" to={`/p/${workspace.slug}`}>← Voltar à vitrine</Link>{!access ? <><p className="eyebrow">Área do cliente</p><h1>Acesse seu conteúdo</h1><p className="checkout-intro">Cole o código ou abra o link enviado pelo profissional depois da confirmação do pagamento. O primeiro acesso vincula o conteúdo a este dispositivo.</p><form className="panel access-form" onSubmit={(event) => void openAccess(event)}><label>Código de acesso<input autoComplete="off" value={token} onChange={(event) => setToken(event.target.value)} placeholder="Cole seu código de 48 caracteres" /></label><button className="primary-button" disabled={loading}>{loading ? 'Validando…' : 'Abrir meu conteúdo'} <span>→</span></button>{error && <p className="form-error" role="alert">{error}</p>}</form><div className="access-safety-note"><strong>Proteção simples</strong><span>O token expira e só funciona no primeiro dispositivo em que for aberto. Se trocar de celular, peça uma nova liberação ao profissional.</span></div></> : <><div className="page-intro"><div><p className="eyebrow">Conteúdo liberado · pedido {access.order_reference}</p><h1>{access.product.name}</h1><p className="intro-description">Acesso válido até {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(access.expires_at))} neste dispositivo.</p></div><button className="secondary-button" onClick={() => window.print()}>Imprimir / salvar PDF</button></div>{access.product.content?.intro && <section className="panel access-intro"><p>{access.product.content.intro}</p></section>}<div className="access-content-grid">{items.length ? items.map((item, index) => <article className="panel access-content-card" key={`${item.title}-${index}`}><div className="access-content-icon">{item.image_url ? <img src={item.image_url} alt="" /> : item.icon || '✦'}</div><div><span className="panel-kicker">Etapa {String(index + 1).padStart(2, '0')}</span><h2>{item.title}</h2>{item.meta && <strong>{item.meta}</strong>}<p>{item.details || 'Siga a orientação combinada com o profissional.'}</p></div></article>) : <section className="panel empty-panel"><h2>Conteúdo em preparação</h2><p>O profissional liberou o acesso, mas ainda está finalizando os detalhes.</p></section>}</div>{error && <p className="form-error" role="alert">{error}</p>}</>}</section>
 }
 
 export function StoreCart() {

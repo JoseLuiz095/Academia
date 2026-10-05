@@ -6,13 +6,13 @@ SaaS para personal trainers e criadores, construído em React, TypeScript, Vite 
 
 | Área | Rotas | O que funciona agora |
 | --- | --- | --- |
-| Página pública | `/`, `/demonstracao`, `/p/:slug`, produto, sacola e finalizar | Página comercial, demonstração interativa local, vitrine, catálogo, pedido pendente com referência e Pix manual |
-| Admin do criador | `/admin/*` | Cadastro sujeito à aprovação, loja, pedidos com contato do cliente, plano, Pix da assinatura, ideias, assistente de nicho, cota de IA e lembretes |
-| Admin Master | `/admin-master/*` | Aprovação de lojistas, controle de espaços/planos, Pix da plataforma, confirmação manual, auditoria e diagnóstico |
+| Página pública | `/`, `/demonstracao`, `/p/:slug`, produto, sacola, finalizar e acesso | Página comercial, demonstração interativa local, vitrine responsiva, catálogo por modalidade/nível, Pix manual, prévia de conteúdos e portal protegido do comprador |
+| Admin do criador | `/admin/*` | Cadastro sujeito à aprovação, loja, documentos profissionais, pedidos com contato do cliente, liberação de acesso, plano, Pix da assinatura, ideias, assistente de nicho, cota de IA e lembretes |
+| Admin Master | `/admin-master/*` | Aprovação de lojistas, controle de espaços/planos, Pix da plataforma, confirmação manual, auditoria, diagnóstico e fila de denúncias de vitrines |
 
 O Admin Master não é liberado pelo cadastro público. Um operador do banco adiciona o usuário autorizado em `public.platform_admins`. O lojista escolhe a Demonstração ou um plano pago e aguarda aprovação. A Demonstração libera 14 dias sem cobrança automática. Para continuar ou renovar, solicita cobrança Pix, informa o comprovante e aguarda o Master conferir o crédito. Só a confirmação do Master avança o vencimento. Os pedidos da loja têm Pix próprio e confirmação manual pelo profissional; não há entrega automática de arquivo digital.
 
-O contrato atual do produto, o ciclo de acesso e os limites estão em [Contrato do produto](docs/CONTRATO_DO_PRODUTO.md).
+Para vender ficha de treino, o espaço precisa informar um CREF/registro profissional; para vender dieta, precisa informar CRN/registro nutricional. Esses dados aparecem na vitrine pública. A denúncia é registrada para análise humana do Admin Master; o sistema não decide validade profissional nem fecha página automaticamente. O contrato atual do produto, o ciclo de acesso e os limites estão em [Contrato do produto](docs/CONTRATO_DO_PRODUTO.md).
 
 ## Execução local
 
@@ -67,7 +67,15 @@ Para a decisão de modelo Gemini e a evolução segura do WhatsApp Business — 
 
 ## Pix e pedidos
 
-O profissional cadastra preferencialmente um Pix copia e cola **estático** do banco, ou uma chave Pix (inclusive CPF) com nome e cidade do recebedor. No checkout, o cliente informa nome, WhatsApp, observação e consentimento para atendimento; o pedido pendente é criado somente após o Turnstile. Preços e total são recalculados no banco, que devolve uma referência. O navegador insere esse total no código estático e recalcula sua verificação, ou monta um BR Code a partir da chave. Códigos dinâmicos são rejeitados. O cliente confere recebedor e valor no aplicativo do banco, paga e envia a referência pelo WhatsApp. O profissional verifica o crédito no extrato e marca o pedido como confirmado no painel. Na primeira versão, entrega manual digital, serviço e envio de produto são combinados por WhatsApp; o site não libera arquivos automaticamente. Imagens do catálogo podem ser enviadas para o bucket público `product-images` ou informadas por URL HTTPS. Para outras formas de pagamento, o cliente combina diretamente com o profissional.
+O profissional cadastra preferencialmente um Pix copia e cola **estático** do banco, ou uma chave Pix (inclusive CPF) com nome e cidade do recebedor. No checkout, o cliente informa nome, WhatsApp, observação e consentimento para atendimento; o pedido pendente é criado somente após o Turnstile. Preços e total são recalculados no banco, que devolve uma referência. O navegador insere esse total no código estático e recalcula sua verificação, ou monta um BR Code a partir da chave. Códigos dinâmicos são rejeitados. O cliente confere recebedor e valor no aplicativo do banco, paga e envia a referência pelo WhatsApp. O profissional verifica o crédito no extrato e marca o pedido como confirmado no painel. Para produtos digitais, pode cadastrar nível, blocos com ícone/imagem, modalidade de entrega e prazo de acesso. Depois de confirmar o pedido, o Admin gera um link/token protegido e avisa o cliente pelo WhatsApp; o token é armazenado como hash, expira e fica vinculado ao primeiro dispositivo. Isso é uma proteção simples de acesso, não DRM absoluto. Produtos físicos e serviços continuam combinados com o profissional. Imagens do catálogo podem ser enviadas para o bucket público `product-images` ou informadas por URL HTTPS. Para outras formas de pagamento, o cliente combina diretamente com o profissional.
+
+### Responsabilidade profissional e denúncias
+
+O painel de configurações possui os registros de treinamento e nutrição. A publicação de ficha de treino ou dieta digital é bloqueada no banco quando o respectivo documento não está preenchido. A vitrine mostra o responsável por categoria e oferece o link `Denunciar página`, protegido por Turnstile. O Admin Master revisa a fila em `/admin-master/denuncias` e registra a decisão manualmente.
+
+### Conteúdo guiado e personalização
+
+O criador pode montar fichas e dietas em blocos com título, detalhes, metadados, ícone e imagem HTTPS, além de escolher cores, chamada principal, título do hero, CTA e informações exibidas na vitrine. O comprador acessa o conteúdo liberado em `/p/:slug/acesso` e pode imprimir/salvar uma cópia para uso pessoal, conforme a orientação comercial do profissional.
 
 ## Marca própria e domínio
 
@@ -75,4 +83,4 @@ Cada espaço possui nome e slug próprios, como `/p/minha-marca`. Atualmente cad
 
 ## Homologação no Cloudflare Workers
 
-A URL `academia.joseluizacama.workers.dev` pertence a um Worker de assets estáticos, não a um projeto Pages conectado ao GitHub. O arquivo `wrangler.jsonc` configura a saída `dist` e o fallback das rotas React. O GitHub guarda o código, mas fazer push não publica automaticamente esse Worker. Para publicar: configure as variáveis públicas do Supabase no ambiente de build, rode `npm run build` e depois `wrangler deploy`. Nunca publique `.env.local` ou a chave secreta do Gemini. Se desejar CI para cada push na `main`, configure um workflow com credencial limitada do Cloudflare em etapa separada.
+A URL `academia.joseluizacama.workers.dev` pertence a um Worker de assets estáticos, não a um projeto Pages conectado ao GitHub. O arquivo `wrangler.jsonc` configura a saída `dist` e o fallback das rotas React. O GitHub guarda o código, mas fazer push não publica automaticamente esse Worker. Para publicar: configure as variáveis públicas do Supabase no ambiente de build, rode `npm run build` e depois `wrangler deploy`. Nunca publique `.env.local` ou a chave secreta do Gemini. As Edge Functions `access-product` e `report-public-store` exigem os secrets remotos do Supabase e já estão estruturadas para o domínio público. Se desejar CI para cada push na `main`, configure um workflow com credencial limitada do Cloudflare em etapa separada.
