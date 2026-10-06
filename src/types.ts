@@ -27,7 +27,7 @@ export type Workspace = {
 }
 
 export type StoreSettings = {
-  theme?: 'sage' | 'sunset' | 'lavender'
+  theme?: 'sage' | 'sunset' | 'lavender' | 'impulso'
   tagline?: string | null
   cta_label?: string | null
   primary_color?: string | null
