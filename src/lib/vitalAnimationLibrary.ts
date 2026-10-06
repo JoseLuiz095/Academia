@@ -1,5 +1,6 @@
 import type { MotionPreset, MuscleGroup } from '../types'
 import type { ExerciseEnvironment } from './exerciseLibraryTypes'
+import { buildExerciseDescription, translateEquipment, translateLevel, translateExerciseName } from './exerciseTranslations'
 
 export type VitalExercise = {
   id: string
@@ -54,10 +55,7 @@ function toPreset(name: string): Exclude<MotionPreset, 'auto'> {
 }
 
 function toLevel(value?: string): VitalExercise['level'] {
-  const level = value?.toLocaleLowerCase('en-US')
-  if (level === 'advanced') return 'advanced'
-  if (level === 'intermediate') return 'intermediate'
-  return 'beginner'
+  return translateLevel(value)
 }
 
 function toMuscles(source: VitalApiExercise): MuscleGroup[] {
@@ -79,18 +77,18 @@ export async function fetchVitalExercises(signal?: AbortSignal): Promise<VitalEx
   const payload = await response.json() as VitalApiExercise[]
   return payload.flatMap((exercise) => {
     if (!exercise.id || !exercise.name) return []
-    const instructions = exercise.instructions?.slice(0, 2).join(' ')
-    const description = exercise.description || instructions || 'Animação HD 3D selecionada da biblioteca de exercícios.'
+    const translatedName = translateExerciseName(exercise.name)
+    const muscles = toMuscles(exercise)
     const mapped: VitalExercise = {
       id: exercise.id,
-      name: exercise.name,
-      description,
-      equipment: (exercise.equipment || 'Equipamento de academia').replaceAll('_', ' '),
+      name: translatedName,
+      description: buildExerciseDescription(translatedName, muscles, exercise.equipment),
+      equipment: translateEquipment(exercise.equipment),
       level: toLevel(exercise.difficulty),
       environment: 'gym',
-      muscles: toMuscles(exercise),
+      muscles,
       preset: toPreset(exercise.name),
-      videoUrl: new URL(`${exercise.id}.mp4`, videoBaseUrl).toString(),
+      videoUrl: `${videoBaseUrl}${encodeURIComponent(exercise.id)}.mp4`,
     }
     return [mapped]
   })

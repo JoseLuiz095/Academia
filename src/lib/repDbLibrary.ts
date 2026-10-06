@@ -1,5 +1,6 @@
 import type { MotionPreset, MuscleGroup } from '../types'
 import type { ExerciseEnvironment } from './exerciseLibraryTypes'
+import { buildExerciseDescription, translateEquipment, translateLevel, translateExerciseName } from './exerciseTranslations'
 
 export type ExerciseCatalogSource = 'repdb' | 'open'
 export type RepDbExercise = {
@@ -51,10 +52,7 @@ function toPreset(name: string): Exclude<MotionPreset, 'auto'> {
 }
 
 function toLevel(value?: string): RepDbExercise['level'] {
-  const level = value?.toLocaleLowerCase('en-US')
-  if (level === 'advanced' || level === 'expert') return 'advanced'
-  if (level === 'intermediate') return 'intermediate'
-  return 'beginner'
+  return translateLevel(value)
 }
 
 function toMuscles(primary: string[] = [], secondary: string[] = []): MuscleGroup[] {
@@ -67,14 +65,18 @@ function mapRepDbExercise(exercise: RepDbApiExercise): RepDbExercise | null {
   const startImage = toImageUrl(exercise.images?.flat?.start ?? exercise.images?.flat?.main, imageBaseUrl)
   const peakImage = toImageUrl(exercise.images?.flat?.peak ?? exercise.images?.flat?.main, imageBaseUrl)
   if (!exercise.id || !exercise.name_en || !startImage) return null
-  return { id: exercise.id, name: exercise.name_en, description: exercise.description_en || 'Demonstração visual selecionada da biblioteca de exercícios.', equipment: (exercise.equipment || 'bodyweight').replaceAll('_', ' '), level: toLevel(exercise.difficulty), environment: exercise.is_bodyweight ? 'home' : 'gym', muscles: toMuscles(exercise.primary_muscles, exercise.secondary_muscles), preset: toPreset(exercise.name_en), startImage, peakImage: peakImage || startImage, source: 'repdb' }
+  const muscles = toMuscles(exercise.primary_muscles, exercise.secondary_muscles)
+  const name = translateExerciseName(exercise.name_en)
+  return { id: exercise.id, name, description: buildExerciseDescription(name, muscles, exercise.equipment), equipment: translateEquipment(exercise.equipment), level: toLevel(exercise.difficulty), environment: exercise.is_bodyweight ? 'home' : 'gym', muscles, preset: toPreset(exercise.name_en), startImage, peakImage: peakImage || startImage, source: 'repdb' }
 }
 
 function mapOpenExercise(exercise: OpenExerciseApiExercise): RepDbExercise | null {
   const startImage = toImageUrl(exercise.images?.[0], openImageBaseUrl)
   const peakImage = toImageUrl(exercise.images?.[1] ?? exercise.images?.[0], openImageBaseUrl)
   if (!exercise.id || !exercise.name || !startImage) return null
-  return { id: exercise.id, name: exercise.name, description: exercise.instructions?.slice(0, 2).join(' ') || 'Demonstração visual selecionada da biblioteca aberta.', equipment: (exercise.equipment || 'bodyweight').replaceAll('_', ' '), level: toLevel(exercise.level), environment: exercise.equipment === 'body only' ? 'home' : 'gym', muscles: toMuscles(exercise.primaryMuscles, exercise.secondaryMuscles), preset: toPreset(exercise.name), startImage, peakImage: peakImage || startImage, source: 'open' }
+  const muscles = toMuscles(exercise.primaryMuscles, exercise.secondaryMuscles)
+  const name = translateExerciseName(exercise.name)
+  return { id: exercise.id, name, description: buildExerciseDescription(name, muscles, exercise.equipment), equipment: translateEquipment(exercise.equipment), level: toLevel(exercise.level), environment: exercise.equipment === 'body only' ? 'home' : 'gym', muscles, preset: toPreset(exercise.name), startImage, peakImage: peakImage || startImage, source: 'open' }
 }
 
 async function fetchJson(url: string, signal?: AbortSignal) {
