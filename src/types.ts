@@ -73,9 +73,16 @@ export type ProductContentItem = {
   diet_parts?: DietPart[] | null
 }
 
+export type WorkoutSettings = {
+  duration_minutes: number
+  exercise_seconds: number
+  rest_seconds: number
+}
+
 export type ProductContent = {
   intro?: string | null
   items?: ProductContentItem[]
+  workout_settings?: WorkoutSettings | null
 }
 
 export type WorkspaceRequest = {

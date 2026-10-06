@@ -800,6 +800,52 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 @keyframes exercise-sequence { 0%, 47% { opacity: 0; } 48%, 100% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .exercise-sequence-preview .sequence-peak, .muscle.active { animation: none; opacity: 1; } }
 @media (max-width: 760px) { .alert-card { top: 12px; right: 12px; left: 12px; width: auto; } }
+@media (max-width: 760px) { .access-content-card { grid-template-columns: 1fr; }.access-content-card .exercise-sequence-preview, .access-content-card .exercise-video-preview, .access-content-card .diet-plate-stage { min-height: 210px; }.workout-timer-heading { align-items: flex-start; flex-direction: column; }.workout-timer-controls > button { flex: 1 1 150px; }.workout-adjust .form-row, .workout-settings-editor .form-row { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .access-product-heading { align-items: flex-start; flex-direction: column; }.access-product-heading .content-lock-badge { align-self: flex-start; } }
+.access-content-card { display: grid; grid-template-columns: minmax(220px, .92fr) minmax(0, 1fr); align-items: center; gap: 18px; }
+.access-content-card > .model-motion-stack, .access-content-card > .motion-frame, .access-content-card > .diet-plate { width: 100%; min-width: 0; }
+.access-content-card .exercise-sequence-preview { min-height: 230px; aspect-ratio: 4 / 3; }
+.access-content-card .exercise-video-preview { min-height: 230px; }
+.access-content-card .diet-plate-stage { min-height: 230px; }
+.content-motion-card .exercise-sequence-preview { min-height: 190px; aspect-ratio: 4 / 3; }
+.content-motion-card .exercise-video-preview { min-height: 190px; }
+.exercise-sequence-preview { display: block; min-height: 180px; padding: 0; background: radial-gradient(circle at 50% 12%, rgba(255,255,255,.96), transparent 45%), linear-gradient(145deg, #f2f5ef, #fff4e8); }
+.exercise-sequence-preview .sequence-stage { position: absolute; inset: 34px 10px 34px; overflow: hidden; border: 1px solid rgba(61, 82, 67, .12); border-radius: 12px; background: rgba(255,255,255,.46); }
+.exercise-sequence-preview .sequence-stage > img { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; padding: 8px; object-fit: contain; }
+.exercise-sequence-preview .sequence-legend { position: absolute; z-index: 2; right: 10px; bottom: 9px; left: 10px; display: flex; justify-content: space-between; gap: 8px; color: #5f7163; font-size: 8px; font-weight: 800; letter-spacing: .2px; text-transform: uppercase; }
+.exercise-sequence-preview .sequence-legend span { padding: 4px 7px; border: 1px solid rgba(80, 109, 87, .14); border-radius: 999px; background: rgba(255,255,255,.82); }
+.exercise-sequence-stack .model-muscle-caption { padding: 0 3px; }
+.workout-settings-editor, .workout-timer { display: grid; gap: 14px; padding: 16px; border: 1px solid #ead7c9; border-radius: 14px; background: linear-gradient(135deg, #fffaf5, #f6f7f4); }
+.workout-settings-editor h3, .workout-timer h2 { margin: 4px 0 0; color: #29382f; font-size: 17px; }
+.workout-settings-editor .form-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.workout-timer { margin: 20px 0; border-color: var(--store-border, #ead7c9); background: color-mix(in srgb, var(--store-surface, #fff) 88%, var(--store-primary, #f97316) 12%); }
+.workout-timer-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.workout-timer-heading p { margin: 5px 0 0; color: var(--store-muted, #77877b); font-size: 11px; }
+.workout-phase { padding: 6px 9px; border-radius: 999px; color: #fff; background: var(--store-primary, #f97316); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.workout-phase.rest { color: #5e704e; background: #e8f0df; }
+.workout-timer-main { display: grid; gap: 12px; padding: 18px; border-radius: 13px; color: var(--store-text, #101214); background: color-mix(in srgb, var(--store-accent, #101214) 8%, var(--store-surface, #fff)); }
+.workout-clock { display: grid; gap: 3px; text-align: center; }
+.workout-clock strong { font-family: 'Playfair Display', serif; font-size: clamp(40px, 7vw, 62px); line-height: .95; }
+.workout-clock span { color: var(--store-muted, #77877b); font-size: 10px; }
+.workout-progress { height: 8px; overflow: hidden; border-radius: 99px; background: color-mix(in srgb, var(--store-border, #dfe5db) 55%, transparent); }
+.workout-progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--store-primary, #f97316), color-mix(in srgb, var(--store-primary, #f97316) 62%, #fff)); transition: width .4s ease; }
+.workout-timer-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.workout-timer-stats span { display: grid; gap: 3px; text-align: center; }
+.workout-timer-stats small { color: var(--store-muted, #77877b); font-size: 9px; }
+.workout-timer-stats strong { font-size: 12px; }
+.workout-timer-controls { display: flex; flex-wrap: wrap; gap: 9px; }
+.workout-adjust { border-top: 1px solid color-mix(in srgb, var(--store-border, #dfe5db) 65%, transparent); padding-top: 12px; }
+.workout-adjust summary { cursor: pointer; color: var(--store-accent, #101214); font-size: 11px; font-weight: 800; }
+.workout-adjust .form-row { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 13px; }
+.workout-adjust label { display: grid; gap: 6px; color: var(--store-muted, #77877b); font-size: 10px; font-weight: 700; }
+.workout-adjust input { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--store-border, #dfe5db); border-radius: 8px; color: var(--store-text, #101214); background: var(--store-surface, #fff); font: inherit; font-size: 12px; }
+.access-product-list { display: grid; gap: 26px; margin-top: 22px; }
+.access-product-block { display: grid; gap: 12px; }
+.access-product-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.access-product-heading h2 { margin: 4px 0 0; font-family: 'Playfair Display', serif; font-size: clamp(23px, 3vw, 32px); }
+.access-product-heading .content-lock-badge { white-space: nowrap; }
+.access-product-block .access-intro { margin: 0; }
+.access-product-block .access-motion-grid { margin-top: 0; }
 @media (max-width: 760px) { .diet-content-card { grid-template-columns: 1fr; }.diet-editor .diet-plate { grid-template-columns: 1fr; }.diet-editor .diet-plate-stage { min-height: 198px; }.diet-part-row { grid-template-columns: 1fr 1fr; }.diet-part-row input:nth-child(3), .diet-part-row input:nth-child(4) { width: 100%; }.diet-part-row input[type="color"] { width: 100%; } }
 @media (max-width: 760px) { .visual-color-grid, .content-motion-grid, .access-motion-grid, .exercise-library-grid { grid-template-columns: 1fr; }.exercise-library-heading, .exercise-selected { align-items: stretch; }.exercise-library-heading { display: flex; flex-direction: column; }.exercise-selected { grid-template-columns: 1fr; }.content-motion-card { grid-template-columns: 104px minmax(0, 1fr); }.motion-frame { min-height: 132px; }.motion-frame.compact { min-height: 104px; }.exercise-library-model.compact { min-height: 188px; }.exercise-library-model.compact model-viewer { height: 188px; }.exercise-library-filters > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }.exercise-filter { width: 100%; } }
 @media (max-width: 760px) { .visual-palette-preview { grid-template-columns: 1fr; }.visual-palette-preview-card { min-height: 145px; }.palette-actions > button { flex: 1 1 145px; } }

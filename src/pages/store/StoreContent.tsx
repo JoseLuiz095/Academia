@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DietPlate } from '../../components/DietPlate'
 import { EvaluationPicker } from '../../components/EvaluationPicker'
 import { ExerciseVideo } from '../../components/ExerciseVideo'
+import { WorkoutTimer } from '../../components/WorkoutTimer'
 import { useStore } from '../../layouts/PublicLayout'
 import { currency, whatsappLink } from '../../lib/format'
 import { supabase } from '../../lib/supabase'
@@ -38,7 +39,7 @@ export function MotionVisual({ item, compact = false, showEmbedded = true, diet 
   const selectedPreset = item.motion_preset && item.motion_preset !== 'auto' ? item.motion_preset : inferPreset(item.title)
   const activated = (item.muscle_focus?.length ? item.muscle_focus : defaultMuscles[selectedPreset]).map((muscle) => muscleLabels[muscle]).join(' · ')
   if (diet) return <DietPlate parts={item.diet_parts} compact={compact} />
-  if (item.motion_url && type === 'sequence') return <div className={`model-motion-stack ${compact ? 'compact' : ''}`}><div className={`motion-frame exercise-sequence-preview ${compact ? 'compact' : ''}`}><span className="motion-badge">Movimento 2D</span><img className="sequence-start" src={item.motion_url} alt={item.motion_label || item.title} loading="lazy" /><img className="sequence-peak" src={item.motion_poster || item.motion_url} alt="" aria-hidden="true" loading="lazy" /></div><p className="model-muscle-caption">Ativação: {activated}</p></div>
+  if (item.motion_url && type === 'sequence') return <div className={`model-motion-stack exercise-sequence-stack ${compact ? 'compact' : ''}`}><div className={`motion-frame exercise-sequence-preview ${compact ? 'compact' : ''}`}><span className="motion-badge">Movimento 2D</span><div className="sequence-stage"><img className="sequence-start" src={item.motion_url} alt={item.motion_label || item.title} loading="lazy" /><img className="sequence-peak" src={item.motion_poster || item.motion_url} alt="" aria-hidden="true" loading="lazy" /></div><div className="sequence-legend"><span>Posição inicial</span><span>Movimento final</span></div></div><p className="model-muscle-caption">Ativação: {activated}</p></div>
   if (item.motion_url && type === 'video') return <div className={`model-motion-stack ${compact ? 'compact' : ''}`}><ExerciseVideo compact={compact} autoPlay title={item.title} src={item.motion_url} controls={!compact} badge="HD 3D" /><p className="model-muscle-caption">Ativação: {activated}</p></div>
   if (item.motion_url && type === 'gif') return <div className={`motion-frame ${compact ? 'compact' : ''}`}><img src={item.motion_url} alt={item.motion_label || item.title} loading="lazy" /></div>
   if (showEmbedded && (type === 'embedded' || type === 'none')) return <BuiltInMotion item={item} compact={compact} />
@@ -77,10 +78,44 @@ export function StoreProductEnhanced() {
   return <StoreProductView product={product} />
 }
 
+function getDeviceId() {
+  const cookie = document.cookie.split('; ').find((part) => part.startsWith('impulso_device_id='))
+  if (cookie) return decodeURIComponent(cookie.slice('impulso_device_id='.length))
+  const storageKey = 'impulso:device-id'
+  const stored = localStorage.getItem(storageKey)
+  if (stored) return stored
+  const created = crypto.randomUUID()
+  localStorage.setItem(storageKey, created)
+  document.cookie = `impulso_device_id=${encodeURIComponent(created)}; Max-Age=31536000; Path=/; SameSite=Lax${window.location.protocol === 'https:' ? '; Secure' : ''}`
+  return created
+}
+
+type ProtectedAccess = { products: Product[]; order_reference: string; expires_at: string }
+
 export function StoreAccessEnhanced() {
-  const { workspace } = useStore(); const [token, setToken] = useState(() => new URLSearchParams(window.location.search).get('token') ?? ''); const [deviceId] = useState(() => { const key = 'impulso:device-id'; const current = localStorage.getItem(key); if (current) return current; const created = crypto.randomUUID(); localStorage.setItem(key, created); return created }); const [loading, setLoading] = useState(false); const [error, setError] = useState(''); const [access, setAccess] = useState<{ product: Product; order_reference: string; expires_at: string } | null>(null)
-  async function openAccess(event?: FormEvent) { event?.preventDefault(); if (!supabase || token.trim().length !== 48) { setError('Cole o link ou código de acesso recebido do profissional.'); return }; setLoading(true); setError(''); const result = await supabase.functions.invoke('access-product', { body: { token: token.trim().toLowerCase(), device_id: deviceId } }); if (result.error || !result.data?.product) setError(result.error?.message || 'Não foi possível abrir este conteúdo.'); else setAccess(result.data as { product: Product; order_reference: string; expires_at: string }); setLoading(false) }
-  const items = access?.product.content?.items ?? []
-  const hasRepDbContent = items.some((item) => item.exercise_library_id?.startsWith('repdb:')); const hasOpenExerciseContent = items.some((item) => item.exercise_library_id?.startsWith('open:')); const hasVitalContent = items.some((item) => item.exercise_library_id?.startsWith('vital:'))
-  return <section className="store-section access-page"><Link className="back-link" to={`/p/${workspace.slug}`}>← Voltar à vitrine</Link>{!access ? <><p className="eyebrow">Área do cliente</p><h1>Acesse seu conteúdo</h1><p className="checkout-intro">Cole o código ou abra o link enviado pelo profissional depois da confirmação do pagamento. O primeiro acesso vincula o conteúdo a este dispositivo.</p><form className="panel access-form" onSubmit={(event) => void openAccess(event)}><label>Código de acesso<input autoComplete="off" value={token} onChange={(event) => setToken(event.target.value)} placeholder="Cole seu código de 48 caracteres" /></label><button className="primary-button" disabled={loading}>{loading ? 'Validando…' : 'Abrir meu conteúdo'} <span>→</span></button>{error && <p className="form-error" role="alert">{error}</p>}</form><div className="access-safety-note"><strong>Proteção simples</strong><span>O token expira e só funciona no primeiro dispositivo em que for aberto. Se trocar de celular, peça uma nova liberação ao profissional.</span></div></> : <><div className="page-intro"><div><p className="eyebrow">Conteúdo liberado · pedido {access.order_reference}</p><h1>{access.product.name}</h1><p className="intro-description">Acesso válido até {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(access.expires_at))} neste dispositivo.</p></div><button className="secondary-button" onClick={() => window.print()}>Imprimir / salvar PDF</button></div>{access.product.content?.intro && <section className="panel access-intro"><p>{access.product.content.intro}</p></section>}<div className="access-motion-grid">{items.length ? items.map((item, index) => <article className="panel access-content-card" key={`${item.title}-${index}`}><MotionVisual item={item} diet={access.product.category === 'diet'} showEmbedded={access.product.category === 'workout'} /><div><span className="panel-kicker">Etapa {String(index + 1).padStart(2, '0')}</span><h2>{item.title}</h2>{item.meta && <strong>{item.meta}</strong>}<p>{item.details || 'Siga a orientação combinada com o profissional.'}</p></div></article>) : <section className="panel empty-panel"><h2>Conteúdo em preparação</h2><p>O profissional liberou o acesso, mas ainda está finalizando os detalhes.</p></section>}</div>{hasRepDbContent && <p className="exercise-source-credit">Ilustrações e dados de exercícios por <a href="https://repdb.co" target="_blank" rel="noreferrer">RepDB ↗</a>.</p>}{hasOpenExerciseContent && <p className="exercise-source-credit">Ilustrações abertas por <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noreferrer">Free Exercise DB ↗</a>.</p>}{hasVitalContent && <p className="exercise-source-credit">Animações HD 3D por <a href="https://vitalanimations.com" target="_blank" rel="noreferrer">Vital Animations ↗</a>.</p>}{error && <p className="form-error" role="alert">{error}</p>}</>}</section>
+  const { workspace } = useStore()
+  const [token, setToken] = useState(() => new URLSearchParams(window.location.search).get('token') ?? '')
+  const [deviceId] = useState(getDeviceId)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [access, setAccess] = useState<ProtectedAccess | null>(null)
+
+  async function openAccess(event?: FormEvent) {
+    event?.preventDefault()
+    if (!supabase || token.trim().length !== 48) { setError('Cole o link ou código de acesso recebido do profissional.'); return }
+    setLoading(true); setError('')
+    const result = await supabase.functions.invoke('access-product', { body: { token: token.trim().toLowerCase(), device_id: deviceId } })
+    const products = (Array.isArray(result.data?.products) ? result.data.products : result.data?.product ? [result.data.product] : []) as Product[]
+    if (result.error || !products.length) setError(result.error?.message || 'Não foi possível abrir este conteúdo.')
+    else setAccess({ products, order_reference: String(result.data.order_reference), expires_at: String(result.data.expires_at) })
+    setLoading(false)
+  }
+
+  const accessProducts = access?.products ?? []
+  const allItems = accessProducts.flatMap((product) => product.content?.items ?? [])
+  const hasRepDbContent = allItems.some((item) => item.exercise_library_id?.startsWith('repdb:'))
+  const hasOpenExerciseContent = allItems.some((item) => item.exercise_library_id?.startsWith('open:'))
+  const hasVitalContent = allItems.some((item) => item.exercise_library_id?.startsWith('vital:'))
+
+  return <section className="store-section access-page"><Link className="back-link" to={`/p/${workspace.slug}`}>← Voltar à vitrine</Link>{!access ? <><p className="eyebrow">Área do cliente</p><h1>Acesse seu conteúdo</h1><p className="checkout-intro">Use o link recebido após a confirmação do pagamento. Ele reúne os conteúdos digitais deste pedido e fica vinculado ao primeiro dispositivo usado.</p><form className="panel access-form" onSubmit={(event) => void openAccess(event)}><label>Código de acesso<input autoComplete="off" value={token} onChange={(event) => setToken(event.target.value)} placeholder="Cole o código de 48 caracteres" /></label><button className="primary-button" disabled={loading}>{loading ? 'Validando…' : 'Abrir meu conteúdo'} <span>→</span></button>{error && <p className="form-error" role="alert">{error}</p>}</form><div className="access-safety-note"><strong>Proteção por dispositivo</strong><span>O token é validado no servidor, expira e fica vinculado ao primeiro dispositivo. Não compartilhe o link.</span></div></> : <><div className="page-intro"><div><p className="eyebrow">Conteúdo liberado · pedido {access.order_reference}</p><h1>{accessProducts.length > 1 ? 'Minha biblioteca' : accessProducts[0]?.name}</h1><p className="intro-description">{accessProducts.length} {accessProducts.length === 1 ? 'conteúdo liberado' : 'conteúdos liberados'} até {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(access.expires_at))}, neste dispositivo.</p></div><button className="secondary-button" onClick={() => window.print()}>Imprimir / salvar PDF</button></div><div className="access-product-list">{accessProducts.map((product) => { const items = product.content?.items ?? []; return <section className="access-product-block" key={product.id}><div className="access-product-heading"><div><span className="panel-kicker">{product.category ? categoryLabel[product.category] : 'Conteúdo digital'}</span><h2>{product.name}</h2></div><span className="content-lock-badge">Liberado</span></div>{product.content?.intro && <section className="panel access-intro"><p>{product.content.intro}</p></section>}{product.category === 'workout' && <WorkoutTimer product={product} />}<div className="access-motion-grid">{items.length ? items.map((item, index) => <article className="panel access-content-card" key={`${product.id}-${item.title}-${index}`}><MotionVisual item={item} diet={product.category === 'diet'} showEmbedded={product.category === 'workout'} /><div><span className="panel-kicker">Etapa {String(index + 1).padStart(2, '0')}</span><h3>{item.title}</h3>{item.meta && <strong>{item.meta}</strong>}<p>{item.details || 'Siga a orientação combinada com o profissional.'}</p></div></article>) : <section className="panel empty-panel"><h3>Conteúdo em preparação</h3><p>O profissional liberou o acesso, mas ainda está finalizando os detalhes.</p></section>}</div></section> })}</div>{hasRepDbContent && <p className="exercise-source-credit">Ilustrações e dados de exercícios por <a href="https://repdb.co" target="_blank" rel="noreferrer">RepDB ↗</a>.</p>}{hasOpenExerciseContent && <p className="exercise-source-credit">Ilustrações abertas por <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noreferrer">Free Exercise DB ↗</a>.</p>}{hasVitalContent && <p className="exercise-source-credit">Animações HD 3D por <a href="https://vitalanimations.com" target="_blank" rel="noreferrer">Vital Animations ↗</a>.</p>}{error && <p className="form-error" role="alert">{error}</p>}</>}</section>
 }

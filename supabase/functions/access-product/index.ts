@@ -40,27 +40,34 @@ Deno.serve(async (request) => {
   if (tokenResult.error || !tokenResult.data) return reply({ error: 'Link de acesso inválido ou expirado.' }, 404)
   const access = tokenResult.data
   if (access.revoked_at || new Date(access.expires_at).getTime() <= Date.now()) return reply({ error: 'Este link de acesso expirou. Solicite uma nova liberação ao profissional.' }, 410)
-  if (access.device_hash && access.device_hash !== deviceHash) return reply({ error: 'Este conteúdo já foi vinculado a outro dispositivo.' }, 403)
 
-  const [orderResult, productResult] = await Promise.all([
+  const [orderResult, itemResult, tokenRowsResult] = await Promise.all([
     client.from('orders').select('workspace_id,status,reference').eq('id', access.order_id).single(),
-    client.from('products').select('id,name,description,image_url,category,level,access_mode,access_days,content').eq('id', access.product_id).single(),
+    client.from('order_items').select('product_id,product:products(id,name,description,image_url,category,level,access_mode,access_days,content,kind)').eq('order_id', access.order_id),
+    client.from('product_access_tokens').select('id,device_hash,expires_at,revoked_at').eq('order_id', access.order_id).is('revoked_at', null),
   ])
-  if (orderResult.error || !orderResult.data || orderResult.data.status !== 'confirmed' || productResult.error || !productResult.data) return reply({ error: 'O pagamento ainda não está liberado para este conteúdo.' }, 403)
+  if (orderResult.error || !orderResult.data || orderResult.data.status !== 'confirmed') return reply({ error: 'O pagamento ainda não está liberado para este conteúdo.' }, 403)
+  if (itemResult.error || tokenRowsResult.error) return reply({ error: 'Não foi possível carregar os conteúdos deste pedido.' }, 503)
 
-  if (!access.device_hash) {
-    const claimed = await client.from('product_access_tokens').update({ device_hash: deviceHash, first_used_at: new Date().toISOString(), last_used_at: new Date().toISOString() }).eq('id', access.id).is('device_hash', null)
+  const products = (itemResult.data ?? []).map((row) => {
+    const product = Array.isArray(row.product) ? row.product[0] : row.product
+    return product
+  }).filter((product): product is Record<string, unknown> => Boolean(product) && product.kind === 'digital' && ['portal', 'both'].includes(String(product.access_mode)))
+  if (!products.length) return reply({ error: 'Este pedido não possui conteúdo protegido liberado.' }, 403)
+
+  const tokenRows = tokenRowsResult.data ?? []
+  if (tokenRows.some((row) => row.device_hash && row.device_hash !== deviceHash)) return reply({ error: 'Este conteúdo já foi vinculado a outro dispositivo.' }, 403)
+  const now = new Date().toISOString()
+  const unclaimedIds = tokenRows.filter((row) => !row.device_hash).map((row) => row.id)
+  if (unclaimedIds.length) {
+    const claimed = await client.from('product_access_tokens').update({ device_hash: deviceHash, first_used_at: now, last_used_at: now }).in('id', unclaimedIds).is('device_hash', null)
     if (claimed.error) return reply({ error: 'Não foi possível vincular este dispositivo. Tente novamente.' }, 409)
   } else {
-    await client.from('product_access_tokens').update({ last_used_at: new Date().toISOString() }).eq('id', access.id)
+    await client.from('product_access_tokens').update({ last_used_at: now }).eq('id', access.id)
   }
 
   const workspace = await client.from('workspaces').select('name,slug').eq('id', orderResult.data.workspace_id).single()
   if (workspace.error || !workspace.data) return reply({ error: 'Espaço indisponível.' }, 404)
-  return reply({
-    product: productResult.data,
-    order_reference: orderResult.data.reference,
-    workspace: workspace.data,
-    expires_at: access.expires_at,
-  })
+  const expiresAt = tokenRows.reduce((earliest, row) => !earliest || new Date(row.expires_at).getTime() < new Date(earliest).getTime() ? row.expires_at : earliest, access.expires_at)
+  return reply({ products, product: products[0], order_reference: orderResult.data.reference, workspace: workspace.data, expires_at: expiresAt })
 })
