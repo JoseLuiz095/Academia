@@ -356,8 +356,12 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .store-hero-art small { align-self: flex-start; position: relative; z-index: 1; padding: 7px 9px; border-radius: 99px; color: #6a846f; background: rgba(255,255,255,.55); font-size: 9px; }
 .store-theme-sunset .store-hero-art { background: radial-gradient(circle at 75% 30%, #f6b990, transparent 34%), linear-gradient(135deg, #f6e0d0, #e9c7b5); }
 .store-theme-lavender .store-hero-art { background: radial-gradient(circle at 75% 30%, #d8c9ed, transparent 34%), linear-gradient(135deg, #e9e5f1, #cfc4e2); }
+.store-theme-impulso .store-hero-art { background: radial-gradient(circle at 76% 24%, rgba(249, 115, 22, .5), transparent 34%), linear-gradient(135deg, #101214, #191c20); }
+.store-theme-impulso .store-hero-art strong, .store-theme-impulso .store-hero-art span, .store-theme-impulso .store-hero-art small { color: #fff7ed; }
+.store-theme-impulso .store-hero-art small { background: rgba(249, 115, 22, .18); }
 .store-theme-sunset .store-product-cover { background: #f5ddce; }
 .store-theme-lavender .store-product-cover { background: #e9e2f0; }
+.store-theme-impulso .store-product-cover { color: #fff7ed; background: linear-gradient(145deg, #101214, #2a1b12); }
 .commercial-pricing { background: #f0f4ed; }
 .commercial-plan-card { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 25px; border: 1px solid #dfe7dc; border-radius: 15px; background: #fff; }
 .commercial-plan-card > strong { display: block; margin: 14px 0 2px; color: #344d3d; font-family: 'Playfair Display', serif; font-size: 34px; }
@@ -608,7 +612,22 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .store-shell .store-hero-art { border-radius: var(--store-radius); background: radial-gradient(circle at 75% 30%, color-mix(in srgb, var(--store-primary) 36%, transparent), transparent 34%), linear-gradient(135deg, color-mix(in srgb, var(--store-accent) 22%, var(--store-bg)), color-mix(in srgb, var(--store-primary) 20%, var(--store-surface))); }
 .store-shell .store-product-cover { border-radius: calc(var(--store-radius) - 2px) calc(var(--store-radius) - 2px) 0 0; }
 .visual-settings { display: grid; gap: 18px; }
-.palette-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.palette-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.palette-featured-button { box-shadow: 0 8px 18px rgba(249, 115, 22, .2); }
+.visual-palette-preview { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; min-height: 180px; padding: 18px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--preview-accent) 25%, var(--preview-bg)); border-radius: 15px; background: var(--preview-bg); color: var(--preview-text); }
+.visual-palette-preview-copy { display: grid; align-content: center; gap: 8px; max-width: 430px; }
+.visual-palette-preview-copy > span { color: var(--preview-primary); font-size: 9px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; }
+.visual-palette-preview-copy strong { max-width: 360px; font-family: 'Playfair Display', serif; font-size: 25px; line-height: 1.05; }
+.visual-palette-preview-copy small { max-width: 390px; color: var(--preview-muted); font-size: 10px; line-height: 1.45; }
+.visual-palette-preview-copy button { justify-self: start; margin-top: 5px; padding: 9px 13px; border: 0; border-radius: 8px; color: var(--preview-button-text); background: var(--preview-primary); font: inherit; font-size: 10px; font-weight: 800; }
+.visual-palette-preview-copy button span { margin-left: 7px; }
+.visual-palette-preview-card { display: grid; align-content: center; gap: 12px; min-width: 0; padding: 18px; border: 1px solid color-mix(in srgb, var(--preview-accent) 35%, transparent); border-radius: 12px; background: var(--preview-surface); box-shadow: 0 12px 26px rgba(16, 18, 20, .1); }
+.visual-palette-preview-card > div:first-child { display: flex; align-items: center; gap: 7px; font-size: 9px; font-weight: 800; }
+.visual-palette-preview-card > div:first-child i { width: 9px; height: 9px; border-radius: 50%; }
+.visual-palette-preview-card > strong { font-family: 'Playfair Display', serif; font-size: 20px; line-height: 1.05; }
+.visual-palette-preview-line { width: 65%; height: 5px; opacity: .45; border-radius: 99px; }
+.visual-palette-preview-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.visual-palette-preview-tags span { padding: 5px 8px; border-radius: 99px; font-size: 8px; font-weight: 800; }
 .visual-color-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
 .visual-color-grid label { display: grid; gap: 8px; color: #52665a; font-size: 11px; font-weight: 700; }
 .visual-color-grid input[type="color"], .visual-settings input[type="color"] { width: 100%; height: 43px; min-height: 43px; padding: 4px; border: 1px solid #dce5da; border-radius: 9px; background: #fff; cursor: pointer; }
@@ -769,6 +788,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { .exercise-sequence-preview .sequence-peak, .muscle.active { animation: none; opacity: 1; } }
 @media (max-width: 760px) { .diet-content-card { grid-template-columns: 1fr; }.diet-editor .diet-plate { grid-template-columns: 1fr; }.diet-editor .diet-plate-stage { min-height: 198px; }.diet-part-row { grid-template-columns: 1fr 1fr; }.diet-part-row input:nth-child(3), .diet-part-row input:nth-child(4) { width: 100%; }.diet-part-row input[type="color"] { width: 100%; } }
 @media (max-width: 760px) { .visual-color-grid, .content-motion-grid, .access-motion-grid, .exercise-library-grid { grid-template-columns: 1fr; }.exercise-library-heading, .exercise-selected { align-items: stretch; }.exercise-library-heading { display: flex; flex-direction: column; }.exercise-selected { grid-template-columns: 1fr; }.content-motion-card { grid-template-columns: 104px minmax(0, 1fr); }.motion-frame { min-height: 132px; }.motion-frame.compact { min-height: 104px; }.exercise-library-model.compact { min-height: 188px; }.exercise-library-model.compact model-viewer { height: 188px; }.exercise-library-filters > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }.exercise-filter { width: 100%; } }
+@media (max-width: 760px) { .visual-palette-preview { grid-template-columns: 1fr; }.visual-palette-preview-card { min-height: 145px; }.palette-actions > button { flex: 1 1 145px; } }
 @media (max-width: 760px) { .exercise-library-tabs { grid-template-columns: 1fr; }.exercise-video-preview.compact { min-height: 188px; } }
 
 /* Public plan selection: the request becomes a guided product moment. */
