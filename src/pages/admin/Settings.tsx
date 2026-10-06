@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { AlertCard } from '../../components/AlertCard'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { isPixCopyPaste, validateStaticPixBase } from '../../lib/pix'
@@ -62,6 +63,7 @@ export function AdminSettings() {
   }
 
   return <>
+    {error && <AlertCard message={error} onDismiss={() => setError('')} />}{message && <AlertCard message={message} title="Configurações salvas" variant="success" onDismiss={() => setMessage('')} />}
     <div className="page-intro"><div><p className="eyebrow">Sua marca</p><h1>Configurações</h1><p className="intro-description">Defina identidade, contato, responsabilidade profissional e a experiência visual da vitrine.</p></div>{workspace?.published && <Link className="secondary-button plain-link" to={`/p/${workspace.slug}`} target="_blank">Abrir vitrine ↗</Link>}</div>
     <section className="panel editor-panel"><form className="form-grid" onSubmit={(event) => void save(event)}>
       <div className="form-row"><label>Nome público<input required minLength={3} value={name} onChange={(event) => setName(event.target.value)} /></label><label>Endereço da página<input readOnly value={`/p/${workspace?.slug ?? ''}`} /></label></div>

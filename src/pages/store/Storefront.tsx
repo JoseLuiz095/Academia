@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { AlertCard } from '../../components/AlertCard'
+import { EvaluationPicker } from '../../components/EvaluationPicker'
 import { TurnstileWidget } from '../../components/TurnstileWidget'
 import { useStore } from '../../layouts/PublicLayout'
 import { appConfig } from '../../lib/config'
@@ -136,12 +138,23 @@ export function StoreCheckout() {
   }
 
   async function copy(text: string, what: string) { try { await navigator.clipboard.writeText(text); setMessage({ text: `${what} copiado.`, error: false }) } catch { setMessage({ text: 'Não foi possível copiar automaticamente. Selecione e copie o texto acima.', error: true }) } }
+  function selectAppointment(next: AppointmentSelection | null) {
+    setAppointment(next)
+    if (!bookingRow) return
+    try {
+      const key = appointmentStorageKey(workspace.id, bookingRow.product.id)
+      if (next) sessionStorage.setItem(key, JSON.stringify(next))
+      else sessionStorage.removeItem(key)
+    } catch { /* O checkout continua funcional mesmo sem sessionStorage. */ }
+  }
   if (!rows.length && !receipt) return <section className="store-section narrow"><h1>Sacola vazia</h1><Link to={`/p/${workspace.slug}`}>Voltar para a vitrine</Link></section>
   return <section className="store-section narrow">
     {!receipt && <Link className="back-link" to={`/p/${workspace.slug}/carrinho`}>← Voltar à sacola</Link>}
     <p className="eyebrow">Pagamento direto com o profissional</p>
     <h1>{receipt ? `Pedido ${receipt.reference}` : 'Combinar pedido'}</h1>
     <p className="checkout-intro">{receipt ? 'Pedido registrado como pendente. Pague via Pix e envie o comprovante pelo WhatsApp; somente após a conferência o profissional analisará a liberação e, se for uma avaliação, aprovará o horário.' : bookingRow ? 'Confira o horário escolhido, informe seus dados e registre o pedido. O pré-agendamento só será efetivado após o pagamento e a aprovação do profissional.' : 'Registre a seleção para receber uma referência e os dados de pagamento.'}</p>
+    {error && <AlertCard message={error} onDismiss={() => setError('')} />}
+    {bookingRow && !receipt && <EvaluationPicker product={bookingRow.product} selected={appointment} onSelect={selectAppointment} />}
     <div className="checkout-grid">
       <div className="panel">
         <h2>Pix manual</h2>
