@@ -45,6 +45,37 @@ const exactTranslations: Record<string, string> = {
   'seated calf raise': 'Elevação de panturrilha sentado',
 }
 
+const vitalTitlesById: Record<string, string> = {
+  '0051': 'Voador peitoral na máquina', '0052': 'Svend press para peitoral', '0053': 'Bicicleta de resistência — sprint', '0054': 'Agachamento livre com barra', '0055': 'Agachamento búlgaro com barra',
+  '0056': 'Agachamento frontal com barra', '0057': 'Elevação pélvica com barra', '0058': 'Marcha com barra', '0059': 'Afundo reverso com barra', '0060': 'Levantamento terra romeno com barra',
+  '0061': 'Coice no cabo', '0062': 'Bicicleta ergométrica', '0063': 'Agachamento búlgaro com halteres', '0064': 'Agachamento goblet com halter', '0065': 'Levantamento terra com halteres',
+  '0066': 'Agachamento com salto e halteres', '0067': 'Elíptico em ritmo HIIT', '0068': 'Hack squat na máquina', '0069': 'Máquina abdutora', '0070': 'Marcha com kettlebell',
+  '0071': 'Elevação com kettlebell', '0072': 'Balanço com kettlebell', '0073': 'Cadeira extensora', '0074': 'Leg press', '0075': 'Mesa flexora',
+  '0076': 'Ondas com corda naval', '0077': 'Remo ergométrico', '0078': 'Corrida na esteira', '0079': 'Cadeira flexora', '0080': 'Desenvolvimento sentado',
+  '0081': 'Subida no banco com carga', '0082': 'Escada ergométrica', '0083': 'Escada ergométrica', '0084': 'Stiff na máquina', '0085': 'Tríceps na corda',
+  '0086': 'Caminhada na esteira', '0087': 'Desenvolvimento Arnold com halteres', '0088': 'Desenvolvimento em pé com barra', '0089': 'Remada alta com barra', '0090': 'Desenvolvimento com halteres',
+  '0091': 'Remada alta com halteres', '0092': 'Elevação frontal com halteres', '0093': 'Elevação frontal com anilha', '0094': 'Desenvolvimento com kettlebell', '0095': 'Elevação lateral cruzada no cabo',
+  '0096': 'Elevação lateral com halteres', '0097': 'Elevação lateral na máquina', '0098': 'Desenvolvimento militar sentado no Smith', '0099': 'Voador inverso na máquina', '0100': 'Voador inverso no cabo',
+}
+
+Object.assign(exactTranslations, {
+  'pec deck machine fly': vitalTitlesById['0051'], 'svend press chest': vitalTitlesById['0052'], 'air bike sprint': vitalTitlesById['0053'], 'barbell back squat': vitalTitlesById['0054'], 'barbell bulgarian split squat': vitalTitlesById['0055'],
+  'barbell front squat': vitalTitlesById['0056'], 'barbell hip thrust': vitalTitlesById['0057'], 'barbell march': vitalTitlesById['0058'], 'barbell reverse lunges': vitalTitlesById['0059'], 'barbell romanian deadlift': vitalTitlesById['0060'],
+  'cable leg kickback': vitalTitlesById['0061'], cycling: vitalTitlesById['0062'], 'dumbbell bulgarian split squat': vitalTitlesById['0063'], 'dumbbell goblet squat': vitalTitlesById['0064'], 'dumbbell hip hinge': vitalTitlesById['0065'],
+  'dumbbell jump squat': vitalTitlesById['0066'], 'elliptical hiit machine': vitalTitlesById['0067'], 'hack squat machine': vitalTitlesById['0068'], 'hip abduction machine': vitalTitlesById['0069'], 'kettlebell hold march': vitalTitlesById['0070'],
+  'kettlebell lift up': vitalTitlesById['0071'], 'kettlebell swing': vitalTitlesById['0072'], 'leg extension machine': vitalTitlesById['0073'], 'leg press machine': vitalTitlesById['0074'], 'lying leg curl machine': vitalTitlesById['0075'],
+  'rope wave': vitalTitlesById['0076'], 'rowing machine': vitalTitlesById['0077'], 'run on treadmill': vitalTitlesById['0078'], 'seated leg curl machine': vitalTitlesById['0079'], 'seated overhead press': vitalTitlesById['0080'],
+  'step-ups (weighted)': vitalTitlesById['0081'], 'stepmill machine version 1': vitalTitlesById['0082'], 'stepmill machine': vitalTitlesById['0083'], 'stiff-legged deadlift machine': vitalTitlesById['0084'], 'triceps pushdown (cable - rope)': vitalTitlesById['0085'],
+  'walk on treadmill': vitalTitlesById['0086'], 'arnold press dumbbell': vitalTitlesById['0087'], 'barbell overhead press standing': vitalTitlesById['0088'], 'barbell upright row': vitalTitlesById['0089'], 'dumbbell overhead standard': vitalTitlesById['0090'],
+  'dumbbell upright row': vitalTitlesById['0091'], 'front raise (dumbbell)': vitalTitlesById['0092'], 'front raise (weighted plate)': vitalTitlesById['0093'], 'kettlebell overhead press': vitalTitlesById['0094'], 'cable cross lateral raise': vitalTitlesById['0095'],
+  'lateral raises (dumbbell)': vitalTitlesById['0096'], 'lateral raise machine': vitalTitlesById['0097'], 'military press (seated - smith machine)': vitalTitlesById['0098'], 'rear delt fly (reverse pec deck)': vitalTitlesById['0099'], 'rear delt cable fly': vitalTitlesById['0100'],
+})
+
+export function displayExerciseName(value: string, exerciseLibraryId?: string | null, customTitle = false) {
+  if (customTitle || !exerciseLibraryId?.startsWith('vital:')) return value
+  return vitalTitlesById[exerciseLibraryId.slice('vital:'.length)] ?? value
+}
+
 const phraseTranslations: Array<[RegExp, string]> = [
   [/3\/4 sit[- ]?up/gi, 'abdominal 3/4'],
   [/90\/90 hamstring/gi, 'alongamento 90/90 de posterior de coxa'],
