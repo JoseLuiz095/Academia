@@ -53,6 +53,7 @@ export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'core' | 'gl
 export type DietPart = {
   name: string
   amount?: string | null
+  description?: string | null
   icon?: string | null
   color?: string | null
 }
