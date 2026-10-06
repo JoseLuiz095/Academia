@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DietPlate } from '../../components/DietPlate'
+import { ExerciseVideo } from '../../components/ExerciseVideo'
 import { useStore } from '../../layouts/PublicLayout'
 import { currency, whatsappLink } from '../../lib/format'
 import { supabase } from '../../lib/supabase'
@@ -37,7 +38,7 @@ export function MotionVisual({ item, compact = false, showEmbedded = true, diet 
   const activated = (item.muscle_focus?.length ? item.muscle_focus : defaultMuscles[selectedPreset]).map((muscle) => muscleLabels[muscle]).join(' · ')
   if (diet) return <DietPlate parts={item.diet_parts} compact={compact} />
   if (item.motion_url && type === 'sequence') return <div className={`model-motion-stack ${compact ? 'compact' : ''}`}><div className={`motion-frame exercise-sequence-preview ${compact ? 'compact' : ''}`}><span className="motion-badge">Movimento 2D</span><img className="sequence-start" src={item.motion_url} alt={item.motion_label || item.title} loading="lazy" /><img className="sequence-peak" src={item.motion_poster || item.motion_url} alt="" aria-hidden="true" loading="lazy" /></div><p className="model-muscle-caption">Ativação: {activated}</p></div>
-  if (item.motion_url && type === 'video') return <div className={`model-motion-stack ${compact ? 'compact' : ''}`}><div className={`motion-frame exercise-video-preview ${compact ? 'compact' : ''}`}><span className="motion-badge">HD 3D</span><video src={item.motion_url} poster={item.motion_poster || undefined} autoPlay muted loop playsInline controls={!compact} aria-label={item.motion_label || item.title} /></div><p className="model-muscle-caption">Ativação: {activated}</p></div>
+  if (item.motion_url && type === 'video') return <div className={`model-motion-stack ${compact ? 'compact' : ''}`}><ExerciseVideo compact={compact} autoPlay title={item.title} src={item.motion_url} controls={!compact} badge="HD 3D" /><p className="model-muscle-caption">Ativação: {activated}</p></div>
   if (item.motion_url && type === 'gif') return <div className={`motion-frame ${compact ? 'compact' : ''}`}><img src={item.motion_url} alt={item.motion_label || item.title} loading="lazy" /></div>
   if (showEmbedded && (type === 'embedded' || type === 'none')) return <BuiltInMotion item={item} compact={compact} />
   if (item.image_url) return <div className={`motion-frame motion-image ${compact ? 'compact' : ''}`}><img src={item.image_url} alt={item.motion_label || item.title} loading="lazy" /></div>
