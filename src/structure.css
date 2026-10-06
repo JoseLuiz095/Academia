@@ -42,6 +42,19 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .form-error, .form-success { display: block; padding: 11px 13px; border-radius: 8px; font-size: 11px; line-height: 1.5; }
 .form-error { color: #9d3e2e; background: #fff0ed; }
 .form-success { color: #35734d; background: #eaf5e9; }
+.alert-card { position: fixed; z-index: 80; top: 18px; right: 20px; display: flex; align-items: flex-start; gap: 10px; width: min(390px, calc(100vw - 32px)); padding: 14px; border: 1px solid #e7c8bb; border-radius: 12px; color: #35251f; background: #fff; box-shadow: 0 18px 42px rgba(30, 38, 33, .18); }
+.alert-card-icon { display: grid; place-items: center; width: 25px; height: 25px; flex: 0 0 25px; border-radius: 50%; color: #fff; background: var(--orange); font-size: 13px; font-weight: 800; }
+.alert-card > div { min-width: 0; flex: 1; }
+.alert-card strong { display: block; font-size: 12px; }
+.alert-card p { margin: 3px 0 0; color: #64716b; font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.alert-card-close { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; color: #6f7b75; background: transparent; font-size: 20px; line-height: 1; }
+.alert-card-close:hover { color: var(--ink); background: #f2f4ee; }
+.alert-card-success { border-color: #bbddc4; }
+.alert-card-success .alert-card-icon { background: #4c9361; }
+.alert-card-warning { border-color: #ecd5a3; background: #fffaf0; }
+.alert-card-warning .alert-card-icon { background: #b5832f; }
+.alert-card-info { border-color: #c8d9df; background: #f7fbfc; }
+.alert-card-info .alert-card-icon { background: #4b7d8c; }
 .field-help { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
 .input-prefix { display: flex; align-items: stretch; border: 1px solid #dfe5db; border-radius: 8px; overflow: hidden; }
 .input-prefix span { padding: 12px; background: #f1f3ec; color: #8a968c; white-space: nowrap; font-size: 11px; }
@@ -786,6 +799,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 @keyframes mesh-pulse { 0%, 100% { opacity: .65; transform: scale(1); transform-origin: center; } 50% { opacity: 1; transform: scale(1.28); transform-origin: center; } }
 @keyframes exercise-sequence { 0%, 47% { opacity: 0; } 48%, 100% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .exercise-sequence-preview .sequence-peak, .muscle.active { animation: none; opacity: 1; } }
+@media (max-width: 760px) { .alert-card { top: 12px; right: 12px; left: 12px; width: auto; } }
 @media (max-width: 760px) { .diet-content-card { grid-template-columns: 1fr; }.diet-editor .diet-plate { grid-template-columns: 1fr; }.diet-editor .diet-plate-stage { min-height: 198px; }.diet-part-row { grid-template-columns: 1fr 1fr; }.diet-part-row input:nth-child(3), .diet-part-row input:nth-child(4) { width: 100%; }.diet-part-row input[type="color"] { width: 100%; } }
 @media (max-width: 760px) { .visual-color-grid, .content-motion-grid, .access-motion-grid, .exercise-library-grid { grid-template-columns: 1fr; }.exercise-library-heading, .exercise-selected { align-items: stretch; }.exercise-library-heading { display: flex; flex-direction: column; }.exercise-selected { grid-template-columns: 1fr; }.content-motion-card { grid-template-columns: 104px minmax(0, 1fr); }.motion-frame { min-height: 132px; }.motion-frame.compact { min-height: 104px; }.exercise-library-model.compact { min-height: 188px; }.exercise-library-model.compact model-viewer { height: 188px; }.exercise-library-filters > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }.exercise-filter { width: 100%; } }
 @media (max-width: 760px) { .visual-palette-preview { grid-template-columns: 1fr; }.visual-palette-preview-card { min-height: 145px; }.palette-actions > button { flex: 1 1 145px; } }
