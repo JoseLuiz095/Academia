@@ -60,6 +60,7 @@ export type DietPart = {
 
 export type ProductContentItem = {
   title: string
+  title_custom?: boolean
   details?: string | null
   icon?: string | null
   image_url?: string | null

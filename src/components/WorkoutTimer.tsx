@@ -1,7 +1,8 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { BuiltInExerciseMotion, defaultMuscles, inferMotionPreset, muscleGroupLabels } from './ExerciseMotion'
 import { ExerciseSequence } from './ExerciseSequence'
 import { ExerciseVideo } from './ExerciseVideo'
+import { displayExerciseName } from '../lib/exerciseTranslations'
 import type { MotionType, Product, ProductContentItem } from '../types'
 
 function formatTime(value: number) {
@@ -28,6 +29,10 @@ export function WorkoutTimer({ product, onSessionChange }: { product: Product; o
   const [elapsed, setElapsed] = useState(0)
   const [running, setRunning] = useState(false)
   const [sessionStarted, setSessionStarted] = useState(false)
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const lastPhaseRef = useRef('')
+  const finishedTonePlayedRef = useRef(false)
 
   const totalSeconds = Math.max(300, totalMinutes * 60)
   const cycleSeconds = Math.max(5, exerciseSeconds + restSeconds)
@@ -42,12 +47,37 @@ export function WorkoutTimer({ product, onSessionChange }: { product: Product; o
   const phaseProgress = Math.min(100, (phaseSpent / Math.max(1, phaseLimit)) * 100)
   const overallProgress = Math.min(100, (elapsed / totalSeconds) * 100)
   const exerciseNumber = (currentCycle % itemCount) + 1
-  const activeItem = items[exerciseNumber - 1] ?? { title: 'Movimento principal', details: 'Siga a orientação do profissional.', motion_type: 'embedded' as MotionType }
+  const rawActiveItem = items[exerciseNumber - 1] ?? { title: 'Movimento principal', details: 'Siga a orientação do profissional.', motion_type: 'embedded' as MotionType }
+  const activeItem = { ...rawActiveItem, title: displayExerciseName(rawActiveItem.title, rawActiveItem.exercise_library_id, rawActiveItem.title_custom) }
   const nextItem = items[exerciseNumber % itemCount]
   const activePreset = activeItem.motion_preset && activeItem.motion_preset !== 'auto' ? activeItem.motion_preset : inferMotionPreset(activeItem.title)
   const activeMuscles = (activeItem.muscle_focus?.length ? activeItem.muscle_focus : defaultMuscles[activePreset]).map((muscle) => muscleGroupLabels[muscle]).join(' · ')
   const finished = elapsed >= totalSeconds
   const phaseLabel = finished ? 'Concluído' : isResting ? 'Descanso' : 'Execução'
+
+  function prepareSound() {
+    if (!audioContextRef.current) audioContextRef.current = new AudioContext()
+    if (audioContextRef.current.state === 'suspended') void audioContextRef.current.resume()
+  }
+  function playTone(frequency: number, duration = .12, volume = .035, delay = 0) {
+    const context = audioContextRef.current
+    if (!context || context.state !== 'running') return
+    const oscillator = context.createOscillator()
+    const gain = context.createGain()
+    const start = context.currentTime + delay
+    oscillator.type = 'sine'
+    oscillator.frequency.setValueAtTime(frequency, start)
+    gain.gain.setValueAtTime(0.0001, start)
+    gain.gain.exponentialRampToValueAtTime(volume, start + .015)
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+    oscillator.connect(gain).connect(context.destination)
+    oscillator.start(start)
+    oscillator.stop(start + duration + .02)
+  }
+  function toggleSound() {
+    if (!soundEnabled) prepareSound()
+    setSoundEnabled((enabled) => !enabled)
+  }
 
   useEffect(() => {
     if (!running) return
@@ -59,11 +89,34 @@ export function WorkoutTimer({ product, onSessionChange }: { product: Product; o
     if (elapsed >= totalSeconds && running) setRunning(false)
   }, [elapsed, running, totalSeconds])
 
-  function startSession() { if (finished) setElapsed(0); setSessionStarted(true); setRunning(true); onSessionChange?.(true) }
+  useEffect(() => () => { if (audioContextRef.current) void audioContextRef.current.close() }, [])
+
+  useEffect(() => {
+    if (!sessionStarted || !running || !soundEnabled || finished) return
+    const phaseKey = `${isResting ? 'rest' : 'work'}-${currentCycle}`
+    if (lastPhaseRef.current && lastPhaseRef.current !== phaseKey) playTone(isResting ? 360 : 720, .19, .05)
+    lastPhaseRef.current = phaseKey
+    if (phaseRemaining > 0 && phaseRemaining <= 3) playTone(phaseRemaining === 1 ? 880 : 660, .09, .035)
+  }, [currentCycle, finished, isResting, phaseRemaining, running, sessionStarted, soundEnabled])
+
+  useEffect(() => {
+    if (!sessionStarted || !finished || !soundEnabled || finishedTonePlayedRef.current) return
+    finishedTonePlayedRef.current = true
+    playTone(523, .12, .05)
+    playTone(659, .12, .05, .16)
+    playTone(784, .22, .055, .32)
+  }, [finished, sessionStarted, soundEnabled])
+
+  function startSession() { if (finished) setElapsed(0); prepareSound(); lastPhaseRef.current = ''; finishedTonePlayedRef.current = false; setSessionStarted(true); setRunning(true); onSessionChange?.(true) }
   function moveExercise(direction: -1 | 1) { setElapsed(Math.min(totalSeconds, Math.max(0, (currentCycle + direction) * cycleSeconds))) }
 
+  if (sessionStarted && finished) return <section className="workout-session workout-complete" aria-label="Treino concluído">
+    <div className="workout-session-topbar"><div><span className="panel-kicker">Sessão concluída</span><strong>{product.name}</strong></div><button type="button" className="text-button" onClick={() => { setSessionStarted(false); onSessionChange?.(false) }}>Ver ficha completa</button></div>
+    <div className="workout-complete-card"><span className="workout-complete-icon">✓</span><div><h2>Treino concluído!</h2><p>O cronômetro chegou ao fim. Hidrate-se e registre como você se sentiu para ajustar a próxima sessão com o profissional.</p></div><div className="workout-complete-stats"><span><small>Duração planejada</small><strong>{totalMinutes} min</strong></span><span><small>Ciclos guiados</small><strong>{rounds}</strong></span><span><small>Exercícios da ficha</small><strong>{itemCount}</strong></span></div><div className="workout-complete-actions"><button type="button" className="primary-button" onClick={() => { setElapsed(0); lastPhaseRef.current = ''; finishedTonePlayedRef.current = false; prepareSound(); setRunning(true) }}>Fazer novamente <span>↻</span></button><button type="button" className="secondary-button" onClick={() => { setSessionStarted(false); onSessionChange?.(false) }}>Voltar aos exercícios</button></div></div>
+  </section>
+
   if (sessionStarted) return <section className="workout-session" aria-label="Treino em andamento">
-    <div className="workout-session-topbar"><div><span className="panel-kicker">Treino em andamento</span><strong>{product.name}</strong></div><button type="button" className="text-button" onClick={() => { setRunning(false); setSessionStarted(false); onSessionChange?.(false) }}>Sair do modo foco</button></div>
+    <div className="workout-session-topbar"><div><span className="panel-kicker">Treino em andamento</span><strong>{product.name}</strong></div><div className="workout-session-utilities"><button type="button" className="workout-sound-button" aria-pressed={soundEnabled} onClick={toggleSound}>{soundEnabled ? 'Som ligado' : 'Som desligado'} <span>{soundEnabled ? '◖))' : '×'}</span></button><button type="button" className="text-button" onClick={() => { setRunning(false); setSessionStarted(false); onSessionChange?.(false) }}>Sair do modo foco</button></div></div>
     <div className="workout-session-grid">
       <div className="workout-session-media"><WorkoutMovement item={activeItem} running={running} resting={isResting} /></div>
       <div className="workout-session-coach">
@@ -72,10 +125,10 @@ export function WorkoutTimer({ product, onSessionChange }: { product: Product; o
         <p>{isResting ? 'Recupere o fôlego. O próximo movimento aparece ao final da pausa.' : activeItem.details || 'Mantenha a execução controlada e respeite seus limites.'}</p>
         <div className="workout-session-muscles"><span>Ativação</span><strong>{activeMuscles}</strong></div>
         <div className="workout-phase-clock" style={{ '--phase-progress': `${phaseProgress * 3.6}deg` } as CSSProperties}><div><strong>{finished ? '✓' : formatTime(phaseRemaining)}</strong><small>{finished ? 'Treino concluído' : phaseLabel}</small></div></div>
-        <div className="workout-session-controls"><button type="button" className="secondary-button" onClick={() => moveExercise(-1)} disabled={currentCycle === 0}>← Anterior</button><button type="button" className="primary-button" onClick={() => { if (finished) { setElapsed(0); setRunning(true) } else setRunning((value) => !value) }}>{finished ? 'Recomeçar' : running ? 'Pausar' : 'Continuar'} <span>{running ? 'Ⅱ' : '▶'}</span></button><button type="button" className="secondary-button" onClick={() => moveExercise(1)} disabled={finished}>Próximo →</button></div>
+        <div className="workout-session-controls"><button type="button" className="secondary-button" onClick={() => moveExercise(-1)} disabled={currentCycle === 0}>← Anterior</button><button type="button" className="primary-button" onClick={() => setRunning((value) => !value)}>{running ? 'Pausar' : 'Continuar'} <span>{running ? 'Ⅱ' : '▶'}</span></button><button type="button" className="secondary-button" onClick={() => moveExercise(1)}>Próximo →</button></div>
       </div>
     </div>
-    <div className="workout-session-footer"><div className="workout-session-progress"><span style={{ width: `${overallProgress}%` }} /></div><span>Rodada {Math.min(currentCycle + 1, rounds)} de {rounds} · {totalMinutes} min planejados</span>{nextItem && !finished && <strong>Próximo: {nextItem.title}</strong>}</div>
+    <div className="workout-session-footer"><div className="workout-session-progress"><span style={{ width: `${overallProgress}%` }} /></div><span>Rodada {Math.min(currentCycle + 1, rounds)} de {rounds} · {totalMinutes} min planejados</span>{nextItem && !finished && <strong>Próximo: {displayExerciseName(nextItem.title, nextItem.exercise_library_id, nextItem.title_custom)}</strong>}</div>
   </section>
 
   return <section className="workout-timer workout-launch" aria-label="Preparação do treino">
