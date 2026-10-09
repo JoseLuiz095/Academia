@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import type { ContentIdea, Product } from '../../types'
+import { PwaExperience } from '../../components/PwaExperience'
+import { notifyBrowser } from '../../lib/pwa'
 
 type Reminder = { id: string; title: string; scheduled_for: string; channel: 'internal' | 'whatsapp' }
 
@@ -33,6 +35,14 @@ export function AdminDashboard() {
     return () => { active = false }
   }, [workspace?.id])
 
+  useEffect(() => {
+    if (!workspace || pendingOrders < 1 || !('Notification' in window) || Notification.permission !== 'granted') return
+    const seenKey = `impulso:admin:last-pending:${workspace.id}`
+    const previous = Number(localStorage.getItem(seenKey) ?? '0')
+    if (pendingOrders > previous) void notifyBrowser('Impulso · nova pendência', { body: `${pendingOrders} pedido${pendingOrders === 1 ? '' : 's'} aguardando conferência, incluindo compras e avaliações.`, tag: `pending-${workspace.id}`, url: '/admin/pedidos' })
+    localStorage.setItem(seenKey, String(pendingOrders))
+  }, [pendingOrders, workspace?.id])
+
   const daysRemaining = workspace?.subscription_ends_at ? Math.ceil((new Date(workspace.subscription_ends_at).getTime() - Date.now()) / 86400000) : null
   const subscriptionDate = workspace?.subscription_ends_at ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(workspace.subscription_ends_at)) : 'A definir'
   const planLabel = workspace?.plan_code === 'pro' ? 'Crescimento' : workspace?.plan_code === 'creator' ? 'Criador' : 'Essencial'
@@ -48,6 +58,7 @@ export function AdminDashboard() {
 
   return <><div className="page-intro"><div><p className="eyebrow">Visão geral</p><h1>Olá, {workspace?.name}</h1><p className="intro-description">Sua operação em um só lugar, com dados reais do seu espaço.</p></div><Link className="primary-button plain-link" to="/admin/produtos">Adicionar produto <span>＋</span></Link></div>
     {!workspace?.published && <div className="setup-banner"><div className="setup-illustration"><div className="sun" /><div className="setup-person">✦</div></div><div className="setup-copy"><span className="setup-label">Sua vitrine ainda é privada</span><strong>Prepare seu espaço antes de compartilhar</strong><p>Configure o WhatsApp, cadastre um produto e publique quando estiver pronta.</p><Link to="/admin/primeiros-passos">Ver primeiros passos <span>→</span></Link></div></div>}
+    {workspace && <PwaExperience audience="admin" workspaceId={workspace.id} compact />}
     {completedTasks < setupTasks.length && <section className="panel activation-panel" aria-labelledby="activation-title"><div className="panel-heading"><div><span className="panel-kicker">Ativação rápida</span><h2 id="activation-title">Seu espaço está {completedTasks === 0 ? 'começando' : 'quase pronto'}</h2></div><strong className="activation-count">{completedTasks}/{setupTasks.length}</strong></div><p className="field-help">Complete estes passos para transformar o painel em uma vitrine pronta para vender e criar conteúdo.</p><div className="activation-progress"><span style={{ width: `${(completedTasks / setupTasks.length) * 100}%` }} /></div><div className="activation-list">{setupTasks.map((task) => <Link key={task.label} to={task.to} className={`activation-item ${task.done ? 'done' : ''}`}><span>{task.done ? '✓' : '○'}</span><strong>{task.label}</strong><small>{task.done ? 'Concluído' : 'Abrir'}</small></Link>)}</div></section>}
     <section className={`dashboard-subscription ${daysRemaining !== null && daysRemaining <= 0 ? 'is-expired' : ''}`}><div className="dashboard-subscription-icon">◇</div><div className="dashboard-subscription-copy"><span className="panel-kicker">Assinatura do espaço</span><strong>{planLabel} <small>{workspace?.subscription_status === 'trial' ? '· período de teste' : '· ativo'}</small></strong><p>{daysRemaining !== null && daysRemaining <= 0 ? 'Sua assinatura venceu. Revise o plano para manter o acesso.' : `Próximo vencimento em ${subscriptionDate}.`}</p></div><div className="dashboard-subscription-meta"><strong>{daysRemaining === null ? '—' : daysRemaining <= 0 ? 'Vencido' : `${daysRemaining} dias`}</strong><span>para revisar</span></div><Link className="secondary-button plain-link" to="/admin/planos">Ver plano →</Link></section>
     {!loading && reminders.length > 0 && <section className="panel editor-panel" aria-labelledby="dashboard-reminders"><div className="panel-heading"><div><span className="panel-kicker">Planejamento de conteúdo</span><h2 id="dashboard-reminders">{dueReminders.length ? `${dueReminders.length} lembrete${dueReminders.length === 1 ? '' : 's'} para revisar` : 'Próximos lembretes'}</h2></div><Link className="text-button plain-link" to="/admin/conteudo">Abrir agenda →</Link></div><div className="simple-list">{reminders.slice(0, 3).map((item) => <div key={item.id}><strong>{item.title}</strong><span>{new Date(item.scheduled_for).toLocaleString('pt-BR')} · {item.channel === 'whatsapp' ? 'WhatsApp manual' : 'No painel'}</span></div>)}</div><p className="field-help">Os lembretes aparecem aqui quando o painel é aberto; nenhum envio ou publicação acontece automaticamente.</p></section>}

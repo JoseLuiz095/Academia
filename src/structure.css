@@ -613,6 +613,20 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 760px) { .availability-row, .exception-row { grid-template-columns: 1fr 1fr; }.availability-row .availability-location, .availability-row .danger-button, .exception-row .availability-location, .exception-row .danger-button { grid-column: 1 / -1; }.reschedule-row { align-items: stretch; flex-direction: column; }.reschedule-row select, .reschedule-row button { width: 100%; }.appointment-picker { padding: 14px; }.appointment-picker .panel-heading { align-items: flex-start; flex-direction: column; }.appointment-slot { flex: 1 1 100px; } }
 @media print { .store-topbar, .store-footer, .back-link, .access-page > .page-intro > button { display: none !important; }.store-shell { background: #fff !important; }.access-content-card { break-inside: avoid; box-shadow: none; } }
 
+/* Mobile app layer: local browser notifications and install affordance. */
+.pwa-experience { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; margin: 18px 0; padding: 18px; border: 1px solid color-mix(in srgb, var(--store-border, #dfe7dd) 88%, var(--store-primary, #f97316)); border-radius: var(--store-radius, 16px); background: linear-gradient(135deg, color-mix(in srgb, var(--store-primary, #f97316) 7%, var(--store-surface, #fff)), var(--store-surface, #fff)); box-shadow: 0 12px 30px rgba(29, 44, 35, .06); }
+.pwa-experience.compact { margin-top: 16px; }
+.pwa-experience-icon { display: grid; place-items: center; width: 45px; height: 45px; border-radius: 15px; color: var(--store-button-text, #fff); background: linear-gradient(145deg, var(--store-primary, #f97316), color-mix(in srgb, var(--store-primary, #f97316) 55%, var(--store-accent, #5f9c78))); font-size: 23px; box-shadow: 0 7px 18px color-mix(in srgb, var(--store-primary, #f97316) 24%, transparent); }
+.pwa-experience-copy { min-width: 0; }
+.pwa-experience-copy h2 { margin: 0; color: var(--store-text, #26372f); font-family: 'Playfair Display', serif; font-size: 19px; }
+.pwa-experience-copy p { max-width: 620px; margin: 5px 0 4px; color: var(--store-muted, #718077); font-size: 11px; line-height: 1.5; }
+.pwa-experience-copy small { color: var(--store-muted, #718077); font-size: 9px; }
+.pwa-experience-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+.pwa-experience-actions .primary-button, .pwa-experience-actions .secondary-button { min-height: 38px; padding: 9px 11px; font-size: 10px; }
+.pwa-installed-badge { align-self: center; color: var(--store-accent, #5f9c78); font-size: 10px; font-weight: 800; }
+.pwa-feedback { grid-column: 2 / -1; margin: -4px 0 0; color: var(--store-accent, #5f9c78); font-size: 10px; }
+@media (max-width: 760px) { .pwa-experience { grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 12px; padding: 15px; }.pwa-experience-actions { grid-column: 1 / -1; justify-content: stretch; }.pwa-experience-actions > button { flex: 1 1 150px; justify-content: center; }.pwa-feedback { grid-column: 1 / -1; margin: 0; }.pwa-experience-copy h2 { font-size: 17px; } }
+
 /* Store customization and motion-first exercise cards. */
 .store-shell { color: var(--store-text); background: var(--store-bg); }
 .store-shell .store-topbar, .store-shell .store-footer { border-color: var(--store-border); }
