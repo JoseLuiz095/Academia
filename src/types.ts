@@ -19,6 +19,10 @@ export type Workspace = {
   subscription_status?: 'trial' | 'active' | 'past_due' | 'cancelled' | null
   subscription_started_at?: string | null
   subscription_ends_at?: string | null
+  billing_exempt_until?: string | null
+  billing_exempt_reason?: string | null
+  negotiated_monthly_price_cents?: number | null
+  negotiated_price_note?: string | null
   store_settings?: StoreSettings | null
   approval_status?: 'pending' | 'approved' | 'rejected' | 'suspended' | null
   approved_at?: string | null
