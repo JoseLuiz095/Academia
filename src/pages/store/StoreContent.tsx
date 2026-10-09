@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DietPlate } from '../../components/DietPlate'
 import { EvaluationPicker } from '../../components/EvaluationPicker'
@@ -6,11 +6,12 @@ import { ExerciseVideo } from '../../components/ExerciseVideo'
 import { ExerciseSequence } from '../../components/ExerciseSequence'
 import { WorkoutTimer } from '../../components/WorkoutTimer'
 import { PwaExperience } from '../../components/PwaExperience'
+import { ClientNotificationCenter } from '../../components/ClientNotificationCenter'
 import { useStore } from '../../layouts/PublicLayout'
 import { currency, whatsappLink } from '../../lib/format'
 import { displayExerciseName } from '../../lib/exerciseTranslations'
 import { supabase } from '../../lib/supabase'
-import type { AppointmentSelection, MotionPreset, MotionType, MuscleGroup, Product, ProductContentItem } from '../../types'
+import type { AppointmentSelection, ClientNotification, MotionPreset, MotionType, MuscleGroup, Product, ProductContentItem } from '../../types'
 
 const label: Record<Product['kind'], string> = { service: 'Serviço', digital: 'Manual digital', physical: 'Produto físico' }
 const categoryLabel: Record<NonNullable<Product['category']>, string> = { workout: 'Ficha de treino', diet: 'Dieta', service: 'Serviço', physical: 'Produto físico', other: 'Conteúdo digital' }
@@ -95,7 +96,7 @@ function getDeviceId() {
   return created
 }
 
-type ProtectedAccess = { products: Product[]; order_reference: string; expires_at: string }
+type ProtectedAccess = { products: Product[]; order_reference: string; expires_at: string; access_token_id: string; token_version: number; access_scope: 'product' | 'order'; token_label: string | null; notifications: ClientNotification[] }
 
 export function StoreAccessEnhanced() {
   const { workspace } = useStore()
@@ -113,9 +114,29 @@ export function StoreAccessEnhanced() {
     const result = await supabase.functions.invoke('access-product', { body: { token: token.trim().toLowerCase(), device_id: deviceId } })
     const products = (Array.isArray(result.data?.products) ? result.data.products : result.data?.product ? [result.data.product] : []) as Product[]
     if (result.error || !products.length) setError(result.error?.message || 'Não foi possível abrir este conteúdo.')
-    else setAccess({ products, order_reference: String(result.data.order_reference), expires_at: String(result.data.expires_at) })
+    else setAccess({ products, order_reference: String(result.data.order_reference), expires_at: String(result.data.expires_at), access_token_id: String(result.data.access_token_id), token_version: Number(result.data.token_version ?? 1), access_scope: result.data.access_scope === 'order' ? 'order' : 'product', token_label: typeof result.data.token_label === 'string' ? result.data.token_label : null, notifications: (Array.isArray(result.data.notifications) ? result.data.notifications : []) as ClientNotification[] })
     setLoading(false)
   }
+
+  async function markNotification(notification: ClientNotification) {
+    if (!supabase || !access) return
+    const result = await supabase.functions.invoke('access-product', { body: { token: token.trim().toLowerCase(), device_id: deviceId, action: 'mark_read', notification_id: notification.id } })
+    if (result.error) { setError('Não foi possível marcar este aviso como lido. Tente novamente.'); return }
+    setAccess((current) => current ? { ...current, notifications: current.notifications.map((item) => item.id === notification.id ? { ...item, read_at: String(result.data?.read_at ?? new Date().toISOString()) } : item) } : current)
+  }
+
+  useEffect(() => {
+    if (!supabase || !access || !token.trim()) return
+    const client = supabase
+    let active = true
+    const refreshNotifications = async () => {
+      const result = await client.functions.invoke('access-product', { body: { token: token.trim().toLowerCase(), device_id: deviceId, action: 'notifications' } })
+      if (!active || result.error || !Array.isArray(result.data?.notifications)) return
+      setAccess((current) => current ? { ...current, notifications: result.data.notifications as ClientNotification[] } : current)
+    }
+    const interval = window.setInterval(() => void refreshNotifications(), 60000)
+    return () => { active = false; window.clearInterval(interval) }
+  }, [access?.access_token_id, deviceId, token])
 
   const accessProducts = access?.products ?? []
   const allItems = accessProducts.flatMap((product) => product.content?.items ?? [])
@@ -123,5 +144,5 @@ export function StoreAccessEnhanced() {
   const hasOpenExerciseContent = allItems.some((item) => item.exercise_library_id?.startsWith('open:'))
   const hasVitalContent = allItems.some((item) => item.exercise_library_id?.startsWith('vital:'))
 
-  return <section className="store-section access-page"><Link className="back-link" to={`/p/${workspace.slug}`}>← Voltar à vitrine</Link>{!access ? <><p className="eyebrow">Área do cliente</p><h1>Acesse seu conteúdo</h1><p className="checkout-intro">Use o link recebido após a confirmação do pagamento. Ele reúne os conteúdos digitais deste pedido e fica vinculado ao primeiro dispositivo usado.</p><form className="panel access-form" onSubmit={(event) => void openAccess(event)}><label>Código de acesso<input autoComplete="off" value={token} onChange={(event) => setToken(event.target.value)} placeholder="Cole o código de 48 caracteres" /></label><button className="primary-button" disabled={loading}>{loading ? 'Validando…' : 'Abrir meu conteúdo'} <span>→</span></button>{error && <p className="form-error" role="alert">{error}</p>}</form><div className="access-safety-note"><strong>Proteção por dispositivo</strong><span>O token é validado no servidor, expira e fica vinculado ao primeiro dispositivo. Não compartilhe o link.</span></div><PwaExperience audience="cliente" workspaceId={workspace.id} compact /></> : <><div className="page-intro"><div><p className="eyebrow">Conteúdo liberado · pedido {access.order_reference}</p><h1>{accessProducts.length > 1 ? 'Minha biblioteca' : accessProducts[0]?.name}</h1><p className="intro-description">{accessProducts.length} {accessProducts.length === 1 ? 'conteúdo liberado' : 'conteúdos liberados'} até {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(access.expires_at))}, neste dispositivo.</p></div><button className="secondary-button" onClick={() => window.print()}>Imprimir / salvar PDF</button></div><PwaExperience audience="cliente" workspaceId={workspace.id} workoutLabel={accessProducts.find((product) => product.category === 'workout')?.name ?? 'seu próximo treino'} /><div className="access-product-list">{accessProducts.map((product) => { const items = product.content?.items ?? []; const productClass = product.category === 'workout' ? 'workout-content' : product.category === 'diet' ? 'diet-content' : ''; return <section className={`access-product-block ${productClass}`} key={product.id}><div className="access-product-heading"><div><span className="panel-kicker">{product.category ? categoryLabel[product.category] : 'Conteúdo digital'}</span><h2>{product.name}</h2></div><span className="content-lock-badge">Liberado</span></div>{product.content?.intro && <section className="panel access-intro"><p>{product.content.intro}</p></section>}{product.category === 'workout' && <WorkoutTimer product={product} onSessionChange={(active) => setActiveWorkoutId(active ? product.id : null)} />}{activeWorkoutId !== product.id && <div className="access-motion-grid">{items.length ? items.map((item, index) => <article className={`panel access-content-card ${productClass}-card`} key={`${product.id}-${item.title}-${index}`}><MotionVisual item={item} diet={product.category === 'diet'} showEmbedded={product.category === 'workout'} /><div><span className="panel-kicker">Etapa {String(index + 1).padStart(2, '0')}</span><h3>{contentTitle(item)}</h3>{item.meta && <strong>{item.meta}</strong>}<p>{item.details || 'Siga a orientação combinada com o profissional.'}</p></div></article>) : <section className="panel empty-panel"><h3>Conteúdo em preparação</h3><p>O profissional liberou o acesso, mas ainda está finalizando os detalhes.</p></section>}</div>}</section> })}</div>{hasRepDbContent && <p className="exercise-source-credit">Ilustrações e dados de exercícios por <a href="https://repdb.co" target="_blank" rel="noreferrer">RepDB ↗</a>.</p>}{hasOpenExerciseContent && <p className="exercise-source-credit">Ilustrações abertas por <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noreferrer">Free Exercise DB ↗</a>.</p>}{hasVitalContent && <p className="exercise-source-credit">Animações HD 3D por <a href="https://vitalanimations.com" target="_blank" rel="noreferrer">Vital Animations ↗</a>.</p>}{error && <p className="form-error" role="alert">{error}</p>}</>}</section>
+  return <section className="store-section access-page"><Link className="back-link" to={`/p/${workspace.slug}`}>← Voltar à vitrine</Link>{!access ? <><p className="eyebrow">Área do cliente</p><h1>Acesse seu conteúdo</h1><p className="checkout-intro">Use o link recebido após a confirmação do pagamento. Ele reúne os conteúdos digitais deste pedido e fica vinculado ao primeiro dispositivo usado.</p><form className="panel access-form" onSubmit={(event) => void openAccess(event)}><label>Código de acesso<input autoComplete="off" value={token} onChange={(event) => setToken(event.target.value)} placeholder="Cole o código de 48 caracteres" /></label><button className="primary-button" disabled={loading}>{loading ? 'Validando…' : 'Abrir meu conteúdo'} <span>→</span></button>{error && <p className="form-error" role="alert">{error}</p>}</form><div className="access-safety-note"><strong>Proteção por dispositivo</strong><span>O token é validado no servidor, expira e fica vinculado ao primeiro dispositivo. Não compartilhe o link.</span></div><PwaExperience audience="cliente" workspaceId={workspace.id} compact /></> : <><div className="page-intro"><div><p className="eyebrow">Conteúdo liberado · {access.token_label ?? `pedido ${access.order_reference}`} · acesso v{access.token_version}</p><h1>{accessProducts.length > 1 ? 'Minha biblioteca' : accessProducts[0]?.name}</h1><p className="intro-description">{accessProducts.length} {accessProducts.length === 1 ? 'conteúdo liberado' : 'conteúdos liberados'} até {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(access.expires_at))}, neste dispositivo.</p></div><button className="secondary-button" onClick={() => window.print()}>Imprimir / salvar PDF</button></div><PwaExperience audience="cliente" workspaceId={workspace.id} workoutLabel={accessProducts.find((product) => product.category === 'workout')?.name ?? 'seu próximo treino'} /><ClientNotificationCenter notifications={access.notifications} onRead={(notification) => void markNotification(notification)} /><div className="access-product-list">{accessProducts.map((product) => { const items = product.content?.items ?? []; const productClass = product.category === 'workout' ? 'workout-content' : product.category === 'diet' ? 'diet-content' : ''; return <section className={`access-product-block ${productClass}`} key={product.id}><div className="access-product-heading"><div><span className="panel-kicker">{product.category ? categoryLabel[product.category] : 'Conteúdo digital'}</span><h2>{product.name}</h2></div><span className="content-lock-badge">Liberado</span></div>{product.content?.intro && <section className="panel access-intro"><p>{product.content.intro}</p></section>}{product.category === 'workout' && <WorkoutTimer product={product} onSessionChange={(active) => setActiveWorkoutId(active ? product.id : null)} />}{activeWorkoutId !== product.id && <div className="access-motion-grid">{items.length ? items.map((item, index) => <article className={`panel access-content-card ${productClass}-card`} key={`${product.id}-${item.title}-${index}`}><MotionVisual item={item} diet={product.category === 'diet'} showEmbedded={product.category === 'workout'} /><div><span className="panel-kicker">Etapa {String(index + 1).padStart(2, '0')}</span><h3>{contentTitle(item)}</h3>{item.meta && <strong>{item.meta}</strong>}<p>{item.details || 'Siga a orientação combinada com o profissional.'}</p></div></article>) : <section className="panel empty-panel"><h3>Conteúdo em preparação</h3><p>O profissional liberou o acesso, mas ainda está finalizando os detalhes.</p></section>}</div>}</section> })}</div>{hasRepDbContent && <p className="exercise-source-credit">Ilustrações e dados de exercícios por <a href="https://repdb.co" target="_blank" rel="noreferrer">RepDB ↗</a>.</p>}{hasOpenExerciseContent && <p className="exercise-source-credit">Ilustrações abertas por <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noreferrer">Free Exercise DB ↗</a>.</p>}{hasVitalContent && <p className="exercise-source-credit">Animações HD 3D por <a href="https://vitalanimations.com" target="_blank" rel="noreferrer">Vital Animations ↗</a>.</p>}{error && <p className="form-error" role="alert">{error}</p>}</>}</section>
 }
