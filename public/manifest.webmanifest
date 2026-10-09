@@ -1,0 +1,12 @@
+{
+  "name": "Impulso · Conteúdo e treino",
+  "short_name": "Impulso",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f6f2",
+  "theme_color": "#f97316",
+  "description": "Vitrine, treinos, dietas e lembretes para espaços de personal e criadores.",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

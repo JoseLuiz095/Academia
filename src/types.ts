@@ -210,3 +210,15 @@ export type ContentIdea = {
   source: 'manual' | 'ai'
   created_at: string
 }
+
+export type ClientNotification = {
+  id: string
+  audience: 'all' | 'product' | 'token'
+  kind: 'general' | 'workout' | 'diet' | 'schedule' | 'important'
+  title: string
+  body: string
+  product_id: string | null
+  target_token_id?: string | null
+  created_at: string
+  read_at?: string | null
+}

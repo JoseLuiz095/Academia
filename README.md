@@ -10,6 +10,14 @@ SaaS para personal trainers e criadores, construído em React, TypeScript, Vite 
 | Admin do criador | `/admin/*` | Cadastro sujeito à aprovação, loja, documentos profissionais, pedidos com contato do cliente, liberação de acesso, plano, Pix da assinatura, ideias, assistente de nicho, cota de IA e lembretes |
 | Admin Master | `/admin-master/*` | Aprovação de lojistas, controle de espaços/planos, Pix da plataforma, confirmação manual, auditoria, diagnóstico e fila de denúncias de vitrines |
 
+## Experiência PWA e notificações
+
+O portal do cliente e o painel do profissional podem ser instalados como PWA pelo navegador do celular. O cliente encontra a opção em `Acesso do cliente` para ativar lembretes locais de água e treino; o profissional encontra a opção na `Visão geral` para receber alertas de pedidos pendentes. O service worker mantém a casca básica disponível quando a conexão oscila e abre o pedido correto ao tocar em um aviso.
+
+Nesta primeira etapa os lembretes usam a permissão do navegador e funcionam enquanto o portal ou o painel estiverem abertos. Isso evita contratar push ou filas antes da validação com clientes. Notificações mesmo com o app fechado exigem uma próxima etapa com Web Push/VAPID, armazenamento da inscrição do dispositivo, rotina agendada e políticas de opt-in. O WhatsApp permanece apenas como canal operacional/manual para confirmar compras e compartilhar informações, sem automação não oficial.
+
+O painel também possui `Avisos aos alunos`: o profissional grava uma notificação no Supabase para todos os alunos ou apenas para uma ficha digital. O aluno vê o aviso dentro do portal, recebe atualização automática enquanto a página estiver aberta e pode marcá-lo como lido. Cada liberação digital usa um token individual por produto, versionado, com hash no banco, expiração, revogação na regeneração e vínculo ao primeiro dispositivo; tokens antigos de pedido continuam sendo aceitos pelo portal.
+
 O Admin Master não é liberado pelo cadastro público. Um operador do banco adiciona o usuário autorizado em `public.platform_admins`. O lojista escolhe a Demonstração ou um plano pago e aguarda aprovação. A Demonstração libera 14 dias sem cobrança automática. Para continuar ou renovar, solicita cobrança Pix, informa o comprovante e aguarda o Master conferir o crédito. Só a confirmação do Master avança o vencimento. Os pedidos da loja têm Pix próprio e confirmação manual pelo profissional; não há entrega automática de arquivo digital.
 
 Para vender ficha de treino, o espaço precisa informar um CREF/registro profissional; para vender dieta, precisa informar CRN/registro nutricional. Esses dados aparecem na vitrine pública. A denúncia é registrada para análise humana do Admin Master; o sistema não decide validade profissional nem fecha página automaticamente. O contrato atual do produto, o ciclo de acesso e os limites estão em [Contrato do produto](docs/CONTRATO_DO_PRODUTO.md).
