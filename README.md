@@ -75,6 +75,25 @@ Para a decisão de modelo Gemini e a evolução segura do WhatsApp Business — 
 
 ## Pix e pedidos
 
+### Asaas na loja piloto
+
+O fluxo automático da loja piloto usa a Edge Function `create-public-order` para criar a cobrança Pix e a função `asaas-webhook` para validar o recebimento. A mensalidade da plataforma continua manual neste MVP. O sistema só ativa a Asaas quando o pedido pertence ao workspace informado em `ASAAS_PILOT_WORKSPACE_ID`; sem esses secrets, permanece no Pix manual.
+
+Configure apenas nos secrets das Edge Functions do Supabase:
+
+```env
+ASAAS_ENV=sandbox
+ASAAS_BASE_URL=https://api-sandbox.asaas.com/v3
+ASAAS_API_KEY=...
+ASAAS_WEBHOOK_TOKEN=um-token-aleatorio-com-32-ou-mais-caracteres
+ASAAS_PILOT_WORKSPACE_ID=uuid-da-sua-loja-piloto
+ASAAS_USER_AGENT=Impulso/1.0
+```
+
+No painel Asaas Sandbox, cadastre um webhook `POST` apontando para `https://SEU_PROJETO.supabase.co/functions/v1/asaas-webhook`, escolha os eventos de pagamentos e configure o mesmo `ASAAS_WEBHOOK_TOKEN` no campo de autenticação. Depois faça um pedido de teste, confirme se o QR/Pix copia e cola aparece e valide o evento `PAYMENT_RECEIVED`. Se a Asaas estiver indisponível, o pedido fica explicitamente como erro/fallback manual e segue o fluxo atual de comprovante e confirmação humana.
+
+Depois de aplicar a migration, publique as funções com a verificação JWT desativada somente para o webhook público protegido pelo token próprio: `supabase functions deploy create-public-order` e `supabase functions deploy asaas-webhook --no-verify-jwt`. Não publique a chave Asaas no frontend.
+
 O profissional cadastra preferencialmente um Pix copia e cola **estático** do banco, ou uma chave Pix (inclusive CPF) com nome e cidade do recebedor. No checkout, o cliente informa nome, WhatsApp, observação e consentimento para atendimento; o pedido pendente é criado somente após o Turnstile. Preços e total são recalculados no banco, que devolve uma referência. O navegador insere esse total no código estático e recalcula sua verificação, ou monta um BR Code a partir da chave. Códigos dinâmicos são rejeitados. O cliente confere recebedor e valor no aplicativo do banco, paga e envia a referência pelo WhatsApp. O profissional verifica o crédito no extrato e marca o pedido como confirmado no painel. Para produtos digitais, pode cadastrar nível, blocos com ícone/imagem, modalidade de entrega e prazo de acesso. Depois de confirmar o pedido, o Admin gera um link/token protegido e avisa o cliente pelo WhatsApp; o token é armazenado como hash, expira e fica vinculado ao primeiro dispositivo. Isso é uma proteção simples de acesso, não DRM absoluto. Produtos físicos e serviços continuam combinados com o profissional. Imagens do catálogo podem ser enviadas para o bucket público `product-images` ou informadas por URL HTTPS. Para outras formas de pagamento, o cliente combina diretamente com o profissional.
 
 No ciclo da plataforma, o Admin Master pode conceder uma isenção/cortesia por período definido, sem gerar Pix, ou registrar uma mensalidade negociada para as próximas cobranças. Ambas as decisões ficam vinculadas ao espaço e registradas na auditoria; a negociação continua exigindo comprovante e confirmação manual. Remover a negociação devolve o valor do plano vigente, e a isenção deixa de bloquear novas cobranças quando expira.

@@ -83,6 +83,7 @@ export type WorkoutSettings = {
   duration_minutes: number
   exercise_seconds: number
   rest_seconds: number
+  training_days?: number[]
 }
 
 export type ProductContent = {
@@ -180,6 +181,13 @@ export type OrderReceipt = {
   reference: string
   total: number
   items: { name: string; quantity: number; unit_price: number; line_total: number }[]
+  payment?: {
+    provider: 'manual_pix' | 'asaas'
+    status: 'manual_review' | 'awaiting_payment' | 'confirmed' | 'overdue' | 'cancelled' | 'refunded' | 'error'
+    pix_copy_paste?: string | null
+    qr_code?: string | null
+    expires_at?: string | null
+  } | null
   appointment?: {
     id: string
     status: EvaluationBooking['status']
