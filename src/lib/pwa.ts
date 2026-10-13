@@ -11,17 +11,21 @@ export function reminderKey(audience: PwaAudience, workspaceId: string) {
 }
 
 export async function requestNotificationPermission() {
-  if (!('Notification' in window)) return 'unsupported' as const
+  if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported' as const
   if (Notification.permission === 'granted') return 'granted' as const
   if (Notification.permission === 'denied') return 'denied' as const
-  return Notification.requestPermission()
+  try {
+    return await Notification.requestPermission()
+  } catch {
+    return 'default' as const
+  }
 }
 
 export async function notifyBrowser(title: string, options: NotificationOptions & { url?: string } = {}) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return false
   const { url, ...notificationOptions } = options
   try {
-    const registration = await navigator.serviceWorker?.ready
+    const registration = await navigator.serviceWorker?.getRegistration()
     if (registration?.showNotification) {
       await registration.showNotification(title, { ...notificationOptions, data: { url: url ?? window.location.href } })
       return true
@@ -37,7 +41,10 @@ export function isReminderEnabled(audience: PwaAudience, workspaceId: string) {
   return localStorage.getItem(reminderKey(audience, workspaceId)) === 'enabled'
 }
 
+export function hasReminderPreference(audience: PwaAudience, workspaceId: string) {
+  return localStorage.getItem(reminderKey(audience, workspaceId)) !== null
+}
+
 export function setReminderEnabled(audience: PwaAudience, workspaceId: string, enabled: boolean) {
-  if (enabled) localStorage.setItem(reminderKey(audience, workspaceId), 'enabled')
-  else localStorage.removeItem(reminderKey(audience, workspaceId))
+  localStorage.setItem(reminderKey(audience, workspaceId), enabled ? 'enabled' : 'disabled')
 }
