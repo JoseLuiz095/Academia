@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { isSupabaseConfigured } from '../lib/supabase'
-import { PwaExperience } from '../components/PwaExperience'
 
 const navigation = [
   { to: '/admin', label: 'Visão geral', icon: '⌂', end: true },
@@ -62,7 +61,7 @@ export function AdminLayout() {
     </aside>
     <main className="main-area">
       <header className="topbar"><div className="mobile-brand"><div className="brand-mark">I</div><strong>impulso</strong></div><div className="breadcrumb"><span>Meu espaço</span><b>/</b><strong>{activeLabel}</strong></div><div className="topbar-actions"><span className={`connection-status ${isSupabaseConfigured ? 'online' : ''}`}><i /> {isSupabaseConfigured ? 'Supabase configurado' : 'Configure o Supabase'}</span><span className="top-avatar">{user?.email?.slice(0, 2).toUpperCase()}</span></div></header>
-      <div className="content-wrap" key={workspace?.id ?? 'setup'}>{subscriptionNotice && <div className={`subscription-alert ${daysRemaining !== null && daysRemaining <= 0 ? 'expired' : ''}`} role="status"><span>{daysRemaining !== null && daysRemaining <= 0 ? '!' : '◷'}</span><div><strong>{daysRemaining !== null && daysRemaining <= 0 ? 'Sua assinatura precisa de atenção' : `Sua assinatura vence em ${daysRemaining} ${daysRemaining === 1 ? 'dia' : 'dias'}`}</strong><small>{daysRemaining !== null && daysRemaining <= 0 ? 'Atualize o plano para manter sua operação ativa.' : 'Revise seu plano e evite ficar sem acesso às ferramentas.'}</small></div><a href="/admin/planos">Ver assinatura →</a></div>}{workspace && <PwaExperience audience="admin" workspaceId={workspace.id} compact />}<Outlet /></div>
+      <div className="content-wrap" key={workspace?.id ?? 'setup'}>{subscriptionNotice && <div className={`subscription-alert ${daysRemaining !== null && daysRemaining <= 0 ? 'expired' : ''}`} role="status"><span>{daysRemaining !== null && daysRemaining <= 0 ? '!' : '◷'}</span><div><strong>{daysRemaining !== null && daysRemaining <= 0 ? 'Sua assinatura precisa de atenção' : `Sua assinatura vence em ${daysRemaining} ${daysRemaining === 1 ? 'dia' : 'dias'}`}</strong><small>{daysRemaining !== null && daysRemaining <= 0 ? 'Atualize o plano para manter sua operação ativa.' : 'Revise seu plano e evite ficar sem acesso às ferramentas.'}</small></div><a href="/admin/planos">Ver assinatura →</a></div>}<Outlet /></div>
     </main>
   </div>
 }
