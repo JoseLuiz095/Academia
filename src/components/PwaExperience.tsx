@@ -57,9 +57,9 @@ export function PwaExperience({ audience, workspaceId, workoutLabel = 'seu próx
         supabase!.from('orders').select('id,reference,status,total').eq('workspace_id', workspaceId).eq('status', 'pending').order('created_at', { ascending: true }).limit(30),
         supabase!.from('evaluation_bookings').select('id,order_id,status').eq('workspace_id', workspaceId).eq('status', 'awaiting_approval').limit(30),
       ])
-      if (!active || ordersResult.error || bookingsResult.error) return
+      if (!active || ordersResult.error) return
       const pending = (ordersResult.data ?? []) as { id: string; reference: string; status: string; total: number }[]
-      const awaitingBookings = (bookingsResult.data ?? []) as { id: string; order_id: string; status: string }[]
+      const awaitingBookings = bookingsResult.error ? [] : (bookingsResult.data ?? []) as { id: string; order_id: string; status: string }[]
       setPendingCount(pending.length + awaitingBookings.length)
       const pendingIds = new Set([...pending.map((order) => order.id), ...awaitingBookings.map((booking) => `booking:${booking.id}`)])
       let seen: string[] = []
