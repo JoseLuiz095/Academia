@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { BuiltInExerciseMotion, defaultMuscles, inferMotionPreset, muscleGroupLabels } from './ExerciseMotion'
+import { BuiltInExerciseMotion, defaultMuscles, inferMotionPreset, muscleGroupLabels, MuscleFocusFigure } from './ExerciseMotion'
 import { ExerciseSequence } from './ExerciseSequence'
 import { ExerciseVideo } from './ExerciseVideo'
 import { displayExerciseName } from '../lib/exerciseTranslations'
@@ -10,6 +10,8 @@ function formatTime(value: number) {
   const seconds = Math.max(0, value % 60).toString().padStart(2, '0')
   return `${minutes}:${seconds}`
 }
+
+const weekdayLabels = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
 function WorkoutMovement({ item, running, resting }: { item: ProductContentItem; running: boolean; resting: boolean }) {
   const type: MotionType = item.motion_type ?? 'embedded'
@@ -52,6 +54,12 @@ export function WorkoutTimer({ product, onSessionChange }: { product: Product; o
   const nextItem = items[exerciseNumber % itemCount]
   const activePreset = activeItem.motion_preset && activeItem.motion_preset !== 'auto' ? activeItem.motion_preset : inferMotionPreset(activeItem.title)
   const activeMuscles = (activeItem.muscle_focus?.length ? activeItem.muscle_focus : defaultMuscles[activePreset]).map((muscle) => muscleGroupLabels[muscle]).join(' · ')
+  const focusMuscles = Array.from(new Set(items.flatMap((item) => {
+    const preset = item.motion_preset && item.motion_preset !== 'auto' ? item.motion_preset : inferMotionPreset(item.title)
+    return item.muscle_focus?.length ? item.muscle_focus : defaultMuscles[preset]
+  })))
+  const trainingDays = (settings?.training_days ?? []).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6).sort((a, b) => a - b)
+  const trainingDaysLabel = trainingDays.map((day) => weekdayLabels[day]).join(' · ')
   const finished = elapsed >= totalSeconds
   const phaseLabel = finished ? 'Concluído' : isResting ? 'Descanso' : 'Execução'
 
@@ -112,7 +120,7 @@ export function WorkoutTimer({ product, onSessionChange }: { product: Product; o
 
   if (sessionStarted && finished) return <section className="workout-session workout-complete" aria-label="Treino concluído">
     <div className="workout-session-topbar"><div><span className="panel-kicker">Sessão concluída</span><strong>{product.name}</strong></div><button type="button" className="text-button" onClick={() => { setSessionStarted(false); onSessionChange?.(false) }}>Ver ficha completa</button></div>
-    <div className="workout-complete-card"><span className="workout-complete-icon">✓</span><div><h2>Treino concluído!</h2><p>O cronômetro chegou ao fim. Hidrate-se e registre como você se sentiu para ajustar a próxima sessão com o profissional.</p></div><div className="workout-complete-stats"><span><small>Duração planejada</small><strong>{totalMinutes} min</strong></span><span><small>Ciclos guiados</small><strong>{rounds}</strong></span><span><small>Exercícios da ficha</small><strong>{itemCount}</strong></span></div><div className="workout-complete-actions"><button type="button" className="primary-button" onClick={() => { setElapsed(0); lastPhaseRef.current = ''; finishedTonePlayedRef.current = false; prepareSound(); setRunning(true) }}>Fazer novamente <span>↻</span></button><button type="button" className="secondary-button" onClick={() => { setSessionStarted(false); onSessionChange?.(false) }}>Voltar aos exercícios</button></div></div>
+    <div className="workout-complete-card"><span className="workout-complete-icon">✓</span><div><h2>Treino concluído!</h2><p>O cronômetro chegou ao fim. Hidrate-se e registre como você se sentiu para ajustar a próxima sessão com o profissional.</p></div><div className="workout-complete-focus"><MuscleFocusFigure muscles={focusMuscles} compact /><div><span className="panel-kicker">Mapa visual</span><h3>O que você trabalhou</h3><p>A ênfase abaixo é uma referência visual configurada na ficha pelo profissional, não um diagnóstico.</p></div></div><div className="workout-complete-stats"><span><small>Duração planejada</small><strong>{totalMinutes} min</strong></span><span><small>Ciclos guiados</small><strong>{rounds}</strong></span><span><small>Exercícios da ficha</small><strong>{itemCount}</strong></span></div><div className="workout-complete-actions"><button type="button" className="primary-button" onClick={() => { setElapsed(0); lastPhaseRef.current = ''; finishedTonePlayedRef.current = false; prepareSound(); setRunning(true) }}>Fazer novamente <span>↻</span></button><button type="button" className="secondary-button" onClick={() => { setSessionStarted(false); onSessionChange?.(false) }}>Voltar aos exercícios</button></div></div>
   </section>
 
   if (sessionStarted) return <section className="workout-session" aria-label="Treino em andamento">
@@ -133,7 +141,7 @@ export function WorkoutTimer({ product, onSessionChange }: { product: Product; o
 
   return <section className="workout-timer workout-launch" aria-label="Preparação do treino">
     <div className="workout-launch-heading"><div><span className="panel-kicker">Treino guiado</span><h2>Seu treino está pronto</h2><p>Comece quando quiser. A duração e os intervalos foram planejados pelo profissional.</p></div><span className="workout-ready-badge">{itemCount} exercícios</span></div>
-    <div className="workout-launch-summary"><div className="workout-launch-time"><small>Tempo estimado</small><strong>{totalMinutes}<span> min</span></strong><p>{rounds} ciclos com pausas planejadas</p></div><div className="workout-launch-stats"><span><small>Execução</small><strong>{exerciseSeconds}s</strong></span><span><small>Descanso</small><strong>{restSeconds}s</strong></span><span><small>Ritmo</small><strong>Guiado</strong></span></div></div>
+    <div className="workout-launch-summary"><div className="workout-launch-time"><small>Tempo estimado</small><strong>{totalMinutes}<span> min</span></strong><p>{rounds} ciclos com pausas planejadas</p>{trainingDaysLabel && <div className="workout-training-days" aria-label="Dias sugeridos para o treino">{trainingDays.map((day) => <span className="workout-training-day" key={day}>{weekdayLabels[day]}</span>)}</div>}</div><div className="workout-launch-stats"><span><small>Execução</small><strong>{exerciseSeconds}s</strong></span><span><small>Descanso</small><strong>{restSeconds}s</strong></span><span><small>Ritmo</small><strong>Guiado</strong></span></div></div>
     <div className="workout-launch-actions"><button type="button" className="primary-button" onClick={startSession}>Iniciar treino guiado <span>▶</span></button><span>Você poderá pausar, avançar ou adaptar o ritmo.</span></div>
     <details className="workout-adjust"><summary>Ajustar tempo do meu treino</summary><div className="form-row"><label>Total (min)<input type="number" min="5" max="180" value={totalMinutes} onChange={(event) => { setTotalMinutes(Math.min(180, Math.max(5, Number(event.target.value) || 5))); setElapsed(0) }} /></label><label>Execução (s)<input type="number" min="5" max="300" value={exerciseSeconds} onChange={(event) => { setExerciseSeconds(Math.min(300, Math.max(5, Number(event.target.value) || 5))); setElapsed(0) }} /></label><label>Descanso (s)<input type="number" min="0" max="300" value={restSeconds} onChange={(event) => { setRestSeconds(Math.min(300, Math.max(0, Number(event.target.value) || 0))); setElapsed(0) }} /></label></div><p className="field-help">A estimativa é recalculada neste dispositivo. Para uma mudança clínica ou de carga, consulte o profissional.</p></details>
   </section>
