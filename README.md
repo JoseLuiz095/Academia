@@ -24,7 +24,7 @@ Para vender ficha de treino, o espaço precisa informar um CREF/registro profiss
 
 ## Execução local
 
-Requer Node.js 22 ou superior.
+Requer Node.js 22.12 ou superior (o Vite 7 não funciona com versões antigas do Node 22). O arquivo `.nvmrc` deixa a versão esperada explícita para ambientes de build.
 
 ```powershell
 npm install
@@ -115,3 +115,7 @@ Cada espaço possui nome e slug próprios, como `/p/minha-marca`. Atualmente cad
 ## Homologação no Cloudflare Workers
 
 A URL `academia.joseluizacama.workers.dev` pertence a um Worker de assets estáticos, não a um projeto Pages conectado ao GitHub. O arquivo `wrangler.jsonc` configura a saída `dist` e o fallback das rotas React. O GitHub guarda o código, mas fazer push não publica automaticamente esse Worker. Para publicar: configure as variáveis públicas do Supabase no ambiente de build, rode `npm run build` e depois `wrangler deploy`. Nunca publique `.env.local` ou a chave secreta do Gemini. As Edge Functions `access-product` e `report-public-store` exigem os secrets remotos do Supabase e já estão estruturadas para o domínio público. Se desejar CI para cada push na `main`, configure um workflow com credencial limitada do Cloudflare em etapa separada.
+
+### Configuração do Workers Builds
+
+No serviço `academia`, use a raiz do repositório, Node `22.12` ou superior, comando de build `npm run build` e saída `dist`. O `wrangler.jsonc` já aponta os assets para `./dist` e mantém o fallback da SPA. Se o painel estiver configurado para executar `wrangler deploy`, instale o Wrangler no ambiente do build ou use `npx wrangler deploy`; o código deste projeto não depende de um `dist/` versionado.
