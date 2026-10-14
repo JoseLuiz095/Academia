@@ -95,30 +95,37 @@ function ContentItemEditor({ item, index, category, onChange, onRemove }: { item
   const activeDietParts = item.diet_parts?.length ? item.diet_parts : defaultDietParts
   function updateDietPart(partIndex: number, patch: Record<string, string>) { onChange({ diet_parts: activeDietParts.map((current, currentIndex) => currentIndex === partIndex ? { ...current, ...patch } : current) }) }
   return <div className="content-item-editor">
-    <strong>{isWorkout ? `Exercício ${index + 1}` : `Refeição ${index + 1}`}</strong>
-    {isWorkout && <ExerciseLibraryPicker item={item} onChange={onChange} />}
-    <div className="form-row"><label>Nome<input value={item.title} onChange={(event) => onChange({ title: event.target.value, title_custom: true })} placeholder={isWorkout ? 'Ex.: Agachamento livre' : 'Ex.: Café da manhã'} /></label><label>Ícone ou figurinha<input value={item.icon ?? ''} onChange={(event) => onChange({ icon: event.target.value })} placeholder="🏋️ ou 🥗" /></label></div>
-    <label>Detalhes<textarea rows={2} value={item.details ?? ''} onChange={(event) => onChange({ details: event.target.value })} placeholder={isWorkout ? 'Orientações de execução, séries, repetições e cuidados.' : 'Ingredientes, porções ou modo de preparo.'} /></label>
-    <div className="form-row"><label>Meta curta<input value={item.meta ?? ''} onChange={(event) => onChange({ meta: event.target.value })} placeholder={isWorkout ? 'Ex.: 4 séries · 10 repetições' : 'Ex.: 420 kcal · 32 g proteína'} /></label><label>Imagem complementar HTTPS<input type="url" value={item.image_url ?? ''} onChange={(event) => onChange({ image_url: event.target.value })} placeholder="https://..." /></label></div>
-    {isWorkout && <div className="motion-editor">
-      <div><span className="panel-kicker">Ajuste da demonstração</span><p className="field-help">Esta é a prévia que também será apresentada na página de venda e no acesso protegido.</p></div>
-      <div className="form-row"><label>Movimento<select value={item.motion_preset ?? 'auto'} onChange={(event) => onChange({ motion_preset: event.target.value as MotionPreset })}>{Object.entries(motionPresetLabels).map(([value, text]) => <option value={value} key={value}>{text}</option>)}</select></label><label>Tipo de mídia<select value={item.motion_type ?? 'embedded'} onChange={(event) => onChange({ motion_type: event.target.value as MotionType })}>{Object.entries(motionLabel).map(([value, text]) => <option value={value} key={value}>{text}</option>)}</select></label></div>
-      <div className="muscle-focus-grid"><span>Ênfase muscular</span>{(Object.entries(muscleGroupLabels) as [MuscleGroup, string][]).map(([muscle, text]) => <label className="muscle-focus-chip" key={muscle}><input type="checkbox" checked={item.muscle_focus?.includes(muscle) ?? false} onChange={(event) => { const current = item.muscle_focus ?? []; onChange({ muscle_focus: event.target.checked ? [...current, muscle] : current.filter((value) => value !== muscle) }) }} />{text}</label>)}</div>
-      {usesPremiumVideo ? <p className="integrated-model-note premium-video-note">Animação HD 3D local selecionada. Ela será exibida automaticamente em loop na vitrine e no conteúdo liberado.</p> : usesCatalogFrames ? <p className="integrated-model-note">Demonstração 2D guiada selecionada. As posições inicial e final aparecem como uma sequência para o cliente.</p> : item.motion_type && !['embedded', 'none'].includes(item.motion_type) && <><label>URL HTTPS da demonstração<input type="url" value={item.motion_url ?? ''} onChange={(event) => onChange({ motion_url: event.target.value })} placeholder="https://.../exercicio.webm" /></label>{item.motion_type === 'video' && <label>Poster do vídeo (opcional)<input type="url" value={item.motion_poster ?? ''} onChange={(event) => onChange({ motion_poster: event.target.value })} placeholder="https://.../poster.jpg" /></label>}</>}
-    </div>}
-    {!isWorkout && category === 'diet' && <div className="diet-editor">
-      <div className="panel-heading"><div><span className="panel-kicker">Apresentação da refeição</span><h3>Prato interativo</h3></div><small>O cliente pode desmontar o prato e consultar a explicação de cada componente.</small></div>
-      <DietPlate parts={activeDietParts} compact />
-      <div className="diet-parts-editor">{activeDietParts.map((part, partIndex) => <div className="diet-part-row" key={`diet-part-${partIndex}`}>
-        <input aria-label={`Nome do componente ${partIndex + 1}`} value={part.name} onChange={(event) => updateDietPart(partIndex, { name: event.target.value })} placeholder="Ex.: Proteína" />
-        <input aria-label={`Porção do componente ${partIndex + 1}`} value={part.amount ?? ''} onChange={(event) => updateDietPart(partIndex, { amount: event.target.value })} placeholder="Ex.: 1 porção" />
-        <input aria-label={`Ícone do componente ${partIndex + 1}`} value={part.icon ?? ''} onChange={(event) => updateDietPart(partIndex, { icon: event.target.value })} placeholder="🍗" />
-        <input aria-label={`Cor do componente ${partIndex + 1}`} type="color" value={part.color || '#9bbd9d'} onChange={(event) => updateDietPart(partIndex, { color: event.target.value })} />
-        <textarea aria-label={`Orientação do componente ${partIndex + 1}`} rows={2} value={part.description ?? ''} onChange={(event) => updateDietPart(partIndex, { description: event.target.value })} placeholder="Orientação que o cliente verá ao tocar neste componente." />
-      </div>)}</div>
-      <button type="button" className="secondary-button" onClick={() => onChange({ diet_parts: [...activeDietParts, { name: 'Novo componente', amount: '1 porção', description: 'Explique a função deste item para o cliente.', icon: '✦', color: '#9bbd9d' }] })} disabled={activeDietParts.length >= 6}>Adicionar componente <span>＋</span></button>
-    </div>}
-    <button type="button" className="text-button" onClick={onRemove}>Remover item</button>
+    <div className="content-item-topline">
+      <div><span className="content-item-index">{isWorkout ? `Exercício ${index + 1}` : `Refeição ${index + 1}`}</span><strong>{item.title || (isWorkout ? 'Novo exercício' : 'Nova refeição')}</strong><small>{isWorkout ? (item.muscle_focus?.length ? item.muscle_focus.map((muscle) => muscleGroupLabels[muscle]).join(' · ') : 'Ênfase ainda não definida') : (item.diet_parts?.length ? `${item.diet_parts.length} componentes no prato` : 'Prato ainda não configurado')}</small></div>
+      <button type="button" className="text-button danger-button" onClick={onRemove}>Remover</button>
+    </div>
+    <details className="content-item-details" open={index === 0}>
+      <summary><span>{item.title ? 'Editar conteúdo' : 'Preencher este item'}</span><small>Campos avançados e apresentação</small></summary>
+      <div className="content-item-fields">
+        {isWorkout && <ExerciseLibraryPicker item={item} onChange={onChange} />}
+        <div className="form-row"><label>Nome<input value={item.title} onChange={(event) => onChange({ title: event.target.value, title_custom: true })} placeholder={isWorkout ? 'Ex.: Agachamento livre' : 'Ex.: Café da manhã'} /></label><label>Ícone ou figurinha<input value={item.icon ?? ''} onChange={(event) => onChange({ icon: event.target.value })} placeholder="🏋️ ou 🥗" /></label></div>
+        <label>Detalhes<textarea rows={2} value={item.details ?? ''} onChange={(event) => onChange({ details: event.target.value })} placeholder={isWorkout ? 'Orientações de execução, séries, repetições e cuidados.' : 'Ingredientes, porções ou modo de preparo.'} /></label>
+        <div className="form-row"><label>Meta curta<input value={item.meta ?? ''} onChange={(event) => onChange({ meta: event.target.value })} placeholder={isWorkout ? 'Ex.: 4 séries · 10 repetições' : 'Ex.: 420 kcal · 32 g proteína'} /></label><label>Imagem complementar HTTPS<input type="url" value={item.image_url ?? ''} onChange={(event) => onChange({ image_url: event.target.value })} placeholder="https://..." /></label></div>
+        {isWorkout && <div className="motion-editor">
+          <div><span className="panel-kicker">Ajuste da demonstração</span><p className="field-help">Esta é a prévia que também será apresentada na página de venda e no acesso protegido.</p></div>
+          <div className="form-row"><label>Movimento<select value={item.motion_preset ?? 'auto'} onChange={(event) => onChange({ motion_preset: event.target.value as MotionPreset })}>{Object.entries(motionPresetLabels).map(([value, text]) => <option value={value} key={value}>{text}</option>)}</select></label><label>Tipo de mídia<select value={item.motion_type ?? 'embedded'} onChange={(event) => onChange({ motion_type: event.target.value as MotionType })}>{Object.entries(motionLabel).map(([value, text]) => <option value={value} key={value}>{text}</option>)}</select></label></div>
+          <div className="muscle-focus-grid"><span>Ênfase muscular</span>{(Object.entries(muscleGroupLabels) as [MuscleGroup, string][]).map(([muscle, text]) => <label className="muscle-focus-chip" key={muscle}><input type="checkbox" checked={item.muscle_focus?.includes(muscle) ?? false} onChange={(event) => { const current = item.muscle_focus ?? []; onChange({ muscle_focus: event.target.checked ? [...current, muscle] : current.filter((value) => value !== muscle) }) }} />{text}</label>)}</div>
+          {usesPremiumVideo ? <p className="integrated-model-note premium-video-note">Animação HD 3D local selecionada. Ela será exibida automaticamente em loop na vitrine e no conteúdo liberado.</p> : usesCatalogFrames ? <p className="integrated-model-note">Demonstração 2D guiada selecionada. As posições inicial e final aparecem como uma sequência para o cliente.</p> : item.motion_type && !['embedded', 'none'].includes(item.motion_type) && <><label>URL HTTPS da demonstração<input type="url" value={item.motion_url ?? ''} onChange={(event) => onChange({ motion_url: event.target.value })} placeholder="https://.../exercicio.webm" /></label>{item.motion_type === 'video' && <label>Poster do vídeo (opcional)<input type="url" value={item.motion_poster ?? ''} onChange={(event) => onChange({ motion_poster: event.target.value })} placeholder="https://.../poster.jpg" /></label>}</>}
+        </div>}
+        {!isWorkout && category === 'diet' && <div className="diet-editor">
+          <div className="panel-heading"><div><span className="panel-kicker">Apresentação da refeição</span><h3>Prato interativo</h3></div><small>O cliente pode desmontar o prato e consultar a explicação de cada componente.</small></div>
+          <DietPlate parts={activeDietParts} compact />
+          <div className="diet-parts-editor">{activeDietParts.map((part, partIndex) => <div className="diet-part-row" key={`diet-part-${partIndex}`}>
+            <input aria-label={`Nome do componente ${partIndex + 1}`} value={part.name} onChange={(event) => updateDietPart(partIndex, { name: event.target.value })} placeholder="Ex.: Proteína" />
+            <input aria-label={`Porção do componente ${partIndex + 1}`} value={part.amount ?? ''} onChange={(event) => updateDietPart(partIndex, { amount: event.target.value })} placeholder="Ex.: 1 porção" />
+            <input aria-label={`Ícone do componente ${partIndex + 1}`} value={part.icon ?? ''} onChange={(event) => updateDietPart(partIndex, { icon: event.target.value })} placeholder="🍗" />
+            <input aria-label={`Cor do componente ${partIndex + 1}`} type="color" value={part.color || '#9bbd9d'} onChange={(event) => updateDietPart(partIndex, { color: event.target.value })} />
+            <textarea aria-label={`Orientação do componente ${partIndex + 1}`} rows={2} value={part.description ?? ''} onChange={(event) => updateDietPart(partIndex, { description: event.target.value })} placeholder="Orientação que o cliente verá ao tocar neste componente." />
+          </div>)}</div>
+          <button type="button" className="secondary-button" onClick={() => onChange({ diet_parts: [...activeDietParts, { name: 'Novo componente', amount: '1 porção', description: 'Explique a função deste item para o cliente.', icon: '✦', color: '#9bbd9d' }] })} disabled={activeDietParts.length >= 6}>Adicionar componente <span>＋</span></button>
+        </div>}
+      </div>
+    </details>
   </div>
 }
 
