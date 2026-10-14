@@ -334,25 +334,11 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .content-item-details[open] summary::after { content: '−'; }
 .content-item-details summary small { color: #a1aaa3; font-size: 9px; font-weight: 500; }
 .content-item-fields { display: grid; gap: 10px; padding-top: 10px; }
-.content-builder-progress { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.content-builder-progress span { display: flex; align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid #e7ece5; border-radius: 9px; color: #9aa79d; background: #fbfcfa; font-size: 9px; font-weight: 800; letter-spacing: .4px; }
-.content-builder-progress span b { color: #7c8b7e; font-size: 10px; font-weight: 700; letter-spacing: 0; }
-.content-builder-progress span.is-done { border-color: #b8d2bc; color: #4e8059; background: #f1f8f0; }
-.content-builder-progress span.is-done b { color: #456e4e; }
-.quick-start { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px dashed #d8e3d6; border-radius: 10px; background: #fbfdf9; }
-.quick-start > div { display: grid; gap: 2px; min-width: 0; margin-right: auto; }
-.quick-start strong { color: #506b57; font-size: 11px; }
-.quick-start small { color: #8b9b8e; font-size: 9px; }
-.quick-start .secondary-button { padding: 7px 10px; font-size: 10px; }
 .editor-panel > form > .form-actions { position: sticky; bottom: 0; z-index: 2; margin: 4px -4px -4px; padding: 12px 4px 4px; border-top: 1px solid #edf0e9; background: linear-gradient(180deg, rgba(255,255,255,0), #fff 35%); }
 @media (max-width: 760px) {
   .content-wrap { padding: 25px 16px 42px; }
   .content-item-topline { align-items: flex-start; }
   .content-item-topline .danger-button { flex: 0 0 auto; }
-  .content-builder-progress { grid-template-columns: 1fr; }
-  .quick-start { align-items: stretch; flex-wrap: wrap; }
-  .quick-start > div { flex: 1 0 100%; }
-  .quick-start .secondary-button { flex: 1; }
 }
 
 .subscription-alert { display: flex; align-items: center; gap: 13px; margin-bottom: 22px; padding: 13px 15px; border: 1px solid #ead8a3; border-radius: 12px; color: #7c6840; background: #fff8da; }
