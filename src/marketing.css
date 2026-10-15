@@ -250,3 +250,40 @@
   .demo-window-bar small { display: none; }
   .demo-panel, .demo-preview { padding: 20px; }
 }
+
+/* Direção comercial: energia de treino com clareza de produto SaaS. */
+.landing-shell { background: #f5f6f4; }
+.landing-header { max-width: 1320px; }
+.commercial-hero {
+  margin: 18px 32px 0;
+  border-radius: 30px;
+  background: radial-gradient(circle at 82% 18%, rgba(249, 115, 22, .28), transparent 30%), linear-gradient(135deg, #17191c 0%, #292d30 100%);
+  box-shadow: 0 24px 60px rgba(20, 23, 25, .14);
+}
+.commercial-hero h1, .commercial-hero p:not(.eyebrow) { color: #fff; }
+.commercial-hero .eyebrow, .commercial-demo-callout .eyebrow, .commercial-final .eyebrow { color: #ffb27d; }
+.commercial-hero-copy > p:not(.eyebrow) { color: rgba(255, 255, 255, .72); }
+.commercial-hero-proof span { border-color: rgba(255, 255, 255, .18); color: #f4c3a0; background: rgba(255, 255, 255, .08); }
+.commercial-scene { box-shadow: 0 24px 50px rgba(0, 0, 0, .24); }
+.commercial-ribbon { color: #d4ddd7; background: #22272a; border-color: #30363a; }
+.commercial-section-heading h2, .commercial-split h2, .commercial-pricing h2, .commercial-faq h2 { color: #181b1d; }
+.commercial-feature-grid article {
+  border-radius: 20px;
+  box-shadow: 0 10px 28px rgba(27, 33, 35, .055);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.commercial-feature-grid article:hover { transform: translateY(-4px); border-color: #f2b184; box-shadow: 0 18px 38px rgba(27, 33, 35, .1); }
+.commercial-feature-top span { color: #fff; background: #ef6b20; }
+.commercial-process article { border-radius: 16px; }
+.commercial-demo-callout {
+  background: radial-gradient(circle at 85% 20%, rgba(249, 115, 22, .2), transparent 26%), linear-gradient(135deg, #17191c, #292d30);
+}
+.commercial-demo-callout h2, .commercial-demo-callout p:not(.eyebrow), .commercial-final h2, .commercial-final p:not(.eyebrow) { color: #fff; }
+.commercial-demo-callout p:not(.eyebrow), .commercial-final p:not(.eyebrow) { color: rgba(255, 255, 255, .7); }
+.commercial-pricing .commercial-plan-card { border-radius: 20px; box-shadow: 0 10px 28px rgba(27, 33, 35, .055); }
+.commercial-final { background: #1a1d20; }
+
+@media (max-width: 760px) {
+  .commercial-hero { margin: 0 18px; border-radius: 22px; }
+  .commercial-hero-copy { padding: 34px 24px; }
+}
