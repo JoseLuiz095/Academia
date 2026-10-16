@@ -24,7 +24,7 @@ Para vender ficha de treino, o espaço precisa informar um CREF/registro profiss
 
 ## Execução local
 
-Requer Node.js 22.12 ou superior (o Vite 7 não funciona com versões antigas do Node 22). O arquivo `.nvmrc` deixa a versão esperada explícita para ambientes de build.
+Requer Node.js 22.23.2 ou superior (o Vite 7 não funciona com versões antigas do Node 22). O arquivo `.nvmrc` deixa a versão compatível explícita para ambientes de build, incluindo o Workers Builds do Cloudflare.
 
 ```powershell
 npm install
@@ -118,4 +118,4 @@ A URL `academia.joseluizacama.workers.dev` pertence a um Worker de assets estát
 
 ### Configuração do Workers Builds
 
-No serviço `academia`, use a raiz do repositório, Node `22.12` ou superior, comando de build `npm run build` e saída `dist`. O `wrangler.jsonc` já aponta os assets para `./dist` e mantém o fallback da SPA. Se o painel estiver configurado para executar `wrangler deploy`, instale o Wrangler no ambiente do build ou use `npx wrangler deploy`; o código deste projeto não depende de um `dist/` versionado.
+No serviço `academia`, use a raiz do repositório, Node `22.23.2` ou superior, comando de build `npm run build` e saída `dist`. O `wrangler.jsonc` já aponta os assets para `./dist` e mantém o fallback da SPA. Configure o deploy como `npx wrangler deploy`; o Wrangler agora está fixado no projeto e o script local `npm run deploy:cloudflare` também está disponível. O código não depende de um `dist/` versionado.
