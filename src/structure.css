@@ -1342,3 +1342,15 @@ body { color: var(--ink); background: #f5f6f4; }
   .store-shell .store-trust-row { gap: 7px 12px; line-height: 1.4; }
   .request-access-card, .request-card { border-radius: 16px; }
 }
+
+/* Atalhos do editor: reduz rolagem nos cadastros longos de treino e dieta. */
+.editor-quickbar { position: sticky; top: 12px; z-index: 4; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 16px; padding: 10px 12px; border: 1px solid #e7ddd3; border-radius: 12px; color: #68756d; background: rgba(255, 252, 248, .94); box-shadow: 0 8px 22px rgba(35, 41, 36, .06); backdrop-filter: blur(9px); }
+.editor-quickbar > span { font-size: 10px; }
+.editor-quickbar > span strong { color: #b65c36; font-size: 16px; }
+.editor-quickbar-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+.editor-quickbar-actions .primary-button, .editor-quickbar-actions .secondary-button { min-height: 34px; padding: 8px 10px; font-size: 10px; }
+@media (max-width: 760px) {
+  .editor-quickbar { align-items: stretch; flex-direction: column; top: 6px; }
+  .editor-quickbar-actions { justify-content: stretch; }
+  .editor-quickbar-actions button { flex: 1 1 140px; }
+}
