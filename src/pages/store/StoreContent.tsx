@@ -88,11 +88,12 @@ function getDeviceId() {
   const cookie = document.cookie.split('; ').find((part) => part.startsWith('impulso_device_id='))
   if (cookie) return decodeURIComponent(cookie.slice('impulso_device_id='.length))
   const storageKey = 'impulso:device-id'
-  const stored = localStorage.getItem(storageKey)
+  let stored = ''
+  try { stored = localStorage.getItem(storageKey) ?? '' } catch { /* Alguns navegadores bloqueiam storage em modo privado. */ }
   if (stored) return stored
   const created = crypto.randomUUID()
-  localStorage.setItem(storageKey, created)
-  document.cookie = `impulso_device_id=${encodeURIComponent(created)}; Max-Age=31536000; Path=/; SameSite=Lax${window.location.protocol === 'https:' ? '; Secure' : ''}`
+  try { localStorage.setItem(storageKey, created) } catch { /* O cookie abaixo mantém a proteção entre páginas. */ }
+  try { document.cookie = `impulso_device_id=${encodeURIComponent(created)}; Max-Age=31536000; Path=/; SameSite=Lax${window.location.protocol === 'https:' ? '; Secure' : ''}` } catch { /* Cookie também pode estar bloqueado. */ }
   return created
 }
 
@@ -148,7 +149,7 @@ export function StoreAccessEnhanced() {
   useEffect(() => {
     if (!access) return
     try {
-      const saved = localStorage.getItem(contentProgressStorageKey(workspace.id, access.access_token_id))
+      const saved = (() => { try { return localStorage.getItem(contentProgressStorageKey(workspace.id, access.access_token_id)) } catch { return null } })()
       const parsed = saved ? JSON.parse(saved) as LocalProgressMap : {}
       setLocalProgress(parsed && typeof parsed === 'object' ? parsed : {})
     } catch {

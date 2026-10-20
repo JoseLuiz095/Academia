@@ -33,7 +33,9 @@ export function AdminOnboarding() {
   const [slug, setSlug] = useState('')
   const [niche, setNiche] = useState('fitness')
   const [plan, setPlan] = useState<WorkspaceRequest['plan_code'] | ''>(() => {
-    const requested = searchParams.get('plan') || localStorage.getItem('impulso:pending-plan')
+    let stored = ''
+    try { stored = localStorage.getItem('impulso:pending-plan') ?? '' } catch { /* A URL continua sendo a fonte principal. */ }
+    const requested = searchParams.get('plan') || stored
     return requested === 'demo' || requested === 'starter' || requested === 'creator' || requested === 'pro' ? requested : ''
   })
   const [plans, setPlans] = useState<PlatformPlan[]>([])
@@ -84,7 +86,7 @@ export function AdminOnboarding() {
       ? await supabase.rpc('create_owner_workspace', { workspace_name: name.trim(), workspace_slug: safeSlug, workspace_niche: niche, workspace_plan: plan })
       : await supabase.rpc('prepare_paid_workspace_request', { p_workspace_name: name.trim(), p_workspace_slug: safeSlug, p_workspace_niche: niche, p_workspace_plan: plan })
     if (result.error) { setError(result.error.code === '23505' ? 'Este endereço já está em uso.' : result.error.message); setBusy(false); return }
-    localStorage.removeItem('impulso:pending-plan')
+    try { localStorage.removeItem('impulso:pending-plan') } catch { /* Limpeza opcional. */ }
     await loadRequest()
     setMessage(plan === 'demo' ? 'Cadastro enviado para análise.' : 'Cadastro preparado. Confira o Pix e conclua o envio do comprovante pelo WhatsApp.')
     setBusy(false)

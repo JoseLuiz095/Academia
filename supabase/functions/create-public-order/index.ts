@@ -112,7 +112,7 @@ Deno.serve(async (request) => {
     return reply(payment ? { ...(data as Record<string, unknown>), payment } : data)
   } catch (asaasError) {
     console.error('[asaas] checkout fallback', asaasError instanceof Error ? asaasError.message : 'unknown error')
-    await client.from('orders').update({ payment_provider: 'manual_pix', payment_status: 'error', payment_error: 'Cobrança automática indisponível; confirmação manual necessária.' }).eq('workspace_id', workspaceId).eq('request_id', requestId)
-    return reply({ ...(data as Record<string, unknown>), payment: { provider: 'manual_pix', status: 'error' } })
+    await client.from('orders').update({ payment_provider: 'manual_pix', payment_status: 'manual_review', payment_error: 'Cobrança automática indisponível; confirmação manual necessária.' }).eq('workspace_id', workspaceId).eq('request_id', requestId)
+    return reply({ ...(data as Record<string, unknown>), payment: { provider: 'manual_pix', status: 'manual_review' } })
   }
 })

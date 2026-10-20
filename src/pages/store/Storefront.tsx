@@ -46,7 +46,7 @@ export function StoreProduct() {
 export function StoreAccess() {
   const { workspace } = useStore()
   const [token, setToken] = useState(() => new URLSearchParams(window.location.search).get('token') ?? '')
-  const [deviceId] = useState(() => { const key = 'impulso:device-id'; const current = localStorage.getItem(key); if (current) return current; const created = crypto.randomUUID(); localStorage.setItem(key, created); return created })
+  const [deviceId] = useState(() => { const key = 'impulso:device-id'; try { const current = localStorage.getItem(key); if (current) return current } catch { /* Usa apenas a sessão atual. */ } const created = crypto.randomUUID(); try { localStorage.setItem(key, created) } catch { /* O acesso ainda pode ser tentado neste dispositivo. */ } return created })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [access, setAccess] = useState<{ product: Product; order_reference: string; expires_at: string } | null>(null)
