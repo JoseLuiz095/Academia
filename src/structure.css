@@ -4,6 +4,10 @@
 a { color: #bc603d; }
 button:disabled { opacity: .55; cursor: not-allowed; }
 :focus-visible { outline: 3px solid #e79a74; outline-offset: 3px; }
+.app-fatal-error { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #f7f6f2; }
+.app-fatal-card { width: min(520px, 100%); padding: clamp(26px, 5vw, 48px); background: #fff; border: 1px solid #e7e5de; border-radius: 22px; box-shadow: 0 24px 70px rgba(31, 41, 40, .1); }
+.app-fatal-card h1 { margin: 8px 0 10px; color: #24312d; font-family: 'Playfair Display', serif; font-size: clamp(30px, 5vw, 44px); line-height: 1.08; }
+.app-fatal-card p { color: #6d7973; line-height: 1.65; }
 .sidebar .brand-lockup { color: var(--ink); }
 .sidebar .nav-item { text-decoration: none; }
 .workspace-select { min-width: 0; width: 100%; background: transparent; border: 0; color: var(--ink); font: inherit; font-size: 11px; font-weight: 700; }

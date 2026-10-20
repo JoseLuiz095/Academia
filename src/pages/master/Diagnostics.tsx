@@ -3,6 +3,11 @@ import { appConfig } from '../../lib/config'
 import { supabase } from '../../lib/supabase'
 
 type Check = { label: string; detail: string; ok: boolean; action?: string }
+type PublicOrderPayment = { payment_provider: string | null; payment_status: string | null; created_at: string }
+
+const formatDate = (value?: string) => value
+  ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
+  : null
 
 export function MasterDiagnostics() {
   const [checks, setChecks] = useState<Check[]>([])
@@ -16,21 +21,35 @@ export function MasterDiagnostics() {
       setLoading(false)
       return
     }
-    const [billingResult, plansResult, workspacesResult, requestsResult] = await Promise.all([
+    const [billingResult, plansResult, workspacesResult, requestsResult, ordersResult] = await Promise.all([
       supabase.from('platform_billing_settings').select('pix_key,pix_receiver,pix_city,pix_static_code,whatsapp').eq('id', true).maybeSingle(),
       supabase.from('platform_plans').select('code,enabled').eq('enabled', true),
       supabase.from('workspaces').select('id', { count: 'exact', head: true }),
       supabase.from('workspace_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      // Apenas campos operacionais e não sensíveis. Segredos do Asaas e o
+      // journal privado do webhook nunca são consultados pelo navegador.
+      supabase.from('orders').select('payment_provider,payment_status,created_at').order('created_at', { ascending: false }).limit(200),
     ])
     const queryError = billingResult.error ?? plansResult.error ?? workspacesResult.error ?? requestsResult.error
     if (queryError) setError('Não foi possível concluir o diagnóstico. Atualize a página e tente novamente.')
     const billing = billingResult.data
     const hasPix = Boolean(billing?.pix_static_code || (billing?.pix_key && billing?.pix_receiver && billing?.pix_city))
+    const storeOrders = (ordersResult.data ?? []) as PublicOrderPayment[]
+    const asaasOrders = storeOrders.filter((order) => order.payment_provider === 'asaas')
+    const manualOrders = storeOrders.filter((order) => order.payment_provider === 'manual_pix')
+    const paymentErrors = storeOrders.filter((order) => order.payment_status === 'error')
+    const latestPayment = storeOrders[0]?.created_at
+    const paymentDetail = ordersResult.error
+      ? 'Não foi possível ler o resumo operacional dos pedidos com a sessão atual.'
+      : storeOrders.length
+        ? `Asaas: ${asaasOrders.length} pedido(s), ${asaasOrders.filter((order) => order.payment_status === 'awaiting_payment').length} aguardando e ${asaasOrders.filter((order) => order.payment_status === 'confirmed').length} confirmado(s). Pix manual: ${manualOrders.length} pedido(s), ${manualOrders.filter((order) => order.payment_status === 'manual_review').length} em conferência.${latestPayment ? ` Último pedido: ${formatDate(latestPayment)}.` : ''}`
+        : 'A leitura pública está disponível, mas ainda não há pedidos de loja visíveis para esta sessão.'
     const checks: Check[] = [
       { label: 'Supabase', detail: 'Conexão com o projeto e autenticação disponíveis.', ok: !queryError },
       { label: 'Turnstile público', detail: appConfig.turnstileSiteKey ? 'A chave pública está disponível no build atual.' : 'A chave pública não está disponível neste ambiente.', ok: Boolean(appConfig.turnstileSiteKey), action: 'Preencha VITE_TURNSTILE_SITE_KEY no build do Cloudflare.' },
       { label: 'Pix da plataforma', detail: hasPix ? 'O Admin Master possui Pix estático ou chave com favorecido e cidade.' : 'Os dados para cobrar planos ainda estão incompletos.', ok: hasPix, action: 'Configure em Admin Master → Pagamentos e Pix.' },
       { label: 'WhatsApp financeiro', detail: billing?.whatsapp ? 'O canal para comprovantes está configurado.' : 'Nenhum WhatsApp financeiro foi informado.', ok: Boolean(billing?.whatsapp), action: 'Cadastre o número em Admin Master → Pagamentos e Pix.' },
+      { label: 'Pagamentos Asaas e Pix manual', detail: paymentDetail, ok: !ordersResult.error && paymentErrors.length === 0, action: ordersResult.error ? 'Verifique a permissão de leitura do resumo de pedidos para o Admin Master.' : paymentErrors.length ? `${paymentErrors.length} pedido(s) registram falha de pagamento e precisam de reconciliação.` : 'A tela usa somente status agregados; chaves, tokens e eventos privados não são exibidos.' },
       { label: 'Planos disponíveis', detail: `${plansResult.data?.length ?? 0} plano(s) ativo(s) para novas solicitações.`, ok: (plansResult.data?.length ?? 0) > 0, action: 'Ative ao menos um plano em Admin Master → Planos e limites.' },
       { label: 'Solicitações pendentes', detail: `${requestsResult.count ?? 0} solicitação(ões) aguardando revisão.`, ok: true },
       { label: 'Espaços cadastrados', detail: `${workspacesResult.count ?? 0} espaço(s) criado(s) na plataforma.`, ok: true },
