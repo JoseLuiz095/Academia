@@ -25,6 +25,32 @@ button, input, textarea, select { line-height: 1.25; }
 @media (max-width: 1100px) { .idea-grid, .content-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }.metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.product-summary { grid-template-columns: repeat(2, 1fr); }.dashboard-grid { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .sidebar { width: 70px; flex-basis: 70px; padding: 20px 9px; }.brand-lockup { padding: 0 10px 24px; }.brand-lockup > div:last-child, .workspace-copy, .nav-heading, .nav-item > span:not(.nav-icon), .help-card, .sidebar-footer .user-profile .workspace-copy, .more { display: none; }.workspace-switcher { justify-content: center; padding: 8px 5px; margin-bottom: 22px; }.chevron { display: none; }.nav-item { justify-content: center; padding: 11px 0; }.nav-icon { font-size: 19px; }.nav-count { position: absolute; margin: -20px 0 0 22px; width: 15px; height: 15px; font-size: 8px; }.user-profile { justify-content: center; padding: 0; }.topbar { height: 65px; padding: 0 18px; }.mobile-brand { display: flex; align-items: center; gap: 7px; }.mobile-brand strong { font-family: 'Playfair Display', serif; font-size: 18px; }.breadcrumb { display: none; }.connection-status { display: none; }.content-wrap { padding: 30px 18px 45px; }.page-intro { align-items: flex-start; flex-direction: column; margin-bottom: 22px; }.page-intro h1 { font-size: 30px; }.setup-banner { min-height: 0; }.setup-illustration { display: none; }.setup-copy { padding: 19px; }.progress-ring { width: 68px; height: 68px; margin-right: 17px; border-width: 4px; }.progress-ring strong { font-size: 15px; }.metric-grid, .client-stat-row { gap: 9px; }.metric-card { padding: 13px; min-height: 127px; }.metric-value { font-size: 20px; }.metric-foot { display: block; }.metric-foot > span:last-child { display: block; margin-top: 5px; }.panel { padding: 16px; }.chart-panel .panel-heading, .activity-panel .panel-heading { align-items: flex-start; }.chart-summary strong { font-size: 21px; }.idea-grid, .content-list, .product-grid, .product-summary { grid-template-columns: 1fr; }.whatsapp-hero { grid-template-columns: 55px 1fr; gap: 15px; padding: 20px; }.whatsapp-symbol { width: 48px; height: 48px; font-size: 25px; }.whatsapp-points { grid-column: 1 / -1; padding-top: 12px; border-top: 1px solid rgba(103,145,112,.18); }.content-toolbar { align-items: flex-start; flex-direction: column; gap: 15px; }.filter-tabs { width: 100%; gap: 14px; overflow-x: auto; }.format-options { grid-template-columns: 1fr; }.composer { padding: 22px; }.composer-foot { align-items: flex-start; flex-direction: column; }.composer-foot .primary-button { width: 100%; justify-content: center; }.toast { right: 14px; left: 14px; bottom: 14px; text-align: center; } }
 
+/* Base de leitura e acessibilidade: acabamento consistente em todas as áreas. */
+:root {
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+  font-optical-sizing: auto;
+  --focus-ring: #f97316;
+}
+
+html { scroll-behavior: smooth; }
+body { overflow-x: hidden; text-rendering: optimizeLegibility; }
+button, input, textarea, select { font-synthesis: none; }
+img, svg, video { max-width: 100%; }
+::selection { color: #fff; background: #c2410c; }
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--focus-ring) 48%, transparent);
+  outline-offset: 3px;
+}
+
+input::placeholder,
+textarea::placeholder { color: #8b9591; opacity: 1; }
+
 .auth-security-card, .checkout-security-card { margin: 15px 0; padding: 14px; border: 1px solid #e4e8de; border-radius: 11px; background: #f8faf5; }
 .auth-security-card > strong, .checkout-security-card > strong { display: block; color: #41584d; font-size: 11px; }
 .auth-security-card > small, .checkout-security-card > small { display: block; margin-top: 4px; color: #87938a; font-size: 10px; }
