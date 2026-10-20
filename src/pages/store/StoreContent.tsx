@@ -98,11 +98,100 @@ function getDeviceId() {
 }
 
 type ProtectedAccess = { products: Product[]; order_reference: string; expires_at: string; access_token_id: string; token_version: number; access_scope: 'product' | 'order'; token_label: string | null; notifications: ClientNotification[] }
-type LocalContentProgress = { completed: boolean; updated_at: string }
+type LocalContentProgress = { completed: boolean; updated_at: string; completed_item_ids?: string[] }
 type LocalProgressMap = Record<string, LocalContentProgress>
 
 function contentProgressStorageKey(workspaceId: string, accessTokenId: string) {
   return `impulso:content-progress:${workspaceId}:${accessTokenId}`
+}
+
+function contentItemProgressKey(item: ProductContentItem, index: number) {
+  return `${index}:${item.exercise_library_id ?? item.title}`
+}
+
+function productProgress(product: Product, progress: LocalContentProgress | undefined) {
+  const items = product.content?.items ?? []
+  if (!items.length) return { completedItems: progress?.completed ? 1 : 0, totalItems: 1, percent: progress?.completed ? 100 : 0 }
+  const completedItemIds = new Set(progress?.completed_item_ids ?? [])
+  const completedItems = progress?.completed ? items.length : items.filter((item, index) => completedItemIds.has(contentItemProgressKey(item, index))).length
+  return { completedItems, totalItems: items.length, percent: Math.round((completedItems / items.length) * 100) }
+}
+
+function ProductProgressSummary({ product, progress }: { product: Product; progress?: LocalContentProgress }) {
+  const summary = productProgress(product, progress)
+  return <div aria-label={`${summary.percent}% concluído. ${summary.completedItems} de ${summary.totalItems} etapas.`} style={{ minWidth: 170, maxWidth: 245, width: '100%' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+      <span className="panel-kicker">Progresso</span>
+      <strong style={{ color: 'var(--store-text, #26372f)', fontSize: 12 }}>{summary.percent}%</strong>
+    </div>
+    <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={summary.percent} aria-label={`Progresso de ${product.name}`} style={{ height: 7, overflow: 'hidden', borderRadius: 999, background: 'var(--store-border, #dfe5db)' }}>
+      <span style={{ display: 'block', width: `${summary.percent}%`, height: '100%', borderRadius: 999, background: 'var(--store-primary, #f97316)', transition: 'width .25s ease' }} />
+    </div>
+    <small style={{ display: 'block', marginTop: 6, color: 'var(--store-muted, #718075)' }}>{summary.completedItems} de {summary.totalItems} {summary.totalItems === 1 ? 'etapa' : 'etapas'}</small>
+  </div>
+}
+
+function AccessLibraryView({ workspace, access, expiresAtLabel, localProgress, activeWorkoutId, nextWorkout, totalItems, completedProducts, progressPercent, error, refreshingNotifications, onRefreshNotifications, onReadNotification, onSetProductCompleted, onSetItemCompleted, onFocusProduct, onSessionChange, sourceFlags }: {
+  workspace: { id: string; slug: string }
+  access: ProtectedAccess
+  expiresAtLabel: string
+  localProgress: LocalProgressMap
+  activeWorkoutId: string | null
+  nextWorkout?: Product
+  totalItems: number
+  completedProducts: number
+  progressPercent: number
+  error: string
+  refreshingNotifications: boolean
+  onRefreshNotifications: () => void | Promise<void>
+  onReadNotification: (notification: ClientNotification) => void | Promise<void>
+  onSetProductCompleted: (productId: string, completed: boolean) => void
+  onSetItemCompleted: (productId: string, item: ProductContentItem, index: number, completed: boolean) => void
+  onFocusProduct: (productId: string) => void
+  onSessionChange: (productId: string, active: boolean) => void
+  sourceFlags: { repdb: boolean; open: boolean; vital: boolean }
+}) {
+  return <section className="store-section access-page">
+    <Link className="back-link" to={`/p/${workspace.slug}`}>← Voltar à vitrine</Link>
+    <div className="page-intro">
+      <div>
+        <p className="eyebrow">Conteúdo liberado · {access.token_label ?? `pedido ${access.order_reference}`} · acesso v{access.token_version}</p>
+        <h1>Minha biblioteca</h1>
+        <p className="intro-description">Tudo o que foi liberado para este pedido, organizado para você saber exatamente o próximo passo. Acesso válido até {expiresAtLabel} neste dispositivo.</p>
+      </div>
+      <button className="secondary-button" onClick={() => window.print()}>Imprimir / salvar PDF</button>
+    </div>
+    <PwaExperience audience="cliente" workspaceId={workspace.id} workoutLabel={nextWorkout?.name ?? 'seu próximo treino'} />
+    <ClientNotificationCenter notifications={access.notifications} onRead={onReadNotification} onRefresh={onRefreshNotifications} refreshing={refreshingNotifications} />
+    {error && <div role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', margin: '16px 0', padding: '12px 14px', border: '1px solid color-mix(in srgb, var(--store-primary, #f97316) 28%, var(--store-border, #dfe5db))', borderRadius: 12, color: 'var(--store-text, #26372f)', background: 'color-mix(in srgb, var(--store-primary, #f97316) 7%, var(--store-surface, #fff))' }}><span>{error}</span><button type="button" className="secondary-button" onClick={() => void onRefreshNotifications()} disabled={refreshingNotifications}>{refreshingNotifications ? 'Atualizando…' : 'Tentar novamente'}</button></div>}
+    <section className="access-hub-summary" aria-label="Resumo da biblioteca" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: 10, margin: '20px 0' }}>
+      <div className="panel" style={{ padding: 16 }}><span className="panel-kicker">Conteúdos</span><strong style={{ display: 'block', fontSize: 27, lineHeight: 1.1 }}>{access.products.length}</strong><small>{totalItems} {totalItems === 1 ? 'etapa disponível' : 'etapas disponíveis'}</small></div>
+      <div className="panel" style={{ padding: 16 }}><span className="panel-kicker">Validade</span><strong style={{ display: 'block', fontSize: 17, lineHeight: 1.2 }}>{expiresAtLabel}</strong><small>Vinculado a este dispositivo</small></div>
+      <div className="panel" style={{ padding: 16 }}><span className="panel-kicker">Progresso geral</span><strong style={{ display: 'block', fontSize: 27, lineHeight: 1.1 }}>{progressPercent}%</strong><small>{completedProducts} de {access.products.length} conteúdo{access.products.length === 1 ? '' : 's'} concluído{access.products.length === 1 ? '' : 's'}</small><div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progressPercent} aria-label="Progresso geral da biblioteca" style={{ height: 5, marginTop: 10, borderRadius: 99, background: 'var(--store-border, #dfe5db)', overflow: 'hidden' }}><span style={{ display: 'block', width: `${progressPercent}%`, height: '100%', borderRadius: 99, background: 'var(--store-primary, #f97316)', transition: 'width .25s ease' }} /></div></div>
+    </section>
+    {nextWorkout && <section className="panel access-hub-continue" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 20, background: 'linear-gradient(135deg, color-mix(in srgb, var(--store-primary, #f97316) 10%, var(--store-surface, #fff)), var(--store-surface, #fff))' }}><div><span className="panel-kicker">Próximo passo</span><h2 style={{ margin: 0 }}>Seu treino continua aqui</h2><p style={{ margin: '6px 0 0', color: 'var(--store-muted, #718075)', fontSize: 12 }}>{nextWorkout.name} · {productProgress(nextWorkout, localProgress[nextWorkout.id]).percent === 100 ? 'revisite quando quiser' : 'ainda há etapas para concluir'}</p></div><button type="button" className="primary-button" onClick={() => onFocusProduct(nextWorkout.id)}>Abrir próximo treino <span>→</span></button></section>}
+    <nav className="access-product-shortcuts" aria-label="Atalhos da biblioteca" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>{access.products.map((product) => { const summary = productProgress(product, localProgress[product.id]); return <a className="secondary-button plain-link" href={`#conteudo-${product.id}`} key={product.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flex: '1 1 180px', minWidth: 0, textAlign: 'left' }}><span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.category === 'workout' ? '▣' : product.category === 'diet' ? '◌' : '✦'} {product.name}</span><strong style={{ color: 'var(--store-primary, #f97316)', fontSize: 11 }}>{summary.percent}%</strong></a> })}</nav>
+    <div className="access-product-list">
+      {access.products.map((product) => {
+        const items = product.content?.items ?? []
+        const productClass = product.category === 'workout' ? 'workout-content' : product.category === 'diet' ? 'diet-content' : ''
+        const progress = productProgress(product, localProgress[product.id])
+        const completedItemIds = new Set(localProgress[product.id]?.completed_item_ids ?? [])
+        const isCompleted = progress.percent === 100
+        return <section className={`access-product-block ${productClass}`} id={`conteudo-${product.id}`} key={product.id}>
+          <div className="access-product-heading">
+            <div style={{ minWidth: 0, flex: '1 1 230px' }}><span className="panel-kicker">{product.category ? categoryLabel[product.category] : 'Conteúdo digital'}</span><h2>{product.name}</h2><ProductProgressSummary product={product} progress={localProgress[product.id]} /></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}><button type="button" className={isCompleted ? 'secondary-button' : 'text-button'} onClick={() => onSetProductCompleted(product.id, !isCompleted)} aria-pressed={isCompleted}>{isCompleted ? '✓ Concluído' : 'Concluir conteúdo'}</button><span className="content-lock-badge">Liberado</span></div>
+          </div>
+          {product.content?.intro && <section className="panel access-intro"><p>{product.content.intro}</p></section>}
+          {product.category === 'workout' && <WorkoutTimer product={product} onSessionChange={(active) => onSessionChange(product.id, active)} />}
+          {activeWorkoutId === product.id && <div className="panel" role="status" style={{ marginTop: 12, padding: 14 }}><strong>Modo treino ativo</strong><p style={{ margin: '5px 0 0', color: 'var(--store-muted, #718075)' }}>Concentre-se na execução. Ao finalizar, você poderá marcar cada etapa concluída.</p></div>}
+          {activeWorkoutId !== product.id && <div className="access-motion-grid">{items.length ? items.map((item, index) => { const itemKey = contentItemProgressKey(item, index); const itemCompleted = isCompleted || completedItemIds.has(itemKey); return <article className={`panel access-content-card ${productClass}-card`} key={`${product.id}-${item.title}-${index}`}><MotionVisual item={item} diet={product.category === 'diet'} showEmbedded={product.category === 'workout'} /><div><div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}><div><span className="panel-kicker">Etapa {String(index + 1).padStart(2, '0')}</span><h3>{contentTitle(item)}</h3></div><label style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0, color: 'var(--store-muted, #718075)', fontSize: 10, cursor: 'pointer' }}><input type="checkbox" checked={itemCompleted} onChange={(event) => onSetItemCompleted(product.id, item, index, event.target.checked)} aria-label={`${itemCompleted ? 'Desmarcar' : 'Marcar'} ${contentTitle(item)} como concluído`} />{itemCompleted ? 'Feito' : 'Concluir'}</label></div>{item.meta && <strong>{item.meta}</strong>}<p>{item.details || 'Siga a orientação combinada com o profissional.'}</p></div></article> }) : <section className="panel empty-panel"><h3>Conteúdo em preparação</h3><p>O acesso já foi liberado, mas o profissional ainda está finalizando os detalhes.</p><button type="button" className="secondary-button" onClick={() => onRefreshNotifications()}>Atualizar avisos</button></section>}</div>}
+        </section>
+      })}
+    </div>
+    {sourceFlags.repdb && <p className="exercise-source-credit">Ilustrações e dados de exercícios por <a href="https://repdb.co" target="_blank" rel="noreferrer">RepDB ↗</a>.</p>}{sourceFlags.open && <p className="exercise-source-credit">Ilustrações abertas por <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noreferrer">Free Exercise DB ↗</a>.</p>}{sourceFlags.vital && <p className="exercise-source-credit">Animações HD 3D por <a href="https://vitalanimations.com" target="_blank" rel="noreferrer">Vital Animations ↗</a>.</p>}
+  </section>
 }
 
 export function StoreAccessEnhanced() {
@@ -114,36 +203,57 @@ export function StoreAccessEnhanced() {
   const [access, setAccess] = useState<ProtectedAccess | null>(null)
   const [activeWorkoutId, setActiveWorkoutId] = useState<string | null>(null)
   const [localProgress, setLocalProgress] = useState<LocalProgressMap>({})
+  const [refreshingNotifications, setRefreshingNotifications] = useState(false)
 
   async function openAccess(event?: FormEvent) {
     event?.preventDefault()
     if (!supabase || token.trim().length !== 48) { setError('Cole o link ou código de acesso recebido do profissional.'); return }
     setLoading(true); setError('')
-    const result = await supabase.functions.invoke('access-product', { body: { token: token.trim().toLowerCase(), device_id: deviceId } })
-    const products = (Array.isArray(result.data?.products) ? result.data.products : result.data?.product ? [result.data.product] : []) as Product[]
-    if (result.error || !products.length) setError(result.error?.message || 'Não foi possível abrir este conteúdo.')
-    else setAccess({ products, order_reference: String(result.data.order_reference), expires_at: String(result.data.expires_at), access_token_id: String(result.data.access_token_id), token_version: Number(result.data.token_version ?? 1), access_scope: result.data.access_scope === 'order' ? 'order' : 'product', token_label: typeof result.data.token_label === 'string' ? result.data.token_label : null, notifications: (Array.isArray(result.data.notifications) ? result.data.notifications : []) as ClientNotification[] })
-    setLoading(false)
+    try {
+      const result = await supabase.functions.invoke('access-product', { body: { token: token.trim().toLowerCase(), device_id: deviceId } })
+      const products = (Array.isArray(result.data?.products) ? result.data.products : result.data?.product ? [result.data.product] : []) as Product[]
+      if (result.error || !products.length) setError(result.error?.message || 'Não foi possível abrir este conteúdo.')
+      else setAccess({ products, order_reference: String(result.data.order_reference), expires_at: String(result.data.expires_at), access_token_id: String(result.data.access_token_id), token_version: Number(result.data.token_version ?? 1), access_scope: result.data.access_scope === 'order' ? 'order' : 'product', token_label: typeof result.data.token_label === 'string' ? result.data.token_label : null, notifications: (Array.isArray(result.data.notifications) ? result.data.notifications : []) as ClientNotification[] })
+    } catch {
+      setError('Não foi possível validar este acesso agora. Confira sua conexão e tente novamente.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function markNotification(notification: ClientNotification) {
     if (!supabase || !access) return
-    const result = await supabase.functions.invoke('access-product', { body: { token: token.trim().toLowerCase(), device_id: deviceId, action: 'mark_read', notification_id: notification.id } })
-    if (result.error) { setError('Não foi possível marcar este aviso como lido. Tente novamente.'); return }
-    setAccess((current) => current ? { ...current, notifications: current.notifications.map((item) => item.id === notification.id ? { ...item, read_at: String(result.data?.read_at ?? new Date().toISOString()) } : item) } : current)
+    try {
+      const result = await supabase.functions.invoke('access-product', { body: { token: token.trim().toLowerCase(), device_id: deviceId, action: 'mark_read', notification_id: notification.id } })
+      if (result.error) { setError('Não foi possível marcar este aviso como lido. Tente novamente.'); return }
+      setAccess((current) => current ? { ...current, notifications: current.notifications.map((item) => item.id === notification.id ? { ...item, read_at: String(result.data?.read_at ?? new Date().toISOString()) } : item) } : current)
+    } catch {
+      setError('Não foi possível marcar este aviso como lido. Tente novamente.')
+    }
+  }
+
+  async function refreshNotifications(showError = true) {
+    if (!supabase || !access || !token.trim()) return
+    setRefreshingNotifications(true)
+    try {
+      const result = await supabase.functions.invoke('access-product', { body: { token: token.trim().toLowerCase(), device_id: deviceId, action: 'notifications' } })
+      if (result.error || !Array.isArray(result.data?.notifications)) {
+        if (showError) setError('Não foi possível atualizar os avisos. Tente novamente.')
+        return
+      }
+      setAccess((current) => current ? { ...current, notifications: result.data.notifications as ClientNotification[] } : current)
+      if (showError) setError('')
+    } catch {
+      if (showError) setError('Não foi possível atualizar os avisos. Tente novamente.')
+    } finally {
+      setRefreshingNotifications(false)
+    }
   }
 
   useEffect(() => {
     if (!supabase || !access || !token.trim()) return
-    const client = supabase
-    let active = true
-    const refreshNotifications = async () => {
-      const result = await client.functions.invoke('access-product', { body: { token: token.trim().toLowerCase(), device_id: deviceId, action: 'notifications' } })
-      if (!active || result.error || !Array.isArray(result.data?.notifications)) return
-      setAccess((current) => current ? { ...current, notifications: result.data.notifications as ClientNotification[] } : current)
-    }
-    const interval = window.setInterval(() => void refreshNotifications(), 60000)
-    return () => { active = false; window.clearInterval(interval) }
+    const interval = window.setInterval(() => void refreshNotifications(false), 60000)
+    return () => window.clearInterval(interval)
   }, [access?.access_token_id, deviceId, token])
 
   useEffect(() => {
@@ -158,7 +268,25 @@ export function StoreAccessEnhanced() {
   }, [access?.access_token_id, workspace.id])
 
   function setProductCompleted(productId: string, completed: boolean) {
-    const next: LocalProgressMap = { ...localProgress, [productId]: { completed, updated_at: new Date().toISOString() } }
+    const product = accessProducts.find((item) => item.id === productId)
+    const itemIds = (product?.content?.items ?? []).map(contentItemProgressKey)
+    const next: LocalProgressMap = { ...localProgress, [productId]: { completed, updated_at: new Date().toISOString(), completed_item_ids: completed ? itemIds : [] } }
+    setLocalProgress(next)
+    if (!access) return
+    try { localStorage.setItem(contentProgressStorageKey(workspace.id, access.access_token_id), JSON.stringify(next)) } catch { /* O progresso continua disponível nesta sessão. */ }
+  }
+
+  function setItemCompleted(productId: string, item: ProductContentItem, index: number, completed: boolean) {
+    const product = accessProducts.find((candidate) => candidate.id === productId)
+    if (!product) return
+    const items = product.content?.items ?? []
+    const current = localProgress[productId]
+    const completedIds = new Set(current?.completed_item_ids ?? [])
+    const itemKey = contentItemProgressKey(item, index)
+    if (completed) completedIds.add(itemKey)
+    else completedIds.delete(itemKey)
+    const completedItemIds = [...completedIds]
+    const next: LocalProgressMap = { ...localProgress, [productId]: { completed: items.length ? completedItemIds.length >= items.length : completed, updated_at: new Date().toISOString(), completed_item_ids: completedItemIds } }
     setLocalProgress(next)
     if (!access) return
     try { localStorage.setItem(contentProgressStorageKey(workspace.id, access.access_token_id), JSON.stringify(next)) } catch { /* O progresso continua disponível nesta sessão. */ }
@@ -174,10 +302,13 @@ export function StoreAccessEnhanced() {
   const hasOpenExerciseContent = allItems.some((item) => item.exercise_library_id?.startsWith('open:'))
   const hasVitalContent = allItems.some((item) => item.exercise_library_id?.startsWith('vital:'))
   const totalItems = allItems.length
-  const completedProducts = accessProducts.filter((product) => localProgress[product.id]?.completed).length
-  const progressPercent = accessProducts.length ? Math.round((completedProducts / accessProducts.length) * 100) : 0
-  const nextWorkout = accessProducts.find((product) => product.category === 'workout' && !localProgress[product.id]?.completed) ?? accessProducts.find((product) => product.category === 'workout')
+  const productSummaries = accessProducts.map((product) => ({ product, progress: productProgress(product, localProgress[product.id]) }))
+  const completedProducts = productSummaries.filter(({ progress }) => progress.percent === 100).length
+  const progressPercent = productSummaries.length ? Math.round(productSummaries.reduce((total, { progress }) => total + progress.percent, 0) / productSummaries.length) : 0
+  const nextWorkout = accessProducts.find((product) => product.category === 'workout' && productProgress(product, localProgress[product.id]).percent < 100) ?? accessProducts.find((product) => product.category === 'workout')
   const expiresAtLabel = access ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(access.expires_at)) : ''
+
+  if (Boolean(access)) return <AccessLibraryView workspace={{ id: workspace.id, slug: workspace.slug }} access={access as ProtectedAccess} expiresAtLabel={expiresAtLabel} localProgress={localProgress} activeWorkoutId={activeWorkoutId} nextWorkout={nextWorkout} totalItems={totalItems} completedProducts={completedProducts} progressPercent={progressPercent} error={error} refreshingNotifications={refreshingNotifications} onRefreshNotifications={refreshNotifications} onReadNotification={markNotification} onSetProductCompleted={setProductCompleted} onSetItemCompleted={setItemCompleted} onFocusProduct={focusProduct} onSessionChange={(productId, active) => setActiveWorkoutId(active ? productId : null)} sourceFlags={{ repdb: hasRepDbContent, open: hasOpenExerciseContent, vital: hasVitalContent }} />
 
   return <section className="store-section access-page"><Link className="back-link" to={`/p/${workspace.slug}`}>← Voltar à vitrine</Link>{!access ? <><p className="eyebrow">Área do cliente</p><h1>Acesse seu conteúdo</h1><p className="checkout-intro">Use o link recebido após a confirmação do pagamento. Ele reúne os conteúdos digitais deste pedido e fica vinculado ao primeiro dispositivo usado.</p><form className="panel access-form" onSubmit={(event) => void openAccess(event)}><label>Código de acesso<input autoComplete="off" value={token} onChange={(event) => setToken(event.target.value)} placeholder="Cole o código de 48 caracteres" /></label><button className="primary-button" disabled={loading}>{loading ? 'Validando…' : 'Abrir meu conteúdo'} <span>→</span></button>{error && <p className="form-error" role="alert">{error}</p>}</form><div className="access-safety-note"><strong>Proteção por dispositivo</strong><span>O token é validado no servidor, expira e fica vinculado ao primeiro dispositivo. Não compartilhe o link.</span></div><PwaExperience audience="cliente" workspaceId={workspace.id} compact /></> : <><div className="page-intro"><div><p className="eyebrow">Conteúdo liberado · {access.token_label ?? `pedido ${access.order_reference}`} · acesso v{access.token_version}</p><h1>Minha biblioteca</h1><p className="intro-description">Seu espaço reúne tudo o que foi liberado para este pedido, com acesso válido até {expiresAtLabel} neste dispositivo.</p></div><button className="secondary-button" onClick={() => window.print()}>Imprimir / salvar PDF</button></div><PwaExperience audience="cliente" workspaceId={workspace.id} workoutLabel={nextWorkout?.name ?? 'seu próximo treino'} /><ClientNotificationCenter notifications={access.notifications} onRead={(notification) => void markNotification(notification)} /><section className="access-hub-summary" aria-label="Resumo da biblioteca" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: 10, margin: '20px 0' }}><div className="panel" style={{ padding: 16 }}><span className="panel-kicker">Conteúdos</span><strong style={{ display: 'block', fontSize: 27, lineHeight: 1.1 }}>{accessProducts.length}</strong><small>{totalItems} {totalItems === 1 ? 'etapa disponível' : 'etapas disponíveis'}</small></div><div className="panel" style={{ padding: 16 }}><span className="panel-kicker">Validade</span><strong style={{ display: 'block', fontSize: 17, lineHeight: 1.2 }}>{expiresAtLabel}</strong><small>Vinculado a este dispositivo</small></div><div className="panel" style={{ padding: 16 }}><span className="panel-kicker">Meu progresso</span><strong style={{ display: 'block', fontSize: 27, lineHeight: 1.1 }}>{progressPercent}%</strong><small>{completedProducts} de {accessProducts.length} concluído{accessProducts.length === 1 ? '' : 's'}</small><div aria-hidden="true" style={{ height: 5, marginTop: 10, borderRadius: 99, background: 'var(--store-border, #dfe5db)', overflow: 'hidden' }}><span style={{ display: 'block', width: `${progressPercent}%`, height: '100%', borderRadius: 99, background: 'var(--store-primary, #f97316)', transition: 'width .25s ease' }} /></div></div></section>{nextWorkout && <section className="panel access-hub-continue" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 20, background: 'linear-gradient(135deg, color-mix(in srgb, var(--store-primary, #f97316) 10%, var(--store-surface, #fff)), var(--store-surface, #fff))' }}><div><span className="panel-kicker">Próximo passo</span><h2 style={{ margin: 0 }}>Retome seu treino</h2><p style={{ margin: '6px 0 0', color: 'var(--store-muted, #718075)', fontSize: 12 }}>{nextWorkout.name} · {localProgress[nextWorkout.id]?.completed ? 'feito anteriormente' : 'ainda não concluído'}</p></div><button type="button" className="primary-button" onClick={() => focusProduct(nextWorkout.id)}>Retomar treino <span>▶</span></button></section>}<nav className="access-product-shortcuts" aria-label="Atalhos da biblioteca" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>{accessProducts.map((product) => <a className="secondary-button plain-link" href={`#conteudo-${product.id}`} key={product.id} style={{ flex: '1 1 145px', minWidth: 0, textAlign: 'left' }}><span>{product.category === 'workout' ? '▣' : product.category === 'diet' ? '◌' : '✦'}</span>{product.name}{localProgress[product.id]?.completed ? ' · ✓' : ''}</a>)}</nav><div className="access-product-list">{accessProducts.map((product) => { const items = product.content?.items ?? []; const productClass = product.category === 'workout' ? 'workout-content' : product.category === 'diet' ? 'diet-content' : ''; const isCompleted = Boolean(localProgress[product.id]?.completed); return <section className={`access-product-block ${productClass}`} id={`conteudo-${product.id}`} key={product.id}><div className="access-product-heading"><div><span className="panel-kicker">{product.category ? categoryLabel[product.category] : 'Conteúdo digital'}</span><h2>{product.name}</h2></div><div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}><button type="button" className={isCompleted ? 'secondary-button' : 'text-button'} onClick={() => setProductCompleted(product.id, !isCompleted)} aria-pressed={isCompleted}>{isCompleted ? '✓ Concluído' : 'Marcar como concluído'}</button><span className="content-lock-badge">Liberado</span></div></div>{product.content?.intro && <section className="panel access-intro"><p>{product.content.intro}</p></section>}{product.category === 'workout' && <WorkoutTimer product={product} onSessionChange={(active) => setActiveWorkoutId(active ? product.id : null)} />}{activeWorkoutId !== product.id && <div className="access-motion-grid">{items.length ? items.map((item, index) => <article className={`panel access-content-card ${productClass}-card`} key={`${product.id}-${item.title}-${index}`}><MotionVisual item={item} diet={product.category === 'diet'} showEmbedded={product.category === 'workout'} /><div><span className="panel-kicker">Etapa {String(index + 1).padStart(2, '0')}</span><h3>{contentTitle(item)}</h3>{item.meta && <strong>{item.meta}</strong>}<p>{item.details || 'Siga a orientação combinada com o profissional.'}</p></div></article>) : <section className="panel empty-panel"><h3>Conteúdo em preparação</h3><p>O profissional liberou o acesso, mas ainda está finalizando os detalhes.</p></section>}</div>}</section> })}</div>{hasRepDbContent && <p className="exercise-source-credit">Ilustrações e dados de exercícios por <a href="https://repdb.co" target="_blank" rel="noreferrer">RepDB ↗</a>.</p>}{hasOpenExerciseContent && <p className="exercise-source-credit">Ilustrações abertas por <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noreferrer">Free Exercise DB ↗</a>.</p>}{hasVitalContent && <p className="exercise-source-credit">Animações HD 3D por <a href="https://vitalanimations.com" target="_blank" rel="noreferrer">Vital Animations ↗</a>.</p>}{error && <p className="form-error" role="alert">{error}</p>}</>}</section>
 }
