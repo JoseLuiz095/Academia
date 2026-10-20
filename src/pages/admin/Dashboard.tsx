@@ -38,9 +38,10 @@ export function AdminDashboard() {
   useEffect(() => {
     if (!workspace || pendingOrders < 1 || !('Notification' in window) || Notification.permission !== 'granted') return
     const seenKey = `impulso:admin:last-pending:${workspace.id}`
-    const previous = Number(localStorage.getItem(seenKey) ?? '0')
+    let previous = 0
+    try { previous = Number(localStorage.getItem(seenKey) ?? '0') } catch { /* Sem histórico local, o alerta pode ser exibido uma vez. */ }
     if (pendingOrders > previous) void notifyBrowser('Impulso · nova pendência', { body: `${pendingOrders} pedido${pendingOrders === 1 ? '' : 's'} aguardando conferência, incluindo compras e avaliações.`, tag: `pending-${workspace.id}`, url: '/admin/pedidos' })
-    localStorage.setItem(seenKey, String(pendingOrders))
+    try { localStorage.setItem(seenKey, String(pendingOrders)) } catch { /* O indicador visual não deve quebrar o painel. */ }
   }, [pendingOrders, workspace?.id])
 
   const daysRemaining = workspace?.subscription_ends_at ? Math.ceil((new Date(workspace.subscription_ends_at).getTime() - Date.now()) / 86400000) : null

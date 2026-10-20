@@ -18,13 +18,23 @@ type AuthState = {
 const AuthContext = createContext<AuthState | null>(null)
 const selectedWorkspaceKey = 'academia:selected-workspace'
 
+function readSelectedWorkspace() {
+  try { return localStorage.getItem(selectedWorkspaceKey) }
+  catch { return null }
+}
+
+function forgetSelectedWorkspace() {
+  try { localStorage.removeItem(selectedWorkspaceKey) }
+  catch { /* Preferência local opcional. */ }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [authError, setAuthError] = useState<string | null>(null)
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [isMaster, setIsMaster] = useState(false)
-  const [selectedId, setSelectedId] = useState(() => localStorage.getItem(selectedWorkspaceKey))
+  const [selectedId, setSelectedId] = useState(readSelectedWorkspace)
   const requestId = useRef(0)
   const pendingRefresh = useRef<number | null>(null)
 
@@ -107,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthError(null)
         setLoading(false)
         setSelectedId(null)
-        localStorage.removeItem(selectedWorkspaceKey)
+        forgetSelectedWorkspace()
         return
       }
       pendingRefresh.current = window.setTimeout(() => {
@@ -129,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const selectWorkspace = (id: string) => {
     if (!workspaces.some((item) => item.id === id)) return
     setSelectedId(id)
-    localStorage.setItem(selectedWorkspaceKey, id)
+    try { localStorage.setItem(selectedWorkspaceKey, id) } catch { /* A sessão continua válida sem persistência local. */ }
   }
 
   const signOut = async () => {
@@ -143,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsMaster(false)
     setAuthError(null)
     setSelectedId(null)
-    localStorage.removeItem(selectedWorkspaceKey)
+    forgetSelectedWorkspace()
   }
 
   return <AuthContext.Provider value={{ user, loading, authError, workspaces, workspace, isMaster, selectWorkspace, refresh, signOut }}>

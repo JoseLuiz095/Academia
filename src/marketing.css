@@ -287,3 +287,58 @@
   .commercial-hero { margin: 0 18px; border-radius: 22px; }
   .commercial-hero-copy { padding: 34px 24px; }
 }
+
+/* Marketing: hierarquia mais clara, textos legíveis e CTA confortável no toque. */
+.landing-shell { overflow-x: hidden; }
+.landing-header nav a {
+  border-radius: 8px;
+  transition: color .18s ease, background-color .18s ease;
+}
+.landing-header nav a:not(.primary-button):hover { color: #c2410c; background: #fff7ed; }
+.commercial-hero h1,
+.commercial-section-heading h2,
+.commercial-split h2,
+.commercial-pricing h2,
+.commercial-faq h2,
+.commercial-inline-heading h2 { text-wrap: balance; }
+.commercial-hero-copy > p:not(.eyebrow),
+.commercial-section-heading > p:last-child,
+.commercial-split > div > p:not(.eyebrow),
+.commercial-demo-callout p:not(.eyebrow),
+.commercial-final p:not(.eyebrow) { max-width: 66ch; }
+.commercial-feature-grid article,
+.commercial-clarity-grid article,
+.commercial-faq details,
+.commercial-plan-card { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.commercial-feature-grid article:focus-within,
+.commercial-clarity-grid article:focus-within,
+.commercial-faq details:focus-within,
+.commercial-plan-card:focus-within { border-color: #f2a36f; box-shadow: 0 14px 34px rgba(27, 33, 35, .1); }
+.commercial-ribbon { line-height: 1.5; }
+.demo-window, .demo-panel, .demo-preview, .demo-product { min-width: 0; }
+.demo-preview h3 { line-height: 1.12; text-wrap: balance; }
+.demo-preview > p, .demo-note, .demo-store-hero p { line-height: 1.7; }
+.demo-preview-actions .primary-button,
+.demo-preview-actions .secondary-button,
+.demo-cart-bar .primary-button,
+.demo-stage-foot .primary-button,
+.demo-stage-foot .secondary-button { min-height: 42px; }
+
+@media (max-width: 760px) {
+  .commercial-hero h1 { font-size: clamp(36px, 11vw, 54px); letter-spacing: -1px; }
+  .commercial-hero-copy > p:not(.eyebrow) { font-size: 13px; }
+  .commercial-hero-proof { margin-top: 25px; }
+  .commercial-hero-proof span { flex: 1 1 130px; text-align: center; }
+  .commercial-section-heading h2,
+  .commercial-split h2,
+  .commercial-pricing h2,
+  .commercial-faq h2 { font-size: clamp(30px, 9vw, 42px); }
+  .commercial-feature-grid article,
+  .commercial-clarity-grid article { padding: 23px; }
+  .commercial-feature-grid h3 { margin-top: 18px; font-size: 21px; }
+  .commercial-final > div { align-items: stretch; flex-direction: column; }
+  .commercial-final > div > a,
+  .commercial-final > div > button { justify-content: center; }
+  .demo-stage-foot > div { width: 100%; }
+  .demo-stage-foot > div > button { flex: 1 1 140px; justify-content: center; }
+}

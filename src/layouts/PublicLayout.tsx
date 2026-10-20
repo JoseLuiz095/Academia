@@ -70,7 +70,12 @@ export function PublicLayout() {
 
   function saveCart(next: CartEntry[]) {
     setCart(next)
-    localStorage.setItem(cartKey, JSON.stringify(next))
+    try {
+      localStorage.setItem(cartKey, JSON.stringify(next))
+    } catch {
+      // A vitrine should remain usable when the browser blocks storage
+      // (private mode, quota exceeded or an embedded webview).
+    }
   }
   function addToCart(id: string) {
     const product = products.find((item) => item.id === id)
@@ -78,7 +83,7 @@ export function PublicLayout() {
     const existing = safeCart.find((item) => item.id === id)
     saveCart(existing ? safeCart.map((item) => item.id === id ? { ...item, quantity: Math.min(item.quantity + 1, 99) } : item) : [...safeCart, { id, quantity: 1 }])
   }
-  function changeQuantity(id: string, quantity: number) { saveCart(safeCart.map((item) => item.id === id ? { ...item, quantity: Math.min(quantity, 99) } : item).filter((item) => item.quantity > 0)) }
+  function changeQuantity(id: string, quantity: number) { saveCart(safeCart.map((item) => item.id === id ? { ...item, quantity: Math.min(Math.max(quantity, 0), 99) } : item).filter((item) => item.quantity > 0)) }
   function clearCart() { saveCart([]) }
 
   if (loading || (workspace && workspace.slug !== slug)) return <div className="loading-page">Carregando vitrine…</div>
