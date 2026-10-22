@@ -49,16 +49,15 @@ export function PwaExperience({ audience, workspaceId, workoutLabel = 'seu próx
   }, [audience, workspaceId])
 
   useEffect(() => {
-    if (!enabled || permission !== 'granted') return
+    if (audience !== 'cliente' || !enabled || permission !== 'granted') return
     return startReminderScheduler(audience, workspaceId, () => {
-      if (audience === 'cliente') void notifyBrowser('Impulso · lembrete de cuidado', { body: 'Beba água e reserve alguns minutos para manter seu ritmo.', tag: `agua-${workspaceId}`, url: window.location.href })
-      else void notifyBrowser('Impulso · novos pedidos', { body: 'Há uma pendência para conferir no seu painel.', tag: `pedidos-${workspaceId}`, url: '/admin/pedidos' })
-    }, audience === 'cliente' ? 2 * 60 * 60 * 1000 : 15 * 60 * 1000)
+      void notifyBrowser('Impulso · lembrete de cuidado', { body: 'Beba água e reserve alguns minutos para manter seu ritmo.', tag: `agua-${workspaceId}`, url: window.location.href })
+    }, 2 * 60 * 60 * 1000)
   }, [audience, enabled, permission, workspaceId])
 
-  const description = audience === 'cliente' ? 'Receba lembretes discretos de água e treino neste dispositivo. Você pode desligar quando quiser.' : 'Receba um aviso no navegador quando houver uma pendência para conferir no painel.'
+  const description = audience === 'cliente' ? 'Receba lembretes discretos de água e treino neste dispositivo. Você pode desligar quando quiser.' : 'Receba um aviso quando a consulta dos pedidos identificar novas pendências. Você pode desligar os alertas quando quiser.'
   const permissionLabel = permission === 'granted' ? 'Disponíveis neste dispositivo' : permission === 'denied' ? 'Bloqueadas pelo navegador' : permission === 'unsupported' ? 'Não suportadas neste navegador' : 'Ainda não ativadas'
-  const nextReminder = useMemo(() => audience === 'cliente' ? 'Água a cada 2 horas · treino conforme sua rotina' : 'Verificação enquanto o painel estiver aberto', [audience])
+  const nextReminder = useMemo(() => audience === 'cliente' ? 'Água a cada 2 horas · treino conforme sua rotina' : 'Somente com dados carregados no painel aberto', [audience])
   const lastAttemptLabel = lastAttempt ? `Última tentativa: ${new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(lastAttempt.attemptedAt)}` : ''
 
   async function activate() {

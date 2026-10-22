@@ -7,6 +7,7 @@
     "node": ">=22.23.2"
   },
   "scripts": {
+    "test": "node --test scripts/pwa.test.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "deploy:cloudflare": "npm run build && wrangler deploy",
