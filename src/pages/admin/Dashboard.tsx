@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import type { ContentIdea, Product } from '../../types'
 import { PwaExperience } from '../../components/PwaExperience'
-import { notifyBrowser } from '../../lib/pwa'
+import { getNotificationPermission, isReminderEnabled, notifyBrowser, shouldNotifyAdminPending, subscribeReminderPreference } from '../../lib/pwa'
 
 type Reminder = { id: string; title: string; scheduled_for: string; channel: 'internal' | 'whatsapp' }
 type OrderSignal = { id: string; status: 'pending' | 'confirmed' | 'cancelled'; payment_provider?: 'manual_pix' | 'asaas'; payment_status?: 'manual_review' | 'awaiting_payment' | 'confirmed' | 'overdue' | 'cancelled' | 'refunded' | 'error' }
@@ -19,6 +19,13 @@ export function AdminDashboard() {
   const [evaluationSignals, setEvaluationSignals] = useState<EvaluationSignal[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const [alertsEnabled, setAlertsEnabled] = useState(() => Boolean(workspace && isReminderEnabled('admin', workspace.id)))
+
+  useEffect(() => {
+    setAlertsEnabled(Boolean(workspace && isReminderEnabled('admin', workspace.id)))
+    if (!workspace) return
+    return subscribeReminderPreference('admin', workspace.id, setAlertsEnabled)
+  }, [workspace?.id])
 
   useEffect(() => {
     if (!supabase || !workspace) return
@@ -42,13 +49,13 @@ export function AdminDashboard() {
 
   useEffect(() => {
     const currentPending = new Set([...orderSignals.filter((order) => order.status === 'pending').map((order) => order.id), ...evaluationSignals.map((booking) => booking.order_id)]).size
-    if (!workspace || currentPending < 1 || !('Notification' in window) || Notification.permission !== 'granted') return
+    if (!workspace || loading || loadError || !alertsEnabled) return
     const seenKey = `impulso:admin:last-pending:${workspace.id}`
     let previous = 0
     try { previous = Number(localStorage.getItem(seenKey) ?? '0') } catch { /* Sem histórico local, o alerta pode ser exibido uma vez. */ }
-    if (currentPending > previous) void notifyBrowser('Impulso · nova pendência', { body: `${currentPending} item${currentPending === 1 ? '' : 's'} aguardando conferência, incluindo compras e avaliações.`, tag: `pending-${workspace.id}`, url: '/admin/pedidos' })
+    if (shouldNotifyAdminPending(previous, currentPending, alertsEnabled, getNotificationPermission())) void notifyBrowser('Impulso · nova pendência', { body: `${currentPending} item${currentPending === 1 ? '' : 's'} aguardando conferência, incluindo compras e avaliações.`, tag: `pending-${workspace.id}`, url: '/admin/pedidos' })
     try { localStorage.setItem(seenKey, String(currentPending)) } catch { /* O indicador visual não deve quebrar o painel. */ }
-  }, [orderSignals, evaluationSignals, workspace?.id])
+  }, [orderSignals, evaluationSignals, workspace?.id, loading, loadError, alertsEnabled])
 
   const daysRemaining = workspace?.subscription_ends_at ? Math.ceil((new Date(workspace.subscription_ends_at).getTime() - Date.now()) / 86400000) : null
   const subscriptionDate = workspace?.subscription_ends_at ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(workspace.subscription_ends_at)) : 'A definir'

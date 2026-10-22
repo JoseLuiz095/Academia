@@ -1,5 +1,6 @@
 const reminderPrefix = 'impulso:pwa:'
 const attemptPrefix = `${reminderPrefix}notification-attempt:`
+const preferenceChangedEvent = 'impulso:reminder-preference-changed'
 
 export type PwaAudience = 'cliente' | 'admin'
 export type NotificationPermissionState = NotificationPermission | 'unsupported'
@@ -133,11 +134,29 @@ export function isReminderEnabled(audience: PwaAudience, workspaceId: string) {
 export function setReminderEnabled(audience: PwaAudience, workspaceId: string, enabled: boolean) {
   if (enabled) storageSet(reminderKey(audience, workspaceId), 'enabled')
   else storageRemove(reminderKey(audience, workspaceId))
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(preferenceChangedEvent))
+}
+
+export function subscribeReminderPreference(audience: PwaAudience, workspaceId: string, onChange: (enabled: boolean) => void) {
+  if (typeof window === 'undefined') return () => undefined
+  const update = () => onChange(isReminderEnabled(audience, workspaceId))
+  window.addEventListener(preferenceChangedEvent, update)
+  window.addEventListener('storage', update)
+  return () => {
+    window.removeEventListener(preferenceChangedEvent, update)
+    window.removeEventListener('storage', update)
+  }
+}
+
+export function shouldNotifyAdminPending(previous: number, current: number, enabled: boolean, permission: NotificationPermissionState) {
+  return enabled && permission === 'granted' && current > 0 && current > previous
 }
 
 /** Mantém um único intervalo por audiência/workspace mesmo com remounts ou duplicações acidentais. */
 export function startReminderScheduler(audience: PwaAudience, workspaceId: string, callback: () => void, delayMs: number) {
-  if (typeof window === 'undefined') return () => undefined
+  // Alertas administrativos dependem de pedidos reais no Dashboard. Um relógio
+  // sozinho não comprova que existe pendência e não deve gerar notificações.
+  if (typeof window === 'undefined' || audience !== 'cliente') return () => undefined
   const key = reminderKey(audience, workspaceId)
   const current = reminderSchedulers.get(key)
   if (current) {
